@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true" scanPeriod="60" debug="false">
+
+    <contextName>logback</contextName>
+
+    <!--多环境的日志输出-->
+    <springProfile name="dev">
+        <property name="LOG_HOME" value="./log/"/>
+    </springProfile>
+    <springProfile name="pro">
+        <property name="LOG_HOME" value="./log/"/>
+    </springProfile>
+
+    <!--  根目录  -->
+    <springProperty name="LogRootPath" source="log.root.path" defaultValue="./log"/>
+    <!--  不同服务日志目录  -->
+    <!--    <springProperty name="Application" source="spring.application.name"/>-->
+    <springProperty name="FILE_SIZE" source="log.fileSize" defaultValue="100MB"/>
+    <springProperty name="MAX_HISTORY" source="log.maxHistory" defaultValue="30"/>
+    <springProperty name="TOTAL_FILE_SIZE" source="log.totalFileSize" defaultValue="100GB"/>
+
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+<!--        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">-->
+<!--            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} %method:%line - %msg%n</pattern>-->
+<!--        </encoder>-->
+        <!--彩色日志输出-->
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <pattern>
+                %clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){magenta} [%clr(%thread){cyan}] %highlight(%-5level) %clr(%logger{36}){yellow} %clr(%method:%line){yellow} - %clr(%msg){green}%n
+            </pattern>
+        </encoder>
+    </appender>
+
+    <appender name="DEBUG" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LogRootPath}/debug.log</file>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>DEBUG</level>
+        </filter>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger:%line - %msg%n</pattern>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <!--日志文件输出的文件名-->
+            <fileNamePattern>${LogRootPath}/history/%d{yyyy-MM-dd}/debug_%i.log</fileNamePattern>
+            <MaxHistory>${MAX_HISTORY}</MaxHistory>
+            <!--日志文件保留天数-->
+            <totalSizeCap>${TOTAL_FILE_SIZE}</totalSizeCap>
+            <maxFileSize>100MB</maxFileSize>
+            <cleanHistoryOnStart>true</cleanHistoryOnStart>
+        </rollingPolicy>
+    </appender>
+
+    <!-- WARN -->
+    <appender name="WARN" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LogRootPath}/warn.log</file>
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>WARN</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+        <encoder>
+            <pattern>
+                %d{yyyy-MM-dd HH:mm:ss.SSS} %5p ${PID:- } -&#45;&#45; [%t] %-40.40logger{39} : %m%n
+            </pattern>
+        </encoder>
+        <!-- 基于时间滚动，就是每天的日志输出到不同的文件 -->
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LogRootPath}/history/%d{yyyy-MM-dd}/warn_%i.log</fileNamePattern>
+            <!--日志文件保留天数-->
+            <maxHistory>${MAX_HISTORY}</maxHistory>
+            <totalSizeCap>${TOTAL_FILE_SIZE}</totalSizeCap>
+            <maxFileSize>64MB</maxFileSize>
+            <cleanHistoryOnStart>true</cleanHistoryOnStart>
+        </rollingPolicy>
+    </appender>
+
+    <!-- ERROR-->
+    <appender name="ERROR" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LogRootPath}/error.log</file>
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>ERROR</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+        <encoder>
+            <pattern>
+                %d{yyyy-MM-dd HH:mm:ss.SSS} %5p ${PID:- } -&#45;&#45; [%t] %-40.40logger{39} : %m%n
+            </pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LogRootPath}/history/%d{yyyy-MM-dd}/error_%i.log</fileNamePattern>
+            <maxHistory>${MAX_HISTORY}</maxHistory>
+            <totalSizeCap>${TOTAL_FILE_SIZE}</totalSizeCap>
+            <maxFileSize>64MB</maxFileSize>
+            <cleanHistoryOnStart>true</cleanHistoryOnStart>
+        </rollingPolicy>
+    </appender>
+
+    <!-- root是根日志打印器，只有一个，负责整个系统的日志输出  -->
+    <root level="DEBUG">
+        <!-- 将上面三个输出终端配置到根打印器，将对整个系统 生效。 -->
+        <appender-ref ref="DEBUG"/>
+        <appender-ref ref="WARN"/>
+        <appender-ref ref="ERROR"/>
+        <appender-ref ref="CONSOLE"/>
+    </root>
+
+    <!-- 限制框架异常 -->
+    <logger name="org.springframework" level="ERROR"/>
+    <logger name="org.hibernate.validator" level="ERROR"/>
+    <logger name="springfox.documentation" level="ERROR"/>
+    <logger name="com.baomidou.mybatisplus" level="ERROR"/>
+    <logger name="org.mybatis" level="WARN"/>
+    <logger name="org.redisson" level="WARN"/>
+    <logger name="com.zaxxer.hikari" level="WARN"/>
+
+<!--    <logger name="io.netty" level="info" includeLocation="true" additivity="false">-->
+<!--        <appender-ref ref="DEBUG"/>-->
+<!--        <appender-ref ref="CONSOLE"/>-->
+<!--    </logger>-->
+<!--    <logger name="com.linkores" level="trace" includeLocation="true" additivity="false">-->
+<!--        <appender-ref ref="INFO"/>-->
+<!--        <appender-ref ref="ERROR"/>-->
+<!--        <appender-ref ref="CONSOLE"/>-->
+<!--    </logger>-->
+
+    <!-- logger是root的子打印器，可以有多个，输出name配置的包中的日志。 -->
+    <!-- dao是mybatis映射dao的包名，设置为debug可以打印mybatis的sql语句 -->
+
+</configuration>

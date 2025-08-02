@@ -1,0 +1,338 @@
+@startuml
+!include ./single.puml
+
+' --- Events --- 
+
+Event("documentUpdated")[
+    文档已变更
+    --fields--
+    文档id
+    文档全名称
+    文档来源(用户文档/对话文档)
+    文档hash
+    文档标签 string[]
+]
+
+Event("documentParsingStarted")[
+    文档解析已开始
+    --fields--
+    文档id
+    文档全名称
+]
+
+' New events for parsing state machine
+Event("documentTextExtracted")[
+    文档文本已提取
+    --fields--
+    文档id
+    提取的文本
+]
+
+Event("documentChunked")[
+    文档已分块
+    --fields--
+    文档id
+    内容分段[]
+]
+
+Event("documentEmbeddingsGenerated")[
+    文档向量已生成
+    --fields--
+    文档id
+    向量数据
+]
+
+Event("documentParsingFinished")[
+    文档解析已完成
+    --fields--
+    文档id
+    文档全名称
+    文档hash
+]
+
+Event("documentParsingFailed")[
+    文档解析已失败
+    --fields--
+    文档id
+    文档全名称
+    解析阶段
+    错误信息
+    可重试: boolean
+]
+
+Event("documentParsingPermanentlyFailed")[
+    文档解析已永久失败
+    --fields--
+    文档id
+    文档全名称
+    最终错误信息
+]
+
+Event("documentDeleted")[
+    文档已删除
+    --fields--
+    文档id
+    文档全名称
+]
+
+Event("parsedContentStored")[
+    解析内容已存储
+    --fields--
+    文档id
+]
+
+Event("parsedContentDeleted")[
+    解析内容已删除
+    --fields--
+    文档id
+]
+
+' --- Commands ---
+
+Command("uploadDocument")[
+    上传文档
+    --rules--
+    用户手动上传文档
+    --fields--
+    文档全名称
+    文件: file
+    文档来源: 用户文档/对话文档
+    文档hash
+    文档标签
+    --events--
+    documentUpdated
+]
+
+Command("updateDocument")[
+    更新文档
+    --rules--
+    定时器扫描对比文件hash不同
+    --fields--
+    文档全名称
+    文件:file
+    文档新hash
+    --events--
+    documentUpdated
+]
+
+Command("deleteDocument")[
+    删除文档
+    --rules--
+    用户删除文档或定时器扫描文档不存在
+    --fields--
+    文档全名称
+    --events--
+    documentDeleted
+]
+
+' New commands for parsing state machine
+Command("extractText")[
+    提取文本
+    --rules--
+    文档上传成功后，开始解析文档的第一阶段
+    --fields--
+    文档id
+    文档全路径
+    --events--
+    documentTextExtracted
+    documentParsingFailed
+]
+
+Command("chunkText")[
+    文本分块
+    --rules--
+    文本提取成功后进行
+    --fields--
+    文档id
+    提取的文本
+    --events--
+    documentChunked
+    documentParsingFailed
+]
+
+Command("generateEmbeddings")[
+    生成向量
+    --rules--
+    文本分块成功后进行
+    --fields--
+    文档id
+    内容分段[]
+    --events--
+    documentEmbeddingsGenerated
+    documentParsingFailed
+]
+
+Command("storeParsedContent")[
+    存储已解析内容
+    --rules--
+    向量生成成功后，将所有解析结果持久化
+    --fields--
+    文档id
+    提取的文本
+    内容分段[]
+    向量数据
+    --events--
+    parsedContentStored
+]
+
+
+Command("deleteParsedContent")[
+    删除解析内容
+    --rules--
+    文档删除后，删除其解析内容
+    --fields--
+    文档id
+    文档hash
+    --events--
+    parsedContentDeleted
+]
+
+Command("retryParsingDocument")[
+    重试解析文档
+    --rules--
+    当解析失败且可重试时触发
+    --fields--
+    文档id
+    失败的解析阶段
+]
+
+' --- Aggregates ---
+
+Aggregate("Document")[
+    文档
+    --id--
+    文档id
+    --fields--
+    文档全名称(包含路径)
+    文档hash
+    文档来源: 用户文档/对话文档
+    文档标签
+    状态: PENDING_PARSING, PARSING, PARSED, FAILED
+]
+
+Aggregate("ParsedDocument")[
+    已解析文档
+    --id--
+    文档hash(文档全路径hash)
+    --fields--
+    文档id
+    文档全名称
+    解析阶段: TEXT_EXTRACTION, CHUNKING, EMBEDDING, COMPLETED, FAILED
+    提取的文本
+    内容分段[]
+    向量数据
+    错误信息
+]
+
+' --- Policies ---
+
+Policy("DocumentParsingPolicy")[
+    文档解析策略
+    --rules--
+    documentUpdated -> extractText
+    documentTextExtracted -> chunkText
+    documentChunked -> generateEmbeddings
+    documentEmbeddingsGenerated -> storeParsedContent
+]
+
+Policy("DocumentDeletionPolicy")[
+    文档删除策略
+    --rules--
+    文档删除后，删除其解析内容
+]
+
+Policy("ParsingRetryPolicy")[
+    解析重试策略
+    --rules--
+    当文档解析失败时，根据策略决定是否重试
+    --fields--
+    重试次数
+    重试间隔
+]
+
+' --- Read Models & Systems ---
+
+ReadModel("DocumentListView")[
+    文档列表视图
+    --fields--
+    文档名称
+    文档全名称
+    文档类型
+    文档hash
+    文档标签
+    解析状态
+]
+
+Person("User")
+System("FileSystem")
+System("VectorDB")
+System("LLMService")
+
+' --- Relationships ---
+
+' Document Lifecycle
+User -down-> uploadDocument
+'FileSystem -down-> updateDocument
+uploadDocument -down-> Document: 创建/更新
+updateDocument -down-> Document: 更新
+deleteDocument -down-> Document: 标记删除
+Document -down-> documentUpdated
+Document -down-> documentDeleted
+
+' Document Parsing State Machine Flow
+documentUpdated -down-> DocumentParsingPolicy
+DocumentParsingPolicy -down-> extractText
+extractText -down-> Document: 更新状态为 PARSING
+Document -down-> documentParsingStarted
+extractText -down-> ParsedDocument: 更新解析阶段为 TEXT_EXTRACTION
+ParsedDocument -down-> documentTextExtracted
+
+documentTextExtracted -down-> DocumentParsingPolicy
+DocumentParsingPolicy -down-> chunkText
+chunkText -down-> ParsedDocument: 更新解析阶段为 CHUNKING
+ParsedDocument -down-> documentChunked
+
+documentChunked -down-> DocumentParsingPolicy
+DocumentParsingPolicy -down-> generateEmbeddings
+generateEmbeddings -down-> LLMService: 调用模型
+generateEmbeddings -down-> ParsedDocument: 更新解析阶段为 EMBEDDING
+ParsedDocument -down-> documentEmbeddingsGenerated
+
+documentEmbeddingsGenerated -down-> DocumentParsingPolicy
+DocumentParsingPolicy -down-> storeParsedContent
+storeParsedContent -down-> ParsedDocument: 更新解析阶段为 COMPLETED, 存储内容
+storeParsedContent -down-> VectorDB: 存储向量
+ParsedDocument -down-> parsedContentStored
+
+parsedContentStored -down-> Document: 更新状态为 PARSED
+Document -down-> documentParsingFinished
+
+' Deletion Flow
+documentDeleted -down-> DocumentDeletionPolicy
+DocumentDeletionPolicy -down-> deleteParsedContent
+deleteParsedContent -down-> ParsedDocument: 删除
+deleteParsedContent -down-> VectorDB: 删除向量
+ParsedDocument -down-> parsedContentDeleted
+
+' Failure and Retry Flow
+extractText ..> documentParsingFailed: (e.g. 文件读取失败)
+chunkText ..> documentParsingFailed: (e.g. 文本处理失败)
+generateEmbeddings ..> documentParsingFailed: (e.g. LLM调用失败)
+
+documentParsingFailed -down-> Document: 更新状态为 FAILED
+documentParsingFailed -down-> ParsingRetryPolicy
+ParsingRetryPolicy -down-> retryParsingDocument: 如果可重试
+retryParsingDocument -down-> extractText: 从失败的阶段重试
+' or retryParsingDocument -> chunkText, etc.
+
+ParsingRetryPolicy -down-> documentParsingPermanentlyFailed: 如果不可重试
+
+' Read Model Updates
+documentUpdated -down-> DocumentListView
+documentDeleted -down-> DocumentListView
+documentParsingStarted -down-> DocumentListView
+documentParsingFinished -down-> DocumentListView
+documentParsingFailed -down-> DocumentListView
+documentParsingPermanentlyFailed -down-> DocumentListView
+
+@enduml
