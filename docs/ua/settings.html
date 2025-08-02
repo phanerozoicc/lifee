@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>系统配置 - LifeE 智能知识库</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+            background-color: #000000;
+            color: #ffffff;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .app-container {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* 侧边栏 */
+        .sidebar {
+            width: 260px;
+            background-color: #000000;
+            border-right: 1px solid #262626;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s ease;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            z-index: 1000;
+        }
+
+        .sidebar.hidden {
+            transform: translateX(-100%);
+        }
+
+        .sidebar-header {
+            padding: 16px;
+            border-bottom: 1px solid #262626;
+        }
+
+        .sidebar-title {
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .menu-section {
+             padding: 16px;
+             border-bottom: 1px solid #262626;
+         }
+
+         .menu-item {
+             padding: 12px 16px;
+             margin-bottom: 8px;
+             border-radius: 8px;
+             cursor: pointer;
+             font-size: 14px;
+             color: #a3a3a3;
+             transition: all 0.2s ease;
+             display: flex;
+             align-items: center;
+             gap: 12px;
+         }
+
+         .menu-item:hover {
+             background-color: #1a1a1a;
+             color: #ffffff;
+         }
+
+         .menu-item.active {
+             background-color: #262626;
+             color: #ffffff;
+         }
+
+         .menu-item svg {
+             flex-shrink: 0;
+         }
+
+         .menu-item span {
+              font-weight: 500;
+          }
+
+        /* 主内容区域 */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            margin-left: 260px;
+            transition: margin-left 0.3s ease;
+        }
+
+        .main-content.sidebar-hidden {
+            margin-left: 0;
+        }
+
+        /* 顶部导航栏 */
+        .header {
+            height: 60px;
+            border-bottom: 1px solid #262626;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .menu-btn {
+            background: none;
+            border: none;
+            color: #ffffff;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 6px;
+            transition: background-color 0.2s ease;
+        }
+
+        .menu-btn:hover {
+            background-color: #1a1a1a;
+        }
+
+        .header-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .share-btn {
+            background: none;
+            border: 1px solid #404040;
+            color: #ffffff;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .share-btn:hover {
+            background-color: #1a1a1a;
+            border-color: #525252;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* 设置页面内容 */
+        .settings-container {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* 左侧服务列表 */
+        .settings-sidebar {
+            width: 280px;
+            background-color: #1a1a1a;
+            border-right: 1px solid #262626;
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+
+        .settings-sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid #262626;
+        }
+
+        .settings-sidebar-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 4px;
+        }
+
+        .settings-sidebar-subtitle {
+            font-size: 12px;
+            color: #a3a3a3;
+        }
+
+        .service-category {
+            padding: 16px 20px 8px 20px;
+        }
+
+        .category-title {
+            font-size: 12px;
+            font-weight: 500;
+            color: #666666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .service-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            margin-bottom: 4px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: #a3a3a3;
+            font-size: 14px;
+        }
+
+        .service-item:hover {
+            background-color: #262626;
+            color: #ffffff;
+        }
+
+        .service-item.active {
+            background-color: #007acc;
+            color: #ffffff;
+        }
+
+        .service-item svg {
+            flex-shrink: 0;
+            width: 16px;
+            height: 16px;
+        }
+
+        .service-status {
+            margin-left: auto;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background-color: #22c55e;
+            color: #ffffff;
+            font-weight: 500;
+        }
+
+        .service-status.off {
+            background-color: #6b7280;
+        }
+
+        /* 右侧配置内容 */
+        .settings-content {
+            flex: 1;
+            overflow-y: auto;
+            background-color: #000000;
+        }
+
+        .settings-header {
+            padding: 24px 32px;
+            border-bottom: 1px solid #262626;
+        }
+
+        .settings-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 4px;
+        }
+
+        .settings-subtitle {
+            font-size: 14px;
+            color: #a3a3a3;
+        }
+
+        .settings-form {
+            padding: 32px;
+        }
+
+        .form-section {
+            margin-bottom: 32px;
+        }
+
+        .form-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-title svg {
+            color: #007acc;
+        }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 0;
+            border-bottom: 1px solid #262626;
+        }
+
+        .setting-item:last-child {
+            border-bottom: none;
+        }
+
+        .setting-info {
+            flex: 1;
+        }
+
+        .setting-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #ffffff;
+            margin-bottom: 4px;
+        }
+
+        .setting-description {
+            font-size: 12px;
+            color: #a3a3a3;
+            line-height: 1.4;
+        }
+
+        .setting-control {
+            margin-left: 16px;
+        }
+
+        /* 开关控件 */
+        .toggle-switch {
+            position: relative;
+            width: 44px;
+            height: 24px;
+            background-color: #404040;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .toggle-switch.active {
+            background-color: #007acc;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background-color: #ffffff;
+            border-radius: 50%;
+            transition: transform 0.3s ease;
+        }
+
+        .toggle-switch.active .toggle-slider {
+            transform: translateX(20px);
+        }
+
+        /* 选择框 */
+        .select-box {
+            background-color: #2a2a2a;
+            border: 1px solid #404040;
+            border-radius: 8px;
+            color: #ffffff;
+            padding: 8px 12px;
+            font-size: 14px;
+            min-width: 120px;
+            cursor: pointer;
+            transition: border-color 0.2s ease;
+        }
+
+        .select-box:hover {
+            border-color: #007acc;
+        }
+
+        .select-box:focus {
+            outline: none;
+            border-color: #007acc;
+            box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.1);
+        }
+
+        /* 输入框 */
+        .input-field {
+            background-color: #2a2a2a;
+            border: 1px solid #404040;
+            border-radius: 8px;
+            color: #ffffff;
+            padding: 8px 12px;
+            font-size: 14px;
+            min-width: 200px;
+            transition: border-color 0.2s ease;
+        }
+
+        .input-field:hover {
+            border-color: #007acc;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #007acc;
+            box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.1);
+        }
+
+        .input-field::placeholder {
+            color: #666666;
+        }
+
+        /* 按钮 */
+        .btn {
+            background-color: #007acc;
+            border: none;
+            border-radius: 8px;
+            color: #ffffff;
+            padding: 8px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .btn:hover {
+            background-color: #0066b3;
+        }
+
+        .btn.secondary {
+            background-color: #404040;
+            color: #ffffff;
+        }
+
+        .btn.secondary:hover {
+            background-color: #525252;
+        }
+
+        .btn.danger {
+            background-color: #dc2626;
+        }
+
+        .btn.danger:hover {
+            background-color: #b91c1c;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                left: 0;
+                top: 0;
+                height: 100vh;
+                z-index: 1000;
+                transform: translateX(-100%);
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+                width: 100%;
+            }
+
+            .settings-container {
+                padding: 16px;
+            }
+
+            .setting-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+
+            .setting-control {
+                margin-left: 0;
+                align-self: flex-end;
+            }
+        }
+
+        /* 滚动条样式 */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #404040;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #525252;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- 侧边栏 -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-title">LifeE 智能知识库</div>
+            </div>
+            <div class="menu-section">
+                <div class="menu-item" onclick="switchToChat()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                    </svg>
+                    <span>对话</span>
+                </div>
+                <div class="menu-item" onclick="switchToKnowledge()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+                        <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+                    </svg>
+                    <span>知识库</span>
+                </div>
+                <div class="menu-item" onclick="switchToRecommend()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 11H5a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h4m6-6h4a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-4m-6 0a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H9z"/>
+                    </svg>
+                    <span>推荐</span>
+                </div>
+                <div class="menu-item active" onclick="switchToSettings()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"/>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1 1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                    </svg>
+                    <span>设置</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 主内容区域 -->
+        <div class="main-content">
+            <!-- 顶部导航栏 -->
+            <div class="header">
+                <div class="header-left">
+                    <button class="menu-btn" onclick="toggleSidebar()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="3" y1="6" x2="21" y2="6"/>
+                            <line x1="3" y1="12" x2="21" y2="12"/>
+                            <line x1="3" y1="18" x2="21" y2="18"/>
+                        </svg>
+                    </button>
+                    <div class="header-title">系统配置</div>
+                </div>
+                <div class="header-right">
+                    <button class="share-btn">导出配置</button>
+                    <div class="user-avatar">U</div>
+                </div>
+            </div>
+
+            <!-- 设置内容区域 -->
+            <div class="settings-container">
+                <!-- 左侧服务列表 -->
+                <div class="settings-sidebar">
+                    <div class="settings-sidebar-header">
+                        <div class="settings-sidebar-title">系统设置</div>
+                        <div class="settings-sidebar-subtitle">配置您的AI助手</div>
+                    </div>
+
+                    <div class="service-category">
+                        <div class="category-title">模型服务</div>
+                        <div class="service-item active" data-section="ai-models">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                            </svg>
+                            <span>AI模型</span>
+                            <span class="service-status">ON</span>
+                        </div>
+                        <div class="service-item" data-section="embedding">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <span>嵌入模型</span>
+                            <span class="service-status">ON</span>
+                        </div>
+                    </div>
+
+                    <div class="service-category">
+                        <div class="category-title">常规设置</div>
+                        <div class="service-item" data-section="interface">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                            </svg>
+                            <span>界面设置</span>
+                        </div>
+                        <div class="service-item" data-section="knowledge">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                            </svg>
+                            <span>知识库设置</span>
+                        </div>
+                    </div>
+
+                    <div class="service-category">
+                        <div class="category-title">数据设置</div>
+                        <div class="service-item" data-section="data">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                            </svg>
+                            <span>数据管理</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 右侧配置内容 -->
+                <div class="settings-content">
+                    <div class="settings-header">
+                        <h1 class="settings-title">AI模型配置</h1>
+                        <p class="settings-subtitle">配置您的AI模型提供商和参数设置</p>
+                    </div>
+
+                    <div class="settings-form">
+                        <!-- AI模型配置 -->
+                        <div class="form-section" id="ai-models-section">
+                            <h3 class="section-title">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M9 12l2 2 4-4"/>
+                                    <path d="M21 12c-1 0-3-1-3-3s2-3 3-3 3 1 3 3-2 3-3 3"/>
+                                    <path d="M3 12c1 0 3-1 3-3s-2-3-3-3-3 1-3 3 2 3 3 3"/>
+                                    <path d="M12 3c0 1-1 3-3 3s-3-2-3-3 1-3 3-3 3 2 3 3"/>
+                                    <path d="M12 21c0-1-1-3-3-3s-3 2-3 3 1 3 3 3 3-2 3-3"/>
+                                </svg>
+                                AI模型配置
+                            </h3>
+                            
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <div class="setting-label">默认AI模型</div>
+                                    <div class="setting-description">选择默认使用的AI模型</div>
+                                </div>
+                                <div class="setting-control">
+                                    <select class="select-box" id="defaultModel">
+                                        <option value="deepseek">DeepSeek</option>
+                                        <option value="gpt-4">GPT-4</option>
+                                        <option value="claude">Claude</option>
+                                        <option value="gemini">Gemini</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <div class="setting-label">API密钥</div>
+                                    <div class="setting-description">配置AI模型的API访问密钥</div>
+                                </div>
+                                <div class="setting-control">
+                                    <input type="password" class="input-field" placeholder="输入API密钥" id="apiKey">
+                                </div>
+                            </div>
+
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <div class="setting-label">温度参数</div>
+                                    <div class="setting-description">控制AI回答的创造性程度 (0.1-2.0)</div>
+                                </div>
+                                <div class="setting-control">
+                                    <input type="number" class="input-field" min="0.1" max="2.0" step="0.1" value="0.7" id="temperature">
+                                </div>
+                            </div>
+
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <div class="setting-label">启用流式输出</div>
+                                    <div class="setting-description">实时显示AI回答内容</div>
+                                </div>
+                                <div class="setting-control">
+                                    <div class="toggle-switch active" onclick="toggleSwitch(this)">
+                                        <div class="toggle-slider"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 界面设置 -->
+                        <div class="form-section" id="interface-section" style="display: none;">
+                            <h3 class="section-title">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                                    <line x1="9" y1="9" x2="15" y2="15"/>
+                                    <line x1="15" y1="9" x2="9" y2="15"/>
+                                </svg>
+                                界面设置
+                            </h3>
+                            
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <div class="setting-label">主题模式</div>
+                                    <div class="setting-description">选择界面主题</div>
+                                </div>
+                                <div class="setting-control">
+                                    <select class="select-box" id="theme">
+                                        <option value="dark">深色模式</option>
+                                        <option value="light">浅色模式</option>
+                                        <option value="auto">跟随系统</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <div class="setting-label">字体大小</div>
+                                    <div class="setting-description">调整界面字体大小</div>
+                                </div>
+                                <div class="setting-control">
+                                    <select class="select-box" id="fontSize">
+                                        <option value="small">小</option>
+                                        <option value="medium" selected>中</option>
+                                        <option value="large">大</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <div class="setting-label">显示侧边栏</div>
+                                    <div class="setting-description">默认显示左侧导航栏</div>
+                                </div>
+                                <div class="setting-control">
+                                    <div class="toggle-switch active" onclick="toggleSwitch(this)">
+                                        <div class="toggle-slider"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <div class="setting-label">启用动画效果</div>
+                                    <div class="setting-description">界面切换和交互动画</div>
+                                </div>
+                                <div class="setting-control">
+                                    <div class="toggle-switch active" onclick="toggleSwitch(this)">
+                                        <div class="toggle-slider"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 知识库设置 -->
+                        <div class="form-section" id="knowledge-section" style="display: none;">
+                            <h3 class="section-title">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+                                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+                                </svg>
+                                知识库设置
+                            </h3>
+                            
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <div class="setting-label">默认知识库</div>
+                                    <div class="setting-description">选择默认使用的知识库</div>
+                                </div>
+                                <div class="setting-control">
+                                    <select class="select-box" id="defaultKnowledgeBase">
+                                        <option value="general">通用知识库</option>
+                                        <option value="tech">技术知识库</option>
+                                        <option value="personal">个人知识库</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <div class="setting-label">自动索引</div>
+                                    <div class="setting-description">自动为上传的文档建立索引</div>
+                                </div>
+                                <div class="setting-control">
+                                    <div class="toggle-switch active" onclick="toggleSwitch(this)">
+                                        <div class="toggle-slider"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <div class="setting-label">搜索结果数量</div>
+                                    <div class="setting-description">每次搜索返回的最大结果数</div>
+                                </div>
+                                <div class="setting-control">
+                                    <input type="number" class="input-field" min="5" max="50" value="10" id="searchLimit">
+                                </div>
+                            </div>
+
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <div class="setting-label">相似度阈值</div>
+                                    <div class="setting-description">搜索结果的最低相似度要求 (0.1-1.0)</div>
+                                </div>
+                                <div class="setting-control">
+                                    <input type="number" class="input-field" min="0.1" max="1.0" step="0.1" value="0.7" id="similarityThreshold">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 嵌入模型配置 -->
+                         <div class="form-section" id="embedding-section" style="display: none;">
+                             <h3 class="section-title">
+                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                     <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                 </svg>
+                                 嵌入模型配置
+                             </h3>
+                             
+                             <div class="setting-item">
+                                 <div class="setting-info">
+                                     <div class="setting-label">嵌入模型提供商</div>
+                                     <div class="setting-description">选择文本嵌入服务提供商</div>
+                                 </div>
+                                 <div class="setting-control">
+                                     <select class="select-box" id="embeddingProvider">
+                                         <option value="openai">OpenAI</option>
+                                         <option value="huggingface">Hugging Face</option>
+                                         <option value="local">本地模型</option>
+                                     </select>
+                                 </div>
+                             </div>
+
+                             <div class="setting-item">
+                                 <div class="setting-info">
+                                     <div class="setting-label">嵌入模型</div>
+                                     <div class="setting-description">选择具体的嵌入模型</div>
+                                 </div>
+                                 <div class="setting-control">
+                                     <select class="select-box" id="embeddingModel">
+                                         <option value="text-embedding-ada-002">text-embedding-ada-002</option>
+                                         <option value="text-embedding-3-small">text-embedding-3-small</option>
+                                         <option value="text-embedding-3-large">text-embedding-3-large</option>
+                                     </select>
+                                 </div>
+                             </div>
+
+                             <div class="setting-item">
+                                 <div class="setting-info">
+                                     <div class="setting-label">向量维度</div>
+                                     <div class="setting-description">嵌入向量的维度大小</div>
+                                 </div>
+                                 <div class="setting-control">
+                                     <input type="number" class="input-field" value="1536" min="128" max="4096" id="embeddingDimension">
+                                 </div>
+                             </div>
+                         </div>
+
+                         <!-- MCP设置 -->
+                         <div class="form-section" id="mcp-section" style="display: none;">
+                             <h3 class="section-title">
+                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                     <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                                 </svg>
+                                 MCP设置
+                             </h3>
+                             
+                             <div class="setting-item">
+                                 <div class="setting-info">
+                                     <div class="setting-label">启用MCP协议</div>
+                                     <div class="setting-description">启用模型控制协议支持</div>
+                                 </div>
+                                 <div class="setting-control">
+                                     <div class="toggle-switch active" onclick="toggleSwitch(this)">
+                                         <div class="toggle-slider"></div>
+                                     </div>
+                                 </div>
+                             </div>
+
+                             <div class="setting-item">
+                                 <div class="setting-info">
+                                     <div class="setting-label">MCP服务器地址</div>
+                                     <div class="setting-description">MCP协议服务器的连接地址</div>
+                                 </div>
+                                 <div class="setting-control">
+                                     <input type="text" class="input-field" placeholder="ws://localhost:8080" id="mcpServerUrl">
+                                 </div>
+                             </div>
+
+                             <div class="setting-item">
+                                 <div class="setting-info">
+                                     <div class="setting-label">连接超时</div>
+                                     <div class="setting-description">MCP连接超时时间（秒）</div>
+                                 </div>
+                                 <div class="setting-control">
+                                     <input type="number" class="input-field" value="30" min="5" max="300" id="mcpTimeout">
+                                 </div>
+                             </div>
+                         </div>
+
+                         <!-- 工具设置 -->
+                         <div class="form-section" id="tools-section" style="display: none;">
+                             <h3 class="section-title">
+                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                     <path d="M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.4 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z"/>
+                                 </svg>
+                                 工具设置
+                             </h3>
+                             
+                             <div class="setting-item">
+                                 <div class="setting-info">
+                                     <div class="setting-label">启用快捷助手</div>
+                                     <div class="setting-description">启用快捷键呼出AI助手</div>
+                                 </div>
+                                 <div class="setting-control">
+                                     <div class="toggle-switch active" onclick="toggleSwitch(this)">
+                                         <div class="toggle-slider"></div>
+                                     </div>
+                                 </div>
+                             </div>
+
+                             <div class="setting-item">
+                                 <div class="setting-info">
+                                     <div class="setting-label">快捷键组合</div>
+                                     <div class="setting-description">设置呼出助手的快捷键</div>
+                                 </div>
+                                 <div class="setting-control">
+                                     <input type="text" class="input-field" value="Cmd+Shift+A" id="shortcutKey">
+                                 </div>
+                             </div>
+
+                             <div class="setting-item">
+                                 <div class="setting-info">
+                                     <div class="setting-label">启用划词助手</div>
+                                     <div class="setting-description">选中文本时显示AI助手选项</div>
+                                 </div>
+                                 <div class="setting-control">
+                                     <div class="toggle-switch active" onclick="toggleSwitch(this)">
+                                         <div class="toggle-slider"></div>
+                                     </div>
+                                 </div>
+                             </div>
+
+                             <div class="setting-item">
+                                 <div class="setting-info">
+                                     <div class="setting-label">划词触发延迟</div>
+                                     <div class="setting-description">选中文本后的触发延迟（毫秒）</div>
+                                 </div>
+                                 <div class="setting-control">
+                                     <input type="number" class="input-field" value="500" min="100" max="2000" id="selectionDelay">
+                                 </div>
+                             </div>
+                         </div>
+
+                         <!-- 数据管理 -->
+                         <div class="form-section" id="data-section" style="display: none;">
+                             <h3 class="section-title">
+                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                     <polyline points="14,2 14,8 20,8"/>
+                                     <line x1="16" y1="13" x2="8" y2="13"/>
+                                     <line x1="16" y1="17" x2="8" y2="17"/>
+                                     <polyline points="10,9 9,9 8,9"/>
+                                 </svg>
+                                 数据管理
+                             </h3>
+                             
+                             <div class="setting-item">
+                                 <div class="setting-info">
+                                     <div class="setting-label">导出聊天记录</div>
+                                     <div class="setting-description">将所有聊天记录导出为JSON文件</div>
+                                 </div>
+                                 <div class="setting-control">
+                                     <button class="btn secondary" onclick="exportChatHistory()">导出</button>
+                                 </div>
+                             </div>
+
+                             <div class="setting-item">
+                                 <div class="setting-info">
+                                     <div class="setting-label">清除聊天记录</div>
+                                     <div class="setting-description">删除所有聊天历史记录</div>
+                                 </div>
+                                 <div class="setting-control">
+                                     <button class="btn danger" onclick="clearChatHistory()">清除</button>
+                                 </div>
+                             </div>
+
+                             <div class="setting-item">
+                                 <div class="setting-info">
+                                     <div class="setting-label">重置所有设置</div>
+                                     <div class="setting-description">将所有配置恢复为默认值</div>
+                                 </div>
+                                 <div class="setting-control">
+                                     <button class="btn danger" onclick="resetAllSettings()">重置</button>
+                                 </div>
+                             </div>
+                         </div>
+
+                        <!-- 保存按钮 -->
+                        <div style="text-align: center; margin-top: 32px;">
+                            <button class="btn" onclick="saveSettings()" style="padding: 12px 32px; font-size: 16px;">保存设置</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 侧边栏切换
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.querySelector('.main-content');
+            sidebar.classList.toggle('hidden');
+            mainContent.classList.toggle('sidebar-hidden');
+        }
+
+        // 页面切换函数
+        function switchToChat() {
+            window.location.href = 'chat.html';
+        }
+
+        function switchToKnowledge() {
+            // 跳转到知识库页面
+            window.location.href = 'knowledge.html';
+        }
+
+        function switchToRecommend() {
+            // 跳转到推荐页面
+            window.location.href = 'recommend.html';
+        }
+
+        function switchToSettings() {
+            // 当前页面，无需跳转
+            console.log('当前在设置页面');
+        }
+
+        // 设置页面内容切换
+        function switchSettingsSection(sectionName) {
+            // 移除所有服务项的active状态
+            document.querySelectorAll('.service-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // 添加当前项的active状态
+            document.querySelector(`[data-section="${sectionName}"]`).classList.add('active');
+            
+            // 隐藏所有配置区域
+            document.querySelectorAll('.form-section').forEach(section => {
+                section.style.display = 'none';
+            });
+            
+            // 显示对应的配置区域
+            const targetSection = document.getElementById(`${sectionName}-section`);
+            if (targetSection) {
+                targetSection.style.display = 'block';
+            }
+            
+            // 更新右侧标题
+            const titles = {
+                'ai-models': { title: 'AI模型配置', subtitle: '配置您的AI模型提供商和参数设置' },
+                'embedding': { title: '嵌入模型配置', subtitle: '配置文本嵌入和向量化设置' },
+                'interface': { title: '界面设置', subtitle: '自定义界面主题和显示选项' },
+                'knowledge': { title: '知识库设置', subtitle: '管理知识库和搜索配置' },
+                'mcp': { title: 'MCP设置', subtitle: '配置模型控制协议相关参数' },
+                'tools': { title: '工具设置', subtitle: '配置快捷助手和辅助工具' },
+                'data': { title: '数据管理', subtitle: '管理聊天记录和系统数据' }
+            };
+            
+            const titleInfo = titles[sectionName] || { title: '设置', subtitle: '配置系统选项' };
+            document.querySelector('.settings-title').textContent = titleInfo.title;
+            document.querySelector('.settings-subtitle').textContent = titleInfo.subtitle;
+        }
+
+        // 开关切换
+        function toggleSwitch(element) {
+            element.classList.toggle('active');
+        }
+
+        // 保存设置
+        function saveSettings() {
+            const settings = {
+                defaultModel: document.getElementById('defaultModel').value,
+                apiKey: document.getElementById('apiKey').value,
+                temperature: parseFloat(document.getElementById('temperature').value),
+                theme: document.getElementById('theme').value,
+                fontSize: document.getElementById('fontSize').value,
+                defaultKnowledgeBase: document.getElementById('defaultKnowledgeBase').value,
+                searchLimit: parseInt(document.getElementById('searchLimit').value),
+                similarityThreshold: parseFloat(document.getElementById('similarityThreshold').value)
+            };
+
+            // 保存到localStorage
+            localStorage.setItem('lifeE_settings', JSON.stringify(settings));
+            
+            // 显示保存成功提示
+            alert('设置已保存！');
+        }
+
+        // 导出聊天记录
+        function exportChatHistory() {
+            const chatHistory = localStorage.getItem('lifeE_chatHistory') || '[]';
+            const blob = new Blob([chatHistory], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'chat_history.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // 清除聊天记录
+        function clearChatHistory() {
+            if (confirm('确定要清除所有聊天记录吗？此操作不可恢复。')) {
+                localStorage.removeItem('lifeE_chatHistory');
+                alert('聊天记录已清除！');
+            }
+        }
+
+        // 重置所有设置
+        function resetAllSettings() {
+            if (confirm('确定要重置所有设置吗？此操作不可恢复。')) {
+                localStorage.removeItem('lifeE_settings');
+                location.reload();
+            }
+        }
+
+        // 页面加载时恢复设置
+        function loadSettings() {
+            const savedSettings = localStorage.getItem('lifeE_settings');
+            if (savedSettings) {
+                const settings = JSON.parse(savedSettings);
+                
+                if (settings.defaultModel) {
+                    document.getElementById('defaultModel').value = settings.defaultModel;
+                }
+                if (settings.apiKey) {
+                    document.getElementById('apiKey').value = settings.apiKey;
+                }
+                if (settings.temperature) {
+                    document.getElementById('temperature').value = settings.temperature;
+                }
+                if (settings.theme) {
+                    document.getElementById('theme').value = settings.theme;
+                }
+                if (settings.fontSize) {
+                    document.getElementById('fontSize').value = settings.fontSize;
+                }
+                if (settings.defaultKnowledgeBase) {
+                    document.getElementById('defaultKnowledgeBase').value = settings.defaultKnowledgeBase;
+                }
+                if (settings.searchLimit) {
+                    document.getElementById('searchLimit').value = settings.searchLimit;
+                }
+                if (settings.similarityThreshold) {
+                    document.getElementById('similarityThreshold').value = settings.similarityThreshold;
+                }
+            }
+        }
+
+        // 页面加载完成后执行
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSettings();
+            
+            // 为所有服务项添加点击事件
+            document.querySelectorAll('.service-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const sectionName = this.getAttribute('data-section');
+                    if (sectionName) {
+                        switchSettingsSection(sectionName);
+                    }
+                });
+            });
+            
+            // 默认显示AI模型配置
+            switchSettingsSection('ai-models');
+        });
+    </script>
+</body>
+</html>

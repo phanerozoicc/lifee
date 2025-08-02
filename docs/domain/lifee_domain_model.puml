@@ -1,0 +1,414 @@
+@startuml LifeE领域模型
+!include single.puml
+
+Title("LifeE智能知识库系统", "领域驱动设计模型", "v1.0", "2024-01-15")
+
+' ===== 用户域 (User Domain) =====
+package "用户域 (User Domain)" as UserDomain {
+    
+    ' 聚合根
+    Aggregate(UserAggregate, "用户聚合")
+    
+    ' 实体
+    class User {
+        +UserId id
+        +String username
+        +String email
+        +String passwordHash
+        +UserProfile profile
+        +UserStatus status
+        +Instant createdAt
+        +Instant lastLoginAt
+        --
+        +register()
+        +login()
+        +updateProfile()
+        +changePassword()
+    }
+    
+
+    
+    class Role {
+        +RoleId id
+        +String name
+        +Set<Permission> permissions
+        +RoleType type
+        --
+        +hasPermission()
+        +grantPermission()
+    }
+    
+    ' 值对象
+    class UserId <<ValueObject>>
+    class RoleId <<ValueObject>>
+    class UserProfile <<ValueObject>>
+    class Permission <<ValueObject>>
+    
+    ' 领域事件
+    DomainEvent(UserRegistered, "用户注册事件")
+    DomainEvent(UserLoggedIn, "用户登录事件")
+    
+    ' 领域服务
+    Service(UserAuthService, "用户认证服务")
+    Service(PermissionService, "权限管理服务")
+}
+
+' ===== 知识库域 (Knowledge Domain) =====
+package "知识库域 (Knowledge Domain)" as KnowledgeDomain {
+    
+    ' 聚合根
+    Aggregate(KnowledgeBaseAggregate, "知识库聚合")
+    Aggregate(DocumentAggregate, "文档聚合")
+    
+    ' 实体
+    class KnowledgeBase {
+        +KnowledgeBaseId id
+        +String name
+        +String description
+        +UserId ownerId
+        +KnowledgeBaseConfig config
+        +DirectoryTree rootDirectory
+        +Instant createdAt
+        --
+        +addDocument()
+        +removeDocument()
+        +updateConfig()
+        +search()
+    }
+    
+    class Document {
+        +DocumentId id
+        +String name
+        +String path
+        +DocumentType type
+        +String content
+        +DocumentMetadata metadata
+        +List<DocumentChunk> chunks
+        +Instant uploadedAt
+        --
+        +parse()
+        +chunk()
+        +vectorize()
+        +updateContent()
+    }
+    
+    class DocumentChunk {
+        +ChunkId id
+        +DocumentId documentId
+        +String content
+        +Vector embedding
+        +ChunkMetadata metadata
+        +Integer sequence
+        --
+        +calculateSimilarity()
+    }
+    
+    class DirectoryNode {
+        +NodeId id
+        +String name
+        +String path
+        +NodeType type
+        +List<DirectoryNode> children
+        +DirectoryNode parent
+        --
+        +addChild()
+        +removeChild()
+        +move()
+    }
+    
+    ' 值对象
+    class KnowledgeBaseId <<ValueObject>>
+    class DocumentId <<ValueObject>>
+    class ChunkId <<ValueObject>>
+    class NodeId <<ValueObject>>
+    class Vector <<ValueObject>>
+    class DocumentMetadata <<ValueObject>>
+    class KnowledgeBaseConfig <<ValueObject>>
+    
+    ' 领域事件
+    DomainEvent(KnowledgeBaseCreated, "知识库创建事件")
+    DomainEvent(DocumentUploaded, "文档上传事件")
+    DomainEvent(DocumentParsed, "文档解析事件")
+    DomainEvent(DocumentIndexed, "文档索引事件")
+    DomainEvent(DocumentDeleted, "文档删除事件")
+    
+    ' 领域服务
+    Service(DocumentParsingService, "文档解析服务")
+    Service(VectorEmbeddingService, "向量嵌入服务")
+    Service(SearchService, "搜索服务")
+    Service(IndexingService, "索引服务")
+}
+
+' ===== 对话域 (Conversation Domain) =====
+package "对话域 (Conversation Domain)" as ConversationDomain {
+    
+    ' 聚合根
+    Aggregate(ConversationAggregate, "对话聚合")
+    Aggregate(PromptTemplateAggregate, "提示词模板聚合")
+    
+    ' 实体
+    class Conversation {
+        +ConversationId id
+        +String title
+        +UserId userId
+        +KnowledgeBaseId knowledgeBaseId
+        +List<Message> messages
+        +ConversationConfig config
+        +ConversationStatus status
+        +Instant createdAt
+        --
+        +addMessage()
+        +generateResponse()
+        +saveAsDocument()
+        +archive()
+    }
+    
+    class Message {
+        +MessageId id
+        +ConversationId conversationId
+        +MessageType type
+        +String content
+        +MessageMetadata metadata
+        +Instant timestamp
+        --
+        +toMarkdown()
+    }
+    
+    class PromptTemplate {
+        +TemplateId id
+        +String name
+        +String template
+        +List<TemplateVariable> variables
+        +UserId createdBy
+        +TemplateCategory category
+        +Instant createdAt
+        --
+        +render()
+        +validate()
+    }
+    
+    class RAGContext {
+        +ContextId id
+        +ConversationId conversationId
+        +List<DocumentChunk> relevantChunks
+        +Double relevanceScore
+        +String query
+        --
+        +buildContext()
+        +rankChunks()
+    }
+    
+    ' 值对象
+    class ConversationId <<ValueObject>>
+    class MessageId <<ValueObject>>
+    class TemplateId <<ValueObject>>
+    class ContextId <<ValueObject>>
+    class ConversationConfig <<ValueObject>>
+    class MessageMetadata <<ValueObject>>
+    class TemplateVariable <<ValueObject>>
+    
+    ' 领域事件
+    DomainEvent(ConversationStarted, "对话开始事件")
+    DomainEvent(MessageSent, "消息发送事件")
+    DomainEvent(ResponseGenerated, "响应生成事件")
+    DomainEvent(ConversationArchived, "对话归档事件")
+    DomainEvent(PromptTemplateCreated, "提示词模板创建事件")
+    
+    ' 领域服务
+    Service(LLMService, "大语言模型服务")
+    Service(RAGService, "检索增强生成服务")
+    Service(PromptRenderingService, "提示词渲染服务")
+    Service(ConversationArchiveService, "对话归档服务")
+}
+
+' ===== 推荐域 (Recommendation Domain) =====
+package "推荐域 (Recommendation Domain)" as RecommendationDomain {
+    
+    ' 聚合根
+    Aggregate(RecommendationAggregate, "推荐聚合")
+    Aggregate(LearningGoalAggregate, "学习目标聚合")
+    
+    ' 实体
+    class UserBehavior {
+        +BehaviorId id
+        +UserId userId
+        +BehaviorType type
+        +String targetId
+        +BehaviorMetadata metadata
+        +Instant timestamp
+        --
+        +calculateWeight()
+    }
+    
+    class LearningGoal {
+        +GoalId id
+        +UserId userId
+        +String title
+        +String description
+        +List<DocumentId> targetDocuments
+        +GoalStatus status
+        +Instant deadline
+        +Instant createdAt
+        --
+        +updateProgress()
+        +complete()
+    }
+    
+    class RecommendationItem {
+        +ItemId id
+        +UserId userId
+        +DocumentId documentId
+        +RecommendationType type
+        +Double score
+        +String reason
+        +Instant recommendedAt
+        --
+        +calculateForgettingCurve()
+        +updateScore()
+    }
+    
+    class LearningProgress {
+        +ProgressId id
+        +UserId userId
+        +DocumentId documentId
+        +Double completionRate
+        +Integer reviewCount
+        +Instant lastReviewAt
+        +Instant nextReviewAt
+        --
+        +updateProgress()
+        +scheduleNextReview()
+    }
+    
+    ' 值对象
+    class BehaviorId <<ValueObject>>
+    class GoalId <<ValueObject>>
+    class ItemId <<ValueObject>>
+    class ProgressId <<ValueObject>>
+    class BehaviorMetadata <<ValueObject>>
+    class ForgettingCurve <<ValueObject>>
+    
+    ' 领域事件
+    DomainEvent(BehaviorRecorded, "行为记录事件")
+    DomainEvent(GoalCreated, "目标创建事件")
+    DomainEvent(GoalCompleted, "目标完成事件")
+    DomainEvent(RecommendationGenerated, "推荐生成事件")
+    DomainEvent(ProgressUpdated, "进度更新事件")
+    
+    ' 领域服务
+    Service(RecommendationEngine, "推荐引擎")
+    Service(BehaviorAnalysisService, "行为分析服务")
+    Service(ForgettingCurveService, "遗忘曲线服务")
+    Service(GoalTrackingService, "目标跟踪服务")
+}
+
+' ===== 配置域 (Configuration Domain) =====
+package "配置域 (Configuration Domain)" as ConfigurationDomain {
+    
+    ' 聚合根
+    Aggregate(ModelConfigAggregate, "模型配置聚合")
+    Aggregate(SystemConfigAggregate, "系统配置聚合")
+    
+    ' 实体
+    class ModelConfig {
+        +ConfigId id
+        +ModelType type
+        +String name
+        +String endpoint
+        +Map<String, Object> parameters
+        +Boolean isDefault
+        +Boolean isActive
+        +Instant createdAt
+        --
+        +validate()
+        +testConnection()
+        +setAsDefault()
+    }
+    
+    class SystemConfig {
+        +ConfigId id
+        +String key
+        +String value
+        +ConfigType type
+        +String description
+        +Instant updatedAt
+        --
+        +update()
+        +validate()
+    }
+    
+    class MCPService {
+        +ServiceId id
+        +String name
+        +String endpoint
+        +MCPCapabilities capabilities
+        +ServiceStatus status
+        +Instant registeredAt
+        --
+        +register()
+        +unregister()
+        +healthCheck()
+    }
+    
+    ' 值对象
+    class ConfigId <<ValueObject>>
+    class ServiceId <<ValueObject>>
+    class ModelType <<ValueObject>>
+    class MCPCapabilities <<ValueObject>>
+    
+    ' 领域事件
+    DomainEvent(ModelConfigCreated, "模型配置创建事件")
+    DomainEvent(ModelConfigUpdated, "模型配置更新事件")
+    DomainEvent(SystemConfigChanged, "系统配置变更事件")
+    DomainEvent(MCPServiceRegistered, "MCP服务注册事件")
+    
+    ' 领域服务
+    Service(ModelValidationService, "模型验证服务")
+    Service(ConfigurationService, "配置管理服务")
+    Service(MCPRegistryService, "MCP注册服务")
+}
+
+' ===== 领域间关系 =====
+
+' 用户域关系
+UserAggregate ||--o{ KnowledgeBaseAggregate : "拥有"
+UserAggregate ||--o{ ConversationAggregate : "创建"
+UserAggregate ||--o{ RecommendationAggregate : "接收推荐"
+
+
+' 知识库域关系
+KnowledgeBaseAggregate ||--o{ DocumentAggregate : "包含"
+DocumentAggregate ||--o{ DocumentChunk : "分段"
+KnowledgeBaseAggregate ||--o{ DirectoryNode : "目录结构"
+
+' 对话域关系
+ConversationAggregate }o--|| KnowledgeBaseAggregate : "基于知识库"
+ConversationAggregate ||--o{ Message : "包含消息"
+ConversationAggregate }o--|| PromptTemplateAggregate : "使用模板"
+RAGContext }o--|| DocumentChunk : "引用文档片段"
+
+' 推荐域关系
+RecommendationAggregate }o--|| DocumentAggregate : "推荐文档"
+LearningGoalAggregate }o--|| DocumentAggregate : "目标文档"
+UserBehavior }o--|| UserAggregate : "用户行为"
+LearningProgress }o--|| DocumentAggregate : "学习进度"
+
+' 配置域关系
+ModelConfigAggregate }o--|| ConversationAggregate : "配置模型"
+ModelConfigAggregate }o--|| KnowledgeBaseAggregate : "嵌入模型"
+SystemConfigAggregate }o--|| RecommendationAggregate : "推荐配置"
+MCPService }o--|| ConversationAggregate : "扩展对话能力"
+
+' ===== 外部系统 =====
+System(LLMProvider, "大语言模型提供商")
+System(VectorDatabase, "向量数据库")
+System(FileStorage, "文件存储")
+System(NotificationService, "通知服务")
+
+' 外部系统关系
+LLMService --> LLMProvider : "调用"
+VectorEmbeddingService --> VectorDatabase : "存储向量"
+DocumentParsingService --> FileStorage : "存储文件"
+RecommendationEngine --> NotificationService : "发送通知"
+
+@enduml
