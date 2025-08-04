@@ -2,9 +2,6 @@ package com.github.phanerozoicc.user.domain.service
 
 import com.github.phanerozoicc.user.domain.model.*
 import com.github.phanerozoicc.user.domain.repository.UserRepository
-import com.github.phanerozoicc.user.domain.policy.EmailPolicy
-import com.github.phanerozoicc.user.domain.policy.PasswordPolicy
-import com.github.phanerozoicc.user.domain.policy.UserPolicy
 import com.github.phanerozoicc.user.domain.model.PasswordStrength
 import java.time.LocalDateTime
 
@@ -15,9 +12,9 @@ import java.time.LocalDateTime
 class UserDomainService(
     private val userRepository: UserRepository
 ) {
-    private val emailPolicy = EmailPolicy()
-    private val passwordPolicy = PasswordPolicy()
-    private val userPolicy = UserPolicy()
+    private val emailSpecification = EmailSpecification()
+    private val passwordSpecification = PasswordSpecification()
+    private val userSpecification = UserSpecification()
     
     /**
      * 验证用户注册信息的唯一性
@@ -27,7 +24,7 @@ class UserDomainService(
      */
     fun validateUserUniqueness(email: Email, nickname: String) {
          // 验证邮箱策略
-         emailPolicy.validateEmail(email)
+         emailSpecification.validateEmail(email)
          
          // 检查邮箱唯一性
          if (userRepository.existsByEmail(email)) {
@@ -72,10 +69,10 @@ class UserDomainService(
         // 检查操作频率限制
         return when (operationType) {
             SensitiveOperationType.CHANGE_PASSWORD -> {
-                userPolicy.canChangePassword(user.getPassword().getCreatedAt())
+                userSpecification.canChangePassword(user.getPassword().getCreatedAt())
             }
             SensitiveOperationType.UPDATE_PROFILE -> {
-                userPolicy.canUpdateProfile(user.getProfile().getUpdatedAt())
+                userSpecification.canUpdateProfile(user.getProfile().getUpdatedAt())
             }
             SensitiveOperationType.CHANGE_EMAIL -> {
                 // TODO: 实现邮箱变更权限检查逻辑

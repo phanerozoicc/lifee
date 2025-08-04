@@ -11,7 +11,7 @@ data class UserId(
 ) {
     companion object {
         private val counter = AtomicLong(0)
-        private const val PREFIX = "USER_"
+        private const val PREFIX = ""
         private const val ID_FORMAT = "%06d"
         
         /**

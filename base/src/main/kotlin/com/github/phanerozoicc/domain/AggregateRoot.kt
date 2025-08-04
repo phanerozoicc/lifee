@@ -1,5 +1,8 @@
 package com.github.phanerozoicc.domain
 
+import com.github.phanerozoicc.utils.SpringContextUtil
+import org.springframework.beans.BeanUtils
+import org.springframework.beans.factory.BeanFactoryUtils
 import java.util.*
 
 /**
@@ -9,27 +12,13 @@ import java.util.*
 abstract class AggregateRoot<T>(
     val id: T
 ) {
-    private val domainEvents = mutableListOf<DomainEvent>()
-    
-    /**
-     * 添加领域事件
-     */
-    protected fun addDomainEvent(event: DomainEvent) {
-        domainEvents.add(event)
+
+    companion object {
+        fun publisher(): DomainEventPublisher {
+            return SpringContextUtil.getBean(DomainEventPublisher::class.java)
+        }
     }
-    
-    /**
-     * 获取所有领域事件
-     */
-    fun getDomainEvents(): List<DomainEvent> = domainEvents.toList()
-    
-    /**
-     * 清除所有领域事件
-     */
-    fun clearDomainEvents() {
-        domainEvents.clear()
-    }
-    
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is AggregateRoot<*>) return false

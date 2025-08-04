@@ -7,7 +7,7 @@ import java.util.regex.Pattern
  * 封装邮箱地址的验证逻辑和操作
  */
 data class Email(
-    private val value: String
+    val value: String
 ) {
     companion object {
         // 邮箱格式正则表达式
@@ -127,4 +127,93 @@ data class Email(
         require(EMAIL_PATTERN.matcher(value).matches()) { "邮箱格式不正确" }
         require(value.length <= MAX_LENGTH) { "邮箱地址长度不能超过${MAX_LENGTH}个字符" }
     }
+}
+
+
+/**
+ * 邮箱规则
+ * 定义邮箱相关的业务规则
+ */
+class EmailSpecification {
+    companion object {
+        // 邮箱最大长度
+        const val MAX_LENGTH = 254
+
+        // 允许的域名（可配置）
+        private val ALLOWED_DOMAINS = setOf(
+            "gmail.com", "yahoo.com", "outlook.com", "hotmail.com",
+            "qq.com", "163.com", "126.com", "sina.com", "sohu.com"
+        )
+
+        // 禁止的域名（临时邮箱等）
+        private val BLOCKED_DOMAINS = setOf(
+            "tempmail.com", "10minutemail.com", "guerrillamail.com",
+            "mailinator.com", "throwaway.email", "temp-mail.org"
+        )
+
+        // 企业邮箱域名模式
+        private val CORPORATE_DOMAIN_PATTERNS = listOf(
+            ".edu", ".gov", ".org"
+        )
+    }
+
+    /**
+     * 验证邮箱是否符合策略
+     */
+    fun validateEmail(email: Email) {
+        val domain = email.getDomain()
+
+        // 检查是否在禁止列表中
+        require(!BLOCKED_DOMAINS.contains(domain)) {
+            "不允许使用临时邮箱域名: $domain"
+        }
+
+        // 长度检查
+        require(email.getValue().length <= MAX_LENGTH) {
+            "邮箱地址长度不能超过${MAX_LENGTH}个字符"
+        }
+    }
+
+    /**
+     * 检查是否为企业邮箱
+     */
+    fun isCorporateEmail(email: Email): Boolean {
+        val domain = email.getDomain().lowercase()
+        return CORPORATE_DOMAIN_PATTERNS.any { pattern ->
+            domain.endsWith(pattern)
+        } || !ALLOWED_DOMAINS.contains(domain)
+    }
+
+    /**
+     * 检查是否为可信域名
+     */
+    fun isTrustedDomain(email: Email): Boolean {
+        val domain = email.getDomain().lowercase()
+        return ALLOWED_DOMAINS.contains(domain) || isCorporateEmail(email)
+    }
+
+    /**
+     * 获取邮箱风险等级
+     */
+    fun getEmailRiskLevel(email: Email): EmailRiskLevel {
+        val domain = email.getDomain().lowercase()
+
+        return when {
+            BLOCKED_DOMAINS.contains(domain) -> EmailRiskLevel.HIGH
+            ALLOWED_DOMAINS.contains(domain) -> EmailRiskLevel.LOW
+            isCorporateEmail(email) -> EmailRiskLevel.LOW
+            else -> EmailRiskLevel.MEDIUM
+        }
+    }
+}
+
+
+
+/**
+ * 邮箱风险等级枚举
+ */
+enum class EmailRiskLevel {
+    LOW,     // 低风险
+    MEDIUM,  // 中等风险
+    HIGH     // 高风险
 }

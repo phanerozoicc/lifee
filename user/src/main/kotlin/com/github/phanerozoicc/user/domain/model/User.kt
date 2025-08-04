@@ -2,8 +2,7 @@ package com.github.phanerozoicc.user.domain.model
 
 import com.github.phanerozoicc.domain.AggregateRoot
 import com.github.phanerozoicc.user.domain.event.*
-import com.github.phanerozoicc.user.domain.policy.PasswordPolicy
-import com.github.phanerozoicc.user.domain.policy.UserPolicy
+import java.time.Duration
 import java.time.LocalDateTime
 
 /**
@@ -26,8 +25,8 @@ class User(
 ) : AggregateRoot<UserId>(id) {
     
     companion object {
-        private val passwordPolicy = PasswordPolicy()
-        private val userPolicy = UserPolicy()
+        private val passwordSpecification = PasswordSpecification()
+        private val userSpecification = UserSpecification()
         
         /**
          * 创建新用户（注册）
@@ -46,7 +45,7 @@ class User(
             userAgent: String? = null
         ): User {
             // 验证密码策略
-            passwordPolicy.validatePassword(plainPassword)
+            passwordSpecification.validatePassword(plainPassword)
             
             val userId = UserId.generate()
             val password = Password.of(plainPassword)
@@ -62,7 +61,7 @@ class User(
             )
             
             // 发布用户注册事件
-            user.addDomainEvent(
+            publisher().publish(
                 UserRegistered(
                     userId = userId,
                     email = email,
@@ -95,9 +94,9 @@ class User(
         require(status.canLogin()) { "用户状态不允许登录: ${status.getDisplayName()}" }
         
         // 检查登录尝试次数
-        require(userPolicy.canAttemptLogin(loginAttempts, lastFailedLoginAt)) {
+        require(userSpecification.canAttemptLogin(loginAttempts, lastFailedLoginAt)) {
             val remainingTime = lastFailedLoginAt?.let { 
-                userPolicy.getRemainingLockoutTime(it) 
+                userSpecification.getRemainingLockoutTime(it)
             }
             "账户已被锁定，请在${remainingTime?.toMinutes()}分钟后重试"
         }
@@ -115,7 +114,7 @@ class User(
         updatedAt = LocalDateTime.now()
         
         // 发布登录事件
-        addDomainEvent(
+        publisher().publish(
             UserLoggedIn(
                 userId = id,
                 email = email,
@@ -128,6 +127,7 @@ class User(
     
     /**
      * 处理登录失败
+     * 登录失败计数和失败时间
      */
     private fun handleLoginFailure(
         reason: String,
@@ -139,7 +139,7 @@ class User(
         updatedAt = LocalDateTime.now()
         
         // 发布登录失败事件
-        addDomainEvent(
+        publisher().publish(
             UserLoginFailed(
                 email = email,
                 failureReason = reason,
@@ -149,7 +149,7 @@ class User(
         )
         
         // 如果达到最大尝试次数，锁定账户
-        if (loginAttempts >= UserPolicy.MAX_LOGIN_ATTEMPTS) {
+        if (loginAttempts >= UserSpecification.MAX_LOGIN_ATTEMPTS) {
             lockAccount("登录失败次数过多")
         }
     }
@@ -163,19 +163,19 @@ class User(
         require(status.canPerformActions()) { "用户状态不允许更新资料" }
         
         // 检查更新频率限制
-        require(userPolicy.canUpdateProfile(profile.getUpdatedAt())) {
+        require(userSpecification.canUpdateProfile(profile.getUpdatedAt())) {
             "资料更新过于频繁，请稍后再试"
         }
         
         val oldProfile = profile
-        val changedFields = detectProfileChanges(oldProfile, newProfile)
+        val changedFields = UserProfile.detectProfileChanges(oldProfile, newProfile)
         
         if (changedFields.isNotEmpty()) {
             profile = newProfile
             updatedAt = LocalDateTime.now()
             
             // 发布资料更新事件
-            addDomainEvent(
+            publisher().publish(
                 UserProfileUpdated(
                     userId = id,
                     oldProfile = oldProfile,
@@ -206,7 +206,7 @@ class User(
         
         return changes
     }
-    
+
     /**
      * 修改密码
      * @param oldPassword 旧密码
@@ -224,12 +224,12 @@ class User(
         require(password.matches(oldPassword)) { "原密码不正确" }
         
         // 检查修改频率限制
-        require(userPolicy.canChangePassword(password.getCreatedAt())) {
+        require(userSpecification.canChangePassword(password.getCreatedAt())) {
             "密码修改过于频繁，请稍后再试"
         }
         
         // 验证新密码策略
-        passwordPolicy.validatePassword(newPassword)
+        passwordSpecification.validatePassword(newPassword)
         
         // 检查新密码不能与旧密码相同
         require(!password.matches(newPassword)) { "新密码不能与原密码相同" }
@@ -238,7 +238,7 @@ class User(
         updatedAt = LocalDateTime.now()
         
         // 发布密码变更事件
-        addDomainEvent(
+        publisher().publish(
             PasswordChanged(
                 userId = id,
                 ipAddress = ipAddress
@@ -258,7 +258,7 @@ class User(
         ipAddress: String? = null
     ) {
         // 验证新密码策略
-        passwordPolicy.validatePassword(newPassword)
+        passwordSpecification.validatePassword(newPassword)
         
         password = Password.of(newPassword)
         updatedAt = LocalDateTime.now()
@@ -268,7 +268,7 @@ class User(
         lastFailedLoginAt = null
         
         // 发布密码变更事件
-        addDomainEvent(
+        publisher().publish(
             PasswordChanged(
                 userId = id,
                 ipAddress = ipAddress,
@@ -288,7 +288,7 @@ class User(
         updatedAt = LocalDateTime.now()
         
         // 发布状态变更事件
-        addDomainEvent(
+        publisher().publish(
             UserStatusChanged(
                 userId = id,
                 oldStatus = oldStatus,
@@ -310,7 +310,7 @@ class User(
         updatedAt = LocalDateTime.now()
         
         // 发布状态变更事件
-        addDomainEvent(
+        publisher().publish(
             UserStatusChanged(
                 userId = id,
                 oldStatus = oldStatus,
@@ -332,7 +332,7 @@ class User(
         updatedAt = LocalDateTime.now()
         
         // 发布状态变更事件
-        addDomainEvent(
+        publisher().publish(
             UserStatusChanged(
                 userId = id,
                 oldStatus = oldStatus,
@@ -357,7 +357,7 @@ class User(
         lastFailedLoginAt = null
         
         // 发布状态变更事件
-        addDomainEvent(
+        publisher().publish(
             UserStatusChanged(
                 userId = id,
                 oldStatus = oldStatus,
@@ -384,7 +384,7 @@ class User(
         }
         
         // 发布邮箱验证事件
-        addDomainEvent(
+        publisher().publish(
             UserEmailVerified(
                 userId = id,
                 email = email,
@@ -401,14 +401,14 @@ class User(
         require(status.canPerformActions()) { "用户状态不允许更新偏好设置" }
         
         val oldPreferences = preferences
-        val changedSettings = detectPreferencesChanges(oldPreferences, newPreferences)
+        val changedSettings = UserPreferences.detectPreferencesChanges(oldPreferences, newPreferences)
         
         if (changedSettings.isNotEmpty()) {
             preferences = newPreferences
             updatedAt = LocalDateTime.now()
             
             // 发布偏好设置更新事件
-            addDomainEvent(
+            publisher().publish(
                 UserPreferencesUpdated(
                     userId = id,
                     oldPreferences = oldPreferences,
@@ -419,26 +419,7 @@ class User(
         }
     }
     
-    /**
-     * 检测偏好设置变更
-     */
-    private fun detectPreferencesChanges(
-        oldPreferences: UserPreferences,
-        newPreferences: UserPreferences
-    ): Set<String> {
-        val changes = mutableSetOf<String>()
-        
-        if (oldPreferences.getLanguage() != newPreferences.getLanguage()) changes.add("language")
-        if (oldPreferences.getTimezone() != newPreferences.getTimezone()) changes.add("timezone")
-        if (oldPreferences.getTheme() != newPreferences.getTheme()) changes.add("theme")
-        if (oldPreferences.getDateFormat() != newPreferences.getDateFormat()) changes.add("dateFormat")
-        if (oldPreferences.getNotificationSettings() != newPreferences.getNotificationSettings()) {
-            changes.add("notificationSettings")
-        }
-        
-        return changes
-    }
-    
+
     /**
      * 删除用户
      * @param reason 删除原因
@@ -455,7 +436,7 @@ class User(
         updatedAt = LocalDateTime.now()
         
         // 发布用户删除事件
-        addDomainEvent(
+        publisher().publish(
             UserDeleted(
                 userId = id,
                 email = email,
@@ -466,7 +447,7 @@ class User(
         )
         
         // 发布状态变更事件
-        addDomainEvent(
+        publisher().publish(
             UserStatusChanged(
                 userId = id,
                 oldStatus = oldStatus,
@@ -499,12 +480,104 @@ class User(
      * 检查用户是否可以登录
      */
     fun canLogin(): Boolean = status.canLogin() && 
-        userPolicy.canAttemptLogin(loginAttempts, lastFailedLoginAt)
+        userSpecification.canAttemptLogin(loginAttempts, lastFailedLoginAt)
     
     /**
      * 检查密码是否需要更新
      */
     fun needsPasswordUpdate(): Boolean {
-        return passwordPolicy.isPasswordExpired(password) || password.needsRehash()
+        return passwordSpecification.isPasswordExpired(password) || password.needsRehash()
+    }
+}
+
+
+/**
+ * 用户策略
+ * 定义用户相关的业务规则
+ */
+class UserSpecification {
+    companion object {
+        // 登录相关
+        const val MAX_LOGIN_ATTEMPTS = 5
+        val ACCOUNT_LOCKOUT_DURATION: Duration = Duration.ofMinutes(30)
+        val SESSION_TIMEOUT: Duration = Duration.ofHours(24)
+
+        // 用户资料限制
+        const val NICKNAME_MAX_LENGTH = 50
+        const val BIO_MAX_LENGTH = 500
+
+        // 注册限制
+        val MIN_AGE_YEARS = 13
+        val REGISTRATION_COOLDOWN: Duration = Duration.ofMinutes(5)
+
+        // 操作频率限制
+        val PASSWORD_CHANGE_COOLDOWN: Duration = Duration.ofHours(1)
+        val PROFILE_UPDATE_COOLDOWN: Duration = Duration.ofMinutes(10)
+        val EMAIL_VERIFICATION_COOLDOWN: Duration = Duration.ofMinutes(5)
+    }
+
+    /**
+     * 检查是否可以尝试登录
+     */
+    fun canAttemptLogin(failedAttempts: Int, lastFailedAttempt: LocalDateTime?): Boolean {
+        if (failedAttempts < MAX_LOGIN_ATTEMPTS) {
+            return true
+        }
+
+        return lastFailedAttempt?.let { lastAttempt ->
+            Duration.between(lastAttempt, LocalDateTime.now()) >= ACCOUNT_LOCKOUT_DURATION
+        } ?: true
+    }
+
+    /**
+     * 检查会话是否过期
+     */
+    fun isSessionExpired(sessionStartTime: LocalDateTime): Boolean {
+        return Duration.between(sessionStartTime, LocalDateTime.now()) > SESSION_TIMEOUT
+    }
+
+    /**
+     * 检查是否可以修改密码
+     */
+    fun canChangePassword(lastPasswordChange: LocalDateTime?): Boolean {
+        return lastPasswordChange?.let { lastChange ->
+            Duration.between(lastChange, LocalDateTime.now()) >= PASSWORD_CHANGE_COOLDOWN
+        } ?: true
+    }
+
+    /**
+     * 检查是否可以更新资料
+     */
+    fun canUpdateProfile(lastProfileUpdate: LocalDateTime?): Boolean {
+        return lastProfileUpdate?.let { lastUpdate ->
+            Duration.between(lastUpdate, LocalDateTime.now()) >= PROFILE_UPDATE_COOLDOWN
+        } ?: true
+    }
+
+    /**
+     * 检查是否可以发送邮箱验证
+     */
+    fun canSendEmailVerification(lastVerificationSent: LocalDateTime?): Boolean {
+        return lastVerificationSent?.let { lastSent ->
+            Duration.between(lastSent, LocalDateTime.now()) >= EMAIL_VERIFICATION_COOLDOWN
+        } ?: true
+    }
+
+    /**
+     * 检查是否可以注册新账户（基于IP或其他标识）
+     */
+    fun canRegisterNewAccount(lastRegistration: LocalDateTime?): Boolean {
+        return lastRegistration?.let { lastReg ->
+            Duration.between(lastReg, LocalDateTime.now()) >= REGISTRATION_COOLDOWN
+        } ?: true
+    }
+
+    /**
+     * 计算账户锁定剩余时间
+     */
+    fun getRemainingLockoutTime(lastFailedAttempt: LocalDateTime): Duration {
+        val elapsed = Duration.between(lastFailedAttempt, LocalDateTime.now())
+        val remaining = ACCOUNT_LOCKOUT_DURATION.minus(elapsed)
+        return if (remaining.isNegative) Duration.ZERO else remaining
     }
 }

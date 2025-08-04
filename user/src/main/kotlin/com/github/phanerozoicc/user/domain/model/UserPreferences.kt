@@ -34,6 +34,25 @@ data class UserPreferences(
         ): UserPreferences {
             return UserPreferences(language, timezone, theme, dateFormat, notificationSettings)
         }
+
+        /**
+         * 检测偏好设置变更
+         */
+        fun detectPreferencesChanges(
+            oldPreferences: UserPreferences,
+            newPreferences: UserPreferences
+        ): Set<String> {
+            val changes = mutableSetOf<String>()
+
+            if (oldPreferences.getLanguage() != newPreferences.getLanguage()) changes.add("language")
+            if (oldPreferences.getTimezone() != newPreferences.getTimezone()) changes.add("timezone")
+            if (oldPreferences.getTheme() != newPreferences.getTheme()) changes.add("theme")
+            if (oldPreferences.getDateFormat() != newPreferences.getDateFormat()) changes.add("dateFormat")
+            if (oldPreferences.getNotificationSettings() != newPreferences.getNotificationSettings()) {
+                changes.add("notificationSettings")
+            }
+            return changes
+        }
     }
     
     /**

@@ -167,6 +167,28 @@ data class UserProfile(
                 "网站URL格式不正确" 
             }
         }
+
+
+
+        /**
+         * 检测资料变更字段
+         */
+        fun detectProfileChanges(oldProfile: UserProfile, newProfile: UserProfile): Set<String> {
+            val changes = mutableSetOf<String>()
+
+            if (oldProfile.getNickname() != newProfile.getNickname()) changes.add("nickname")
+            if (oldProfile.getFirstName() != newProfile.getFirstName()) changes.add("firstName")
+            if (oldProfile.getLastName() != newProfile.getLastName()) changes.add("lastName")
+            if (oldProfile.getAvatar() != newProfile.getAvatar()) changes.add("avatar")
+            if (oldProfile.getBio() != newProfile.getBio()) changes.add("bio")
+            if (oldProfile.getBirthDate() != newProfile.getBirthDate()) changes.add("birthDate")
+            if (oldProfile.getGender() != newProfile.getGender()) changes.add("gender")
+            if (oldProfile.getPhoneNumber() != newProfile.getPhoneNumber()) changes.add("phoneNumber")
+            if (oldProfile.getAddress() != newProfile.getAddress()) changes.add("address")
+            if (oldProfile.getWebsite() != newProfile.getWebsite()) changes.add("website")
+
+            return changes
+        }
     }
     
     /**

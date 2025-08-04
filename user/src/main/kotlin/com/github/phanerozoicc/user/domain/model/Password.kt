@@ -191,3 +191,187 @@ enum class PasswordStrength {
     MEDIUM,  // 中等
     STRONG   // 强
 }
+
+
+/**
+ * 密码策略
+ * 定义密码相关的业务规则
+ */
+class PasswordSpecification {
+    companion object {
+        // 密码长度限制
+        const val MIN_LENGTH = 8
+        const val MAX_LENGTH = 128
+
+        // 字符要求
+        const val REQUIRE_UPPERCASE = true
+        const val REQUIRE_LOWERCASE = true
+        const val REQUIRE_DIGITS = true
+        const val REQUIRE_SPECIAL_CHARS = true
+
+        // 密码有效期
+        val PASSWORD_MAX_AGE: Duration = Duration.ofDays(90)
+
+        // 密码历史限制
+        const val PASSWORD_HISTORY_COUNT = 5
+
+        // 密码复杂度要求
+        const val MIN_UNIQUE_CHARS = 6
+
+        // 禁用的弱密码模式
+        private val WEAK_PATTERNS = listOf(
+            "123456", "password", "123456789", "12345678", "12345",
+            "1234567", "1234567890", "qwerty", "abc123", "111111",
+            "123123", "admin", "letmein", "welcome", "monkey"
+        )
+
+        // 特殊字符集合
+        private val SPECIAL_CHARS = setOf(
+            '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '-', '_',
+            '=', '+', '[', ']', '{', '}', '|', '\\', ':', ';', '"', "'",
+            '<', '>', ',', '.', '?', '/', '~', '`'
+        )
+    }
+
+    /**
+     * 验证密码是否符合策略
+     * @param plainPassword 明文密码
+     * @throws IllegalArgumentException 如果密码不符合策略
+     */
+    fun validatePassword(plainPassword: String) {
+        require(plainPassword.isNotBlank()) { "密码不能为空" }
+
+        // 长度检查
+        require(plainPassword.length >= MIN_LENGTH) {
+            "密码长度不能少于${MIN_LENGTH}个字符"
+        }
+        require(plainPassword.length <= MAX_LENGTH) {
+            "密码长度不能超过${MAX_LENGTH}个字符"
+        }
+
+        // 字符类型检查
+        if (REQUIRE_UPPERCASE) {
+            require(plainPassword.any { it.isUpperCase() }) {
+                "密码必须包含至少一个大写字母"
+            }
+        }
+
+        if (REQUIRE_LOWERCASE) {
+            require(plainPassword.any { it.isLowerCase() }) {
+                "密码必须包含至少一个小写字母"
+            }
+        }
+
+        if (REQUIRE_DIGITS) {
+            require(plainPassword.any { it.isDigit() }) {
+                "密码必须包含至少一个数字"
+            }
+        }
+
+        if (REQUIRE_SPECIAL_CHARS) {
+            require(plainPassword.any { SPECIAL_CHARS.contains(it) }) {
+                "密码必须包含至少一个特殊字符: ${SPECIAL_CHARS.joinToString("")}"
+            }
+        }
+
+        // 唯一字符检查
+        require(plainPassword.toSet().size >= MIN_UNIQUE_CHARS) {
+            "密码必须包含至少${MIN_UNIQUE_CHARS}个不同的字符"
+        }
+
+        // 弱密码检查
+        val lowerPassword = plainPassword.lowercase()
+        WEAK_PATTERNS.forEach { pattern ->
+            require(!lowerPassword.contains(pattern)) {
+                "密码不能包含常见的弱密码模式"
+            }
+        }
+
+        // 重复字符检查
+        require(!hasRepeatingChars(plainPassword)) {
+            "密码不能包含连续重复的字符（如：aaa、111）"
+        }
+
+        // 连续字符检查
+        require(!hasSequentialChars(plainPassword)) {
+            "密码不能包含连续的字符序列（如：abc、123）"
+        }
+    }
+
+    /**
+     * 检查密码是否过期
+     */
+    fun isPasswordExpired(password: Password): Boolean {
+        return password.isExpired(PASSWORD_MAX_AGE)
+    }
+
+    /**
+     * 检查是否有重复字符
+     */
+    private fun hasRepeatingChars(password: String): Boolean {
+        for (i in 0 until password.length - 2) {
+            if (password[i] == password[i + 1] && password[i + 1] == password[i + 2]) {
+                return true
+            }
+        }
+        return false
+    }
+
+    /**
+     * 检查是否有连续字符
+     */
+    private fun hasSequentialChars(password: String): Boolean {
+        for (i in 0 until password.length - 2) {
+            val char1 = password[i].code
+            val char2 = password[i + 1].code
+            val char3 = password[i + 2].code
+
+            if ((char2 == char1 + 1 && char3 == char2 + 1) ||
+                (char2 == char1 - 1 && char3 == char2 - 1)) {
+                return true
+            }
+        }
+        return false
+    }
+
+    /**
+     * 计算密码强度分数（0-100）
+     */
+    fun calculatePasswordStrength(plainPassword: String): Int {
+        var score = 0
+
+        // 长度分数
+        score += when {
+            plainPassword.length >= 12 -> 25
+            plainPassword.length >= 10 -> 20
+            plainPassword.length >= 8 -> 15
+            else -> 0
+        }
+
+        // 字符类型分数
+        if (plainPassword.any { it.isLowerCase() }) score += 15
+        if (plainPassword.any { it.isUpperCase() }) score += 15
+        if (plainPassword.any { it.isDigit() }) score += 15
+        if (plainPassword.any { SPECIAL_CHARS.contains(it) }) score += 15
+
+        // 复杂度分数
+        val uniqueChars = plainPassword.toSet().size
+        score += when {
+            uniqueChars >= 10 -> 15
+            uniqueChars >= 8 -> 10
+            uniqueChars >= 6 -> 5
+            else -> 0
+        }
+
+        // 扣分项
+        if (hasRepeatingChars(plainPassword)) score -= 10
+        if (hasSequentialChars(plainPassword)) score -= 10
+
+        val lowerPassword = plainPassword.lowercase()
+        WEAK_PATTERNS.forEach { pattern ->
+            if (lowerPassword.contains(pattern)) score -= 20
+        }
+
+        return maxOf(0, minOf(100, score))
+    }
+}
