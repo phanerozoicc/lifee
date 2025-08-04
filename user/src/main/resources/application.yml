@@ -1,0 +1,217 @@
+# 用户模块配置文件
+spring:
+  application:
+    name: user-service
+  
+  # 数据源配置
+  datasource:
+    url: jdbc:h2:mem:userdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: 
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+  
+  # JPA配置
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        format_sql: true
+        use_sql_comments: true
+        jdbc:
+          batch_size: 20
+        order_inserts: true
+        order_updates: true
+    open-in-view: false
+  
+  # H2控制台配置（开发环境）
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+      settings:
+        web-allow-others: true
+  
+  # Jackson配置
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    deserialization:
+      fail-on-unknown-properties: false
+    default-property-inclusion: non_null
+  
+  # 验证配置
+  validation:
+    enabled: true
+
+# 服务器配置
+server:
+  port: 8080
+  servlet:
+    context-path: /
+  error:
+    include-message: always
+    include-binding-errors: always
+    include-stacktrace: on-param
+    include-exception: false
+
+# 日志配置
+logging:
+  level:
+    com.github.phanerozoicc.user: DEBUG
+    org.springframework.web: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/user-service.log
+    max-size: 10MB
+    max-history: 30
+
+# 用户模块自定义配置
+user:
+  # 密码策略配置
+  password:
+    policy:
+      min-length: 8
+      max-length: 128
+      require-uppercase: true
+      require-lowercase: true
+      require-digit: true
+      require-special-char: true
+      max-repeated-chars: 3
+      min-unique-chars: 6
+      history-size: 5
+      expiry-days: 90
+      warning-days: 7
+  
+  # 用户策略配置
+  user:
+    policy:
+      max-login-attempts: 5
+      lockout-duration-minutes: 30
+      session-timeout-minutes: 60
+      password-reset-token-expiry-hours: 24
+      email-verification-token-expiry-hours: 72
+      max-sessions-per-user: 3
+  
+  # 邮件配置
+  email:
+    verification:
+      enabled: true
+      required: true
+      resend-interval-minutes: 5
+      max-attempts: 3
+  
+  # 安全配置
+  security:
+    jwt:
+      secret: "your-secret-key-here-should-be-at-least-256-bits"
+      expiration-hours: 24
+      refresh-expiration-days: 7
+    cors:
+      allowed-origins:
+        - "http://localhost:3000"
+        - "http://localhost:8080"
+      allowed-methods:
+        - GET
+        - POST
+        - PUT
+        - DELETE
+        - OPTIONS
+      allowed-headers:
+        - "*"
+      allow-credentials: true
+  
+  # 缓存配置
+  cache:
+    enabled: true
+    ttl-minutes: 30
+    max-size: 1000
+
+# 管理端点配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+# 应用信息
+info:
+  app:
+    name: User Service
+    description: 用户管理微服务
+    version: 1.0.0
+    encoding: UTF-8
+    java:
+      version: 17
+
+---
+# 生产环境配置
+spring:
+  config:
+    activate:
+      on-profile: prod
+  
+  datasource:
+    url: jdbc:postgresql://localhost:5432/userdb
+    driver-class-name: org.postgresql.Driver
+    username: ${DB_USERNAME:user}
+    password: ${DB_PASSWORD:password}
+  
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  
+  h2:
+    console:
+      enabled: false
+
+logging:
+  level:
+    com.github.phanerozoicc.user: INFO
+    org.springframework.web: WARN
+    org.hibernate.SQL: WARN
+    org.hibernate.type.descriptor.sql.BasicBinder: WARN
+
+---
+# 测试环境配置
+spring:
+  config:
+    activate:
+      on-profile: test
+  
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+  
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+
+logging:
+  level:
+    com.github.phanerozoicc.user: WARN
+    org.springframework.web: WARN
+    org.hibernate: WARN

@@ -1,0 +1,588 @@
+@startuml User Domain CQRS
+!include single.puml
+
+Title("用户域CQRS模型", "User Domain CQRS Model", "v1.0", "2024")
+
+' 样式定义
+skinparam class {
+    BackgroundColor<<Command>> #AEC6CF
+    BackgroundColor<<Query>> #62D862
+    BackgroundColor<<CommandHandler>> #779FAE
+    BackgroundColor<<QueryHandler>> #77DD77
+    BackgroundColor<<DTO>> #E8F5E8
+    BackgroundColor<<Event>> #FFCB81
+    BorderColor #333333
+    FontSize 11
+}
+
+skinparam package {
+    BackgroundColor #F5F5F5
+    BorderColor #CCCCCC
+    FontStyle bold
+}
+
+package "Command Side (写端)" {
+    
+    package "Commands" {
+        
+        ' 用户注册命令
+        class RegisterUserCommand <<Command>> {
+            - email: String                         // 邮箱地址
+            - password: String                      // 密码
+            - nickname: String                      // 昵称
+            - ipAddress: String                     // IP地址
+            - userAgent: String                     // 用户代理
+            ==
+            + getEmail(): String                    // 获取邮箱
+            + getPassword(): String                 // 获取密码
+            + getNickname(): String                 // 获取昵称
+            + getIpAddress(): String                // 获取IP地址
+            + getUserAgent(): String                // 获取用户代理
+            + validate(): void                      // 验证命令
+        }
+        
+        ' 用户登录命令
+        class LoginUserCommand <<Command>> {
+            - email: String                         // 邮箱地址
+            - password: String                      // 密码
+            - ipAddress: String                     // IP地址
+            - userAgent: String                     // 用户代理
+            - rememberMe: boolean                   // 记住我
+            ==
+            + getEmail(): String                    // 获取邮箱
+            + getPassword(): String                 // 获取密码
+            + getIpAddress(): String                // 获取IP地址
+            + getUserAgent(): String                // 获取用户代理
+            + isRememberMe(): boolean               // 是否记住我
+            + validate(): void                      // 验证命令
+        }
+        
+        ' 更新用户资料命令
+        class UpdateUserProfileCommand <<Command>> {
+            - userId: String                        // 用户ID（自增ID格式）
+            - nickname: String                      // 昵称
+            - bio: String                           // 个人简介
+            - avatar: String                        // 头像URL
+            - preferences: UserPreferencesDTO       // 用户偏好
+            ==
+            + getUserId(): String                   // 获取用户ID
+            + getNickname(): String                 // 获取昵称
+            + getBio(): String                      // 获取简介
+            + getAvatar(): String                   // 获取头像
+            + getPreferences(): UserPreferencesDTO  // 获取偏好
+            + validate(): void                      // 验证命令
+        }
+        
+        ' 修改密码命令
+        class ChangePasswordCommand <<Command>> {
+            - userId: String                        // 用户ID（自增ID格式）
+            - oldPassword: String                   // 旧密码
+            - newPassword: String                   // 新密码
+'            - confirmPassword: String               // 确认密码   确认为前端逻辑无需后端处理
+            - ipAddress: String                     // IP地址
+            ==
+            + getUserId(): String                   // 获取用户ID
+            + getOldPassword(): String              // 获取旧密码
+            + getNewPassword(): String              // 获取新密码
+'            + getConfirmPassword(): String          // 获取确认密码
+            + getIpAddress(): String                // 获取IP地址
+            + validate(): void                      // 验证命令
+        }
+        
+        ' 激活用户命令
+        class ActivateUserCommand <<Command>> {
+            - userId: String                        // 用户ID（自增ID格式）
+            - activationToken: String               // 激活令牌
+            - activatedBy: String                   // 激活操作者（自增ID格式）
+            ==
+            + getUserId(): String                   // 获取用户ID
+            + getActivationToken(): String          // 获取激活令牌
+            + getActivatedBy(): String              // 获取激活操作者
+            + validate(): void                      // 验证命令
+        }
+        
+        ' 停用用户命令
+        class DeactivateUserCommand <<Command>> {
+            - userId: String                        // 用户ID（自增ID格式）
+            - reason: String                        // 停用原因
+            - deactivatedBy: String                 // 停用操作者（自增ID格式）
+            ==
+            + getUserId(): String                   // 获取用户ID
+            + getReason(): String                   // 获取停用原因
+            + getDeactivatedBy(): String            // 获取停用操作者
+            + validate(): void                      // 验证命令
+        }
+    }
+    
+    package "Command Handlers" {
+        
+        ' 用户注册命令处理器
+        class RegisterUserCommandHandler <<CommandHandler>> {
+            - userRepository: UserRepository        // 用户仓储
+'            - userDomainService: UserDomainService  // 用户领域服务
+            - eventPublisher: DomainEventPublisher  // 事件发布器
+            ==
+            + handle(command: RegisterUserCommand): UserId  // 处理注册命令
+            - validateUniqueEmail(email: Email): void       // 验证邮箱唯一性 // 改由值对象自己验证
+            - createUser(command: RegisterUserCommand): User // 创建用户
+            - publishUserRegisteredEvent(user: User): void  // 直接发布用户注册事件
+        }
+        
+        ' 用户登录命令处理器
+        class LoginUserCommandHandler <<CommandHandler>> {
+            - userRepository: UserRepository        // 用户仓储
+            - authenticationService: UserAuthenticationService  // 认证服务
+            - eventPublisher: DomainEventPublisher  // 事件发布器
+            ==
+            + handle(command: LoginUserCommand): AuthTokenDTO   // 处理登录命令
+            - authenticateUser(email: Email, password: Password): User  // 认证用户
+            - generateAuthToken(user: User): AuthTokenDTO       // 生成认证令牌
+            - publishUserLoggedInEvent(user: User, command: LoginUserCommand): void  // 直接发布用户登录事件
+        }
+        
+        ' 更新用户资料命令处理器
+        class UpdateUserProfileCommandHandler <<CommandHandler>> {
+            - userRepository: UserRepository        // 用户仓储
+            - eventPublisher: DomainEventPublisher  // 事件发布器
+            ==
+            + handle(command: UpdateUserProfileCommand): void   // 处理更新资料命令
+            - loadUser(userId: UserId): User                    // 加载用户
+            - updateProfile(user: User, command: UpdateUserProfileCommand): void  // 更新资料
+            - saveUser(user: User): void                        // 保存用户
+        }
+        
+        ' 修改密码命令处理器
+        class ChangePasswordCommandHandler <<CommandHandler>> {
+            - userRepository: UserRepository        // 用户仓储
+            - passwordEncryptionService: PasswordEncryptionService  // 密码加密服务
+            - eventPublisher: DomainEventPublisher  // 事件发布器
+            ==
+            + handle(command: ChangePasswordCommand): void      // 处理修改密码命令
+            - loadUser(userId: UserId): User                    // 加载用户
+            - validateOldPassword(user: User, oldPassword: String): void  // 验证旧密码
+            - changePassword(user: User, newPassword: String): void       // 修改密码
+        }
+        
+        ' 激活用户命令处理器
+        class ActivateUserCommandHandler <<CommandHandler>> {
+            - userRepository: UserRepository        // 用户仓储
+            - eventPublisher: DomainEventPublisher  // 事件发布器
+            ==
+            + handle(command: ActivateUserCommand): void    // 处理激活用户命令
+            - loadUser(userId: UserId): User                // 加载用户
+            - activateUser(user: User): void                // 激活用户
+            - saveUser(user: User): void                    // 保存用户
+        }
+        
+        ' 停用用户命令处理器
+        class DeactivateUserCommandHandler <<CommandHandler>> {
+            - userRepository: UserRepository        // 用户仓储
+            - eventPublisher: DomainEventPublisher  // 事件发布器
+            ==
+            + handle(command: DeactivateUserCommand): void  // 处理停用用户命令
+            - loadUser(userId: UserId): User                // 加载用户
+            - deactivateUser(user: User, reason: String): void  // 停用用户
+            - saveUser(user: User): void                    // 保存用户
+        }
+    }
+    
+    package "Domain Events" {
+        
+        ' 用户注册事件
+        class UserRegistered <<Event>> {
+            - userId: String                        // 用户ID（自增ID格式）
+            - email: String                         // 邮箱地址
+            - registeredAt: LocalDateTime           // 注册时间
+            - ipAddress: String                     // IP地址
+            ==
+            + getUserId(): String                   // 获取用户ID
+            + getEmail(): String                    // 获取邮箱地址
+            + getRegisteredAt(): LocalDateTime      // 获取注册时间
+            + getIpAddress(): String                // 获取IP地址
+        }
+        
+        ' 用户登录事件
+        class UserLoggedIn <<Event>> {
+            - userId: String                        // 用户ID（自增ID格式）
+            - loginAt: LocalDateTime                // 登录时间
+            - ipAddress: String                     // IP地址
+            - sessionId: String                     // 会话ID
+            ==
+            + getUserId(): String                   // 获取用户ID
+            + getLoginAt(): LocalDateTime           // 获取登录时间
+            + getIpAddress(): String                // 获取IP地址
+            + getSessionId(): String                // 获取会话ID
+        }
+        
+        ' 用户资料更新事件
+        class UserProfileUpdated <<Event>> {
+            - userId: String                        // 用户ID（自增ID格式）
+            - updatedFields: Map<String, Object>    // 更新字段
+            - updatedAt: LocalDateTime              // 更新时间
+            ==
+            + getUserId(): String                   // 获取用户ID
+            + getUpdatedFields(): Map<String, Object>  // 获取更新字段
+            + getUpdatedAt(): LocalDateTime         // 获取更新时间
+        }
+        
+        ' 密码修改事件
+        class PasswordChanged <<Event>> {
+            - userId: String                        // 用户ID（自增ID格式）
+            - changedAt: LocalDateTime              // 修改时间
+            - ipAddress: String                     // IP地址
+            ==
+            + getUserId(): String                   // 获取用户ID
+            + getChangedAt(): LocalDateTime         // 获取修改时间
+            + getIpAddress(): String                // 获取IP地址
+        }
+    }
+}
+
+package "Query Side (读端)" {
+    
+    package "Queries" {
+        
+        ' 获取用户资料查询
+        class GetUserProfileQuery <<Query>> {
+            - userId: String                        // 用户ID（自增ID格式）
+            ==
+            + getUserId(): String                   // 获取用户ID
+            + validate(): void                      // 验证查询
+        }
+        
+        ' 获取用户权限查询
+        class GetUserPermissionsQuery <<Query>> {
+            - userId: String                        // 用户ID（自增ID格式）
+            ==
+            + getUserId(): String                   // 获取用户ID
+            + validate(): void                      // 验证查询
+        }
+        
+        ' 用户列表查询
+        class ListUsersQuery <<Query>> {
+            - page: int                             // 页码
+            - size: int                             // 页大小
+            - sortBy: String                        // 排序字段
+            - sortDirection: String                 // 排序方向
+            - status: String                        // 状态筛选
+            - searchKeyword: String                 // 搜索关键词
+            ==
+            + getPage(): int                        // 获取页码
+            + getSize(): int                        // 获取页大小
+            + getSortBy(): String                   // 获取排序字段
+            + getSortDirection(): String            // 获取排序方向
+            + getStatus(): String                   // 获取状态筛选
+            + getSearchKeyword(): String            // 获取搜索关键词
+            + validate(): void                      // 验证查询
+        }
+        
+        ' 搜索用户查询
+        class SearchUsersQuery <<Query>> {
+            - keyword: String                       // 搜索关键词
+            - page: int                             // 页码
+            - size: int                             // 页大小
+            - filters: Map<String, Object>          // 过滤条件
+            ==
+            + getKeyword(): String                  // 获取搜索关键词
+            + getPage(): int                        // 获取页码
+            + getSize(): int                        // 获取页大小
+            + getFilters(): Map<String, Object>     // 获取过滤条件
+            + validate(): void                      // 验证查询
+        }
+        
+        ' 获取用户统计查询
+        class GetUserStatisticsQuery <<Query>> {
+            - dateRange: DateRange                  // 日期范围
+            - groupBy: String                       // 分组字段
+            ==
+            + getDateRange(): DateRange             // 获取日期范围
+            + getGroupBy(): String                  // 获取分组字段
+            + validate(): void                      // 验证查询
+        }
+    }
+    
+    package "Query Handlers" {
+        
+        ' 获取用户资料查询处理器
+        class GetUserProfileQueryHandler <<QueryHandler>> {
+            - userReadModelRepository: UserReadModelRepository  // 用户读模型仓储
+            ==
+            + handle(query: GetUserProfileQuery): UserProfileDTO    // 处理获取用户资料查询
+            - findUserProfile(userId: String): UserProfileDTO      // 查找用户资料
+        }
+        
+        ' 获取用户权限查询处理器
+        class GetUserPermissionsQueryHandler <<QueryHandler>> {
+            - userReadModelRepository: UserReadModelRepository  // 用户读模型仓储
+            - permissionService: PermissionService             // 权限服务
+            ==
+            + handle(query: GetUserPermissionsQuery): UserPermissionsDTO    // 处理获取用户权限查询
+            - loadUserPermissions(userId: String): UserPermissionsDTO      // 加载用户权限
+        }
+        
+        ' 用户列表查询处理器
+        class ListUsersQueryHandler <<QueryHandler>> {
+            - userReadModelRepository: UserReadModelRepository  // 用户读模型仓储
+            ==
+            + handle(query: ListUsersQuery): Page<UserSummaryDTO>           // 处理用户列表查询
+            - buildSearchCriteria(query: ListUsersQuery): SearchCriteria   // 构建搜索条件
+            - executeSearch(criteria: SearchCriteria): Page<UserSummaryDTO> // 执行搜索
+        }
+        
+        ' 搜索用户查询处理器
+        class SearchUsersQueryHandler <<QueryHandler>> {
+            - userSearchService: UserSearchService             // 用户搜索服务
+            ==
+            + handle(query: SearchUsersQuery): Page<UserSummaryDTO>     // 处理搜索用户查询
+            - performSearch(query: SearchUsersQuery): Page<UserSummaryDTO>  // 执行搜索
+        }
+        
+        ' 获取用户统计查询处理器
+        class GetUserStatisticsQueryHandler <<QueryHandler>> {
+            - userStatisticsRepository: UserStatisticsRepository   // 用户统计仓储
+            ==
+            + handle(query: GetUserStatisticsQuery): UserStatisticsDTO     // 处理获取用户统计查询
+            - calculateStatistics(query: GetUserStatisticsQuery): UserStatisticsDTO    // 计算统计数据
+        }
+    }
+    
+    package "DTOs" {
+        
+        ' 用户资料数据传输对象
+        class UserProfileDTO <<DTO>> {
+            - userId: String                        // 用户ID（自增ID格式）
+            - email: String                         // 邮箱地址
+            - nickname: String                      // 昵称
+            - avatar: String                        // 头像
+            - bio: String                           // 个人简介
+            - status: String                        // 状态
+            - preferences: UserPreferencesDTO       // 用户偏好设置
+            - createdAt: LocalDateTime              // 创建时间
+            - lastLoginAt: LocalDateTime            // 最后登录时间
+            ==
+            + getUserId(): String                   // 获取用户ID
+            + getEmail(): String                    // 获取邮箱地址
+            + getNickname(): String                 // 获取昵称
+            + getAvatar(): String                   // 获取头像
+            + getBio(): String                      // 获取个人简介
+            + getStatus(): String                   // 获取状态
+            + getPreferences(): UserPreferencesDTO  // 获取用户偏好设置
+            + getCreatedAt(): LocalDateTime         // 获取创建时间
+            + getLastLoginAt(): LocalDateTime       // 获取最后登录时间
+        }
+        
+        ' 用户摘要数据传输对象
+        class UserSummaryDTO <<DTO>> {
+            - userId: String                        // 用户ID（自增ID格式）
+            - email: String                         // 邮箱地址
+            - nickname: String                      // 昵称
+            - avatar: String                        // 头像
+            - status: String                        // 状态
+            - createdAt: LocalDateTime              // 创建时间
+            - lastLoginAt: LocalDateTime            // 最后登录时间
+            ==
+            + getUserId(): String                   // 获取用户ID
+            + getEmail(): String                    // 获取邮箱地址
+            + getNickname(): String                 // 获取昵称
+            + getAvatar(): String                   // 获取头像
+            + getStatus(): String                   // 获取状态
+            + getCreatedAt(): LocalDateTime         // 获取创建时间
+            + getLastLoginAt(): LocalDateTime       // 获取最后登录时间
+        }
+        
+        ' 用户权限数据传输对象
+        class UserPermissionsDTO <<DTO>> {
+            - userId: String                        // 用户ID（自增ID格式）
+            - permissions: Set<String>              // 权限集合
+            - roles: Set<String>                    // 角色集合
+            - isAdmin: boolean                      // 是否管理员
+            ==
+            + getUserId(): String                   // 获取用户ID
+            + getPermissions(): Set<String>         // 获取权限集合
+            + getRoles(): Set<String>               // 获取角色集合
+            + isAdmin(): boolean                    // 是否管理员
+            + hasPermission(permission: String): boolean  // 是否拥有权限
+        }
+        
+        ' 用户统计数据传输对象
+        class UserStatisticsDTO <<DTO>> {
+            - totalUsers: long                      // 总用户数
+            - activeUsers: long                     // 活跃用户数
+            - newUsersToday: long                   // 今日新用户数
+            - newUsersThisWeek: long                // 本周新用户数
+            - newUsersThisMonth: long               // 本月新用户数
+            - usersByStatus: Map<String, Long>      // 按状态分组的用户数
+            - registrationTrend: List<RegistrationTrendDTO>  // 注册趋势
+            ==
+            + getTotalUsers(): long                 // 获取总用户数
+            + getActiveUsers(): long                // 获取活跃用户数
+            + getNewUsersToday(): long              // 获取今日新用户数
+            + getNewUsersThisWeek(): long           // 获取本周新用户数
+            + getNewUsersThisMonth(): long          // 获取本月新用户数
+            + getUsersByStatus(): Map<String, Long> // 获取按状态分组的用户数
+            + getRegistrationTrend(): List<RegistrationTrendDTO>  // 获取注册趋势
+        }
+        
+        ' 用户偏好设置数据传输对象
+        class UserPreferencesDTO <<DTO>> {
+            - language: String                      // 语言
+            - timezone: String                      // 时区
+            - theme: String                         // 主题
+            - dateFormat: String                    // 日期格式
+            - emailNotifications: boolean           // 邮件通知
+            - pushNotifications: boolean            // 推送通知
+            ==
+            + getLanguage(): String                 // 获取语言
+            + getTimezone(): String                 // 获取时区
+            + getTheme(): String                    // 获取主题
+            + getDateFormat(): String               // 获取日期格式
+            + isEmailNotifications(): boolean       // 是否开启邮件通知
+            + isPushNotifications(): boolean        // 是否开启推送通知
+        }
+        
+        ' 认证令牌数据传输对象
+        class AuthTokenDTO <<DTO>> {
+            - accessToken: String                   // 访问令牌
+            - refreshToken: String                  // 刷新令牌
+            - tokenType: String                     // 令牌类型
+            - expiresIn: long                       // 过期时间
+            - scope: String                         // 权限范围
+            ==
+            + getAccessToken(): String              // 获取访问令牌
+            + getRefreshToken(): String             // 获取刷新令牌
+            + getTokenType(): String                // 获取令牌类型
+            + getExpiresIn(): long                  // 获取过期时间
+            + getScope(): String                    // 获取权限范围
+        }
+    }
+    
+    package "Read Models" {
+        
+        ' 用户读模型仓储接口
+        interface UserReadModelRepository <<Repository>> {
+            + findById(userId: String): Optional<UserProfileDTO>    // 根据ID查找用户
+            + findByEmail(email: String): Optional<UserProfileDTO>  // 根据邮箱查找用户
+            + findAll(pageable: Pageable): Page<UserSummaryDTO>     // 分页查询所有用户
+            + search(criteria: SearchCriteria): Page<UserSummaryDTO> // 根据条件搜索用户
+            + count(): long                                         // 统计用户总数
+            + countByStatus(status: String): long                   // 按状态统计用户数
+        }
+        
+        ' 用户统计仓储接口
+        interface UserStatisticsRepository <<Repository>> {
+            + getUserStatistics(dateRange: DateRange): UserStatisticsDTO        // 获取用户统计数据
+            + getRegistrationTrend(dateRange: DateRange): List<RegistrationTrendDTO>  // 获取注册趋势
+            + getUsersByStatus(): Map<String, Long>                             // 按状态获取用户数
+        }
+    }
+}
+
+package "Event Projections" {
+    
+    ' 用户资料投影
+    class UserProfileProjection {
+        - userReadModelRepository: UserReadModelRepository  // 用户读模型仓储
+        ==
+        + on(event: UserRegistered): void               // 处理用户注册事件
+        + on(event: UserProfileUpdated): void           // 处理用户资料更新事件
+        + on(event: UserStatusChanged): void            // 处理用户状态变更事件
+        + on(event: UserLoggedIn): void                 // 处理用户登录事件
+        - updateUserProfile(event: DomainEvent): void  // 更新用户资料
+        - createUserProfile(event: UserRegistered): void // 创建用户资料
+    }
+    
+    ' 用户统计投影
+    class UserStatisticsProjection {
+        - userStatisticsRepository: UserStatisticsRepository // 用户统计仓储
+        ==
+        + on(event: UserRegistered): void               // 处理用户注册事件
+        + on(event: UserStatusChanged): void            // 处理用户状态变更事件
+        + on(event: UserLoggedIn): void                 // 处理用户登录事件
+        - updateStatistics(event: DomainEvent): void   // 更新统计数据
+        - incrementUserCount(): void                   // 增加用户计数
+        - updateLoginStatistics(event: UserLoggedIn): void // 更新登录统计
+    }
+}
+
+' 关系定义
+
+' 命令端关系 - 命令处理器处理对应的命令
+RegisterUserCommandHandler --> RegisterUserCommand : handles
+LoginUserCommandHandler --> LoginUserCommand : handles
+UpdateUserProfileCommandHandler --> UpdateUserProfileCommand : handles
+ChangePasswordCommandHandler --> ChangePasswordCommand : handles
+
+' 事件发布关系 - 命令处理器发布领域事件
+RegisterUserCommandHandler ..> UserRegistered : publishes
+LoginUserCommandHandler ..> UserLoggedIn : publishes
+UpdateUserProfileCommandHandler ..> UserProfileUpdated : publishes
+ChangePasswordCommandHandler ..> PasswordChanged : publishes
+
+' 查询端关系 - 查询处理器处理对应的查询
+GetUserProfileQueryHandler --> GetUserProfileQuery : handles
+GetUserPermissionsQueryHandler --> GetUserPermissionsQuery : handles
+ListUsersQueryHandler --> ListUsersQuery : handles
+SearchUsersQueryHandler --> SearchUsersQuery : handles
+GetUserStatisticsQueryHandler --> GetUserStatisticsQuery : handles
+
+' DTO返回关系 - 查询处理器返回对应的DTO
+GetUserProfileQueryHandler ..> UserProfileDTO : returns
+GetUserPermissionsQueryHandler ..> UserPermissionsDTO : returns
+ListUsersQueryHandler ..> UserSummaryDTO : returns
+SearchUsersQueryHandler ..> UserSummaryDTO : returns
+GetUserStatisticsQueryHandler ..> UserStatisticsDTO : returns
+LoginUserCommandHandler ..> AuthTokenDTO : returns
+
+' 投影关系 - 投影更新读模型仓储
+UserProfileProjection --> UserReadModelRepository : updates
+UserStatisticsProjection --> UserStatisticsRepository : updates
+
+' 事件订阅关系 - 领域事件触发投影更新
+UserRegistered ..> UserProfileProjection : triggers
+UserProfileUpdated ..> UserProfileProjection : triggers
+UserStatusChanged ..> UserProfileProjection : triggers
+UserLoggedIn ..> UserProfileProjection : triggers
+
+UserRegistered ..> UserStatisticsProjection : triggers
+UserStatusChanged ..> UserStatisticsProjection : triggers
+UserLoggedIn ..> UserStatisticsProjection : triggers
+
+' 注释说明
+note top of "Command Side (写端)"
+  命令端 (写端)
+  ================
+  • 处理业务命令
+  • 执行业务逻辑
+  • 发布领域事件
+  • 确保数据一致性
+end note
+
+note top of "Query Side (读端)"
+  查询端 (读端)
+  ================
+  • 处理查询请求
+  • 优化读取性能
+  • 支持复杂查询
+  • 提供多种视图
+end note
+
+note bottom of "Event Projections"
+  事件投影
+  ================
+  • 监听领域事件
+  • 更新读模型
+  • 保持最终一致性
+  • 支持多种视图投影
+end note
+
+note as EventPublishingNote
+  **事件发布机制说明**
+  ================
+  • 聚合根不存储领域事件
+  • 事件在业务操作时通过DomainEventPublisher直接发布
+  • 命令处理器负责协调事件发布
+  • 保持聚合根的纯净性和单一职责
+  • 事件发布与业务逻辑解耦
+end note
+
+@enduml

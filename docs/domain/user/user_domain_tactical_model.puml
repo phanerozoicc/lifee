@@ -1,0 +1,332 @@
+@startuml User Domain Tactical Model
+!include single.puml
+
+Title("LifeE用户域战术建模", "User Domain Tactical Design", "v1.0", "2024")
+
+' 定义颜色和样式
+skinparam class {
+    BackgroundColor<<AggregateRoot>> #FDFD9D
+    BackgroundColor<<Entity>> #E1F5FE
+    BackgroundColor<<ValueObject>> #F3E5F5
+    BackgroundColor<<DomainService>> #E8F5E8
+    BackgroundColor<<Repository>> #FFF3E0
+    BackgroundColor<<DomainEvent>> #FFCB81
+    BackgroundColor<<ApplicationService>> #F0F4C3
+    BackgroundColor<<QueryService>> #77DD77
+    BorderColor #333333
+    FontSize 12
+}
+
+skinparam package {
+    BackgroundColor #F5F5F5
+    BorderColor #CCCCCC
+    FontStyle bold
+}
+
+' 包结构定义
+package "用户域 (User Domain)" {
+    
+    package "domain.model" {
+        
+        ' 聚合根 - 用户
+        class User <<AggregateRoot>> {
+            - userId: UserId                    // 用户ID
+            - email: Email                      // 邮箱地址
+            - password: Password                // 密码
+            - profile: UserProfile              // 用户资料
+            - status: UserStatus                // 用户状态
+            - createdAt: LocalDateTime          // 创建时间
+            - updatedAt: LocalDateTime          // 更新时间
+            - version: Long                     // 版本号(乐观锁)
+            --
+            + register(email: Email, password: Password): User     // 用户注册
+            + login(password: Password): void                       // 用户登录
+            + updateProfile(profile: UserProfile): void            // 更新用户资料
+            + changePassword(oldPassword: Password, newPassword: Password): void  // 修改密码
+            + activate(): void                                      // 激活用户
+            + deactivate(): void                                    // 停用用户
+            + isActive(): boolean                                   // 检查是否激活
+            + validatePassword(password: Password): boolean         // 验证密码
+            --
+            ' 注意：事件通过DomainEventPublisher在应用服务层直接发布
+            ' 聚合根不存储或管理事件，保持聚合的纯净性
+        }
+        
+        ' 实体 - 用户资料
+        class UserProfile <<Entity>> {
+            - profileId: ProfileId              // 资料ID
+            - nickname: String                  // 昵称
+            - avatar: String                    // 头像URL
+            - bio: String                       // 个人简介
+            - preferences: UserPreferences      // 用户偏好设置
+            - lastLoginAt: LocalDateTime        // 最后登录时间
+            --
+            + updateNickname(nickname: String): void                    // 更新昵称
+            + updateAvatar(avatar: String): void                        // 更新头像
+            + updateBio(bio: String): void                              // 更新个人简介
+            + updatePreferences(preferences: UserPreferences): void     // 更新偏好设置
+            + recordLogin(): void                                       // 记录登录时间
+        }
+        
+        ' 值对象 - 用户ID
+        class UserId <<ValueObject>> {
+            - value: String                     // 自增ID值（前面补0，如000001）
+            --
+            + of(value: String): UserId         // 创建用户ID
+            + generate(): UserId                // 生成新的自增用户ID
+            + getValue(): String                // 获取ID值
+            + equals(other: Object): boolean    // 相等性比较
+            + hashCode(): int                   // 哈希码
+        }
+        
+        ' 值对象 - 邮箱地址
+        class Email <<ValueObject>> {
+            - value: String                     // 邮箱地址
+            --
+            + of(value: String): Email          // 创建邮箱对象
+            + getValue(): String                // 获取邮箱地址
+            + isValid(): boolean                // 验证邮箱格式
+            + getDomain(): String               // 获取邮箱域名
+            + equals(other: Object): boolean    // 相等性比较
+            + hashCode(): int                   // 哈希码
+        }
+        
+        ' 值对象 - 密码
+        class Password <<ValueObject>> {
+            - hashedValue: String               // 哈希后的密码
+            - salt: String                      // 盐值
+            --
+            + of(plainText: String): Password                           // 从明文创建密码
+            + fromHash(hashedValue: String, salt: String): Password     // 从哈希值创建密码
+            + matches(plainText: String): boolean                       // 验证密码匹配
+            + getHashedValue(): String                                  // 获取哈希值
+            + getSalt(): String                                         // 获取盐值
+            + isStrong(): boolean                                       // 检查密码强度
+        }
+        
+        ' 值对象 - 用户状态
+        class UserStatus <<ValueObject>> {
+            - status: StatusEnum                // 状态枚举
+            --
+            + ACTIVE                            // 激活状态
+            + INACTIVE                          // 未激活状态
+            + PENDING_ACTIVATION                // 待激活状态
+            + SUSPENDED                         // 暂停状态
+            --
+            + of(status: StatusEnum): UserStatus    // 创建用户状态
+            + isActive(): boolean                   // 是否激活
+            + canLogin(): boolean                   // 是否可以登录
+        }
+        
+        ' 值对象 - 资料ID
+        class ProfileId <<ValueObject>> {
+            - value: UUID                       // UUID值
+            --
+            + of(value: UUID): ProfileId        // 创建资料ID
+            + generate(): ProfileId             // 生成新的资料ID
+            + getValue(): UUID                  // 获取UUID值
+        }
+        
+        ' 值对象 - 用户偏好设置
+        class UserPreferences <<ValueObject>> {
+            - language: String                  // 语言设置
+            - timezone: String                  // 时区设置
+            - theme: String                     // 主题设置
+            - notifications: NotificationSettings   // 通知设置
+            --
+            + of(language: String, timezone: String, theme: String): UserPreferences   // 创建偏好设置
+            + updateLanguage(language: String): UserPreferences                        // 更新语言
+            + updateTimezone(timezone: String): UserPreferences                        // 更新时区
+            + updateTheme(theme: String): UserPreferences                              // 更新主题
+        }
+    }
+    
+    package "domain.service" {
+        
+        ' 领域服务 - 用户认证服务
+        class UserAuthenticationService <<DomainService>> {
+            - passwordEncryptionService: PasswordEncryptionService     // 密码加密服务
+            --
+            + authenticate(email: Email, password: Password, user: User): boolean   // 用户认证
+            + generateAuthToken(user: User): AuthToken                              // 生成认证令牌
+            + validateAuthToken(token: AuthToken): boolean                          // 验证认证令牌
+            + refreshAuthToken(token: AuthToken): AuthToken                         // 刷新认证令牌
+        }
+        
+        ' 领域服务 - 密码加密服务
+        class PasswordEncryptionService <<DomainService>> {
+            --
+            + encryptPassword(plainText: String): Password                          // 加密密码
+            + verifyPassword(plainText: String, password: Password): boolean        // 验证密码
+            + generateSalt(): String                                                // 生成盐值
+            + hashPassword(plainText: String, salt: String): String                 // 哈希密码
+        }
+        
+        ' 领域服务 - 用户领域服务
+        class UserDomainService <<DomainService>> {
+            - userRepository: UserRepository                                        // 用户仓储
+            --
+            + isEmailUnique(email: Email): boolean                                  // 检查邮箱唯一性
+            + findUserByEmail(email: Email): Optional<User>                         // 根据邮箱查找用户
+            + validateUserRegistration(email: Email, password: Password): void     // 验证用户注册
+        }
+    }
+    
+    package "domain.repository" {
+        
+        ' 仓储接口 - 用户仓储
+        interface UserRepository <<Repository>> {
+            + save(user: User): User                                                 // 保存用户
+            + findById(userId: UserId): Optional<User>                              // 根据ID查找用户
+            + findByEmail(email: Email): Optional<User>                             // 根据邮箱查找用户
+            + existsByEmail(email: Email): boolean                                  // 检查邮箱是否存在
+            + delete(userId: UserId): void                                          // 删除用户
+            + findAll(pageable: Pageable): Page<User>                               // 分页查询所有用户
+            + findByStatus(status: UserStatus, pageable: Pageable): Page<User>      // 根据状态分页查询用户
+            + count(): long                                                         // 统计用户总数
+            + countByStatus(status: UserStatus): long                               // 根据状态统计用户数
+        }
+    }
+    
+    package "domain.event" {
+        
+        ' 领域事件 - 抽象基类
+        abstract class DomainEvent <<DomainEvent>> {
+            - eventId: UUID                         // 事件ID
+            - aggregateId: String                   // 聚合根ID
+            - occurredOn: LocalDateTime             // 事件发生时间
+            - version: Long                         // 事件版本
+            --
+            + getEventId(): UUID                    // 获取事件ID
+            + getAggregateId(): String              // 获取聚合根ID
+            + getOccurredOn(): LocalDateTime        // 获取事件发生时间
+            + getVersion(): Long                    // 获取事件版本
+        }
+        
+        ' 领域事件 - 用户注册事件
+        class UserRegistered <<DomainEvent>> {
+            - userId: UserId                        // 用户ID
+            - email: Email                          // 邮箱地址
+            - registeredAt: LocalDateTime           // 注册时间
+            --
+            + getUserId(): UserId                   // 获取用户ID
+            + getEmail(): Email                     // 获取邮箱地址
+            + getRegisteredAt(): LocalDateTime      // 获取注册时间
+        }
+        
+        ' 领域事件 - 用户登录事件
+        class UserLoggedIn <<DomainEvent>> {
+            - userId: UserId                        // 用户ID
+            - loginAt: LocalDateTime                // 登录时间
+            - ipAddress: String                     // IP地址
+            - userAgent: String                     // 用户代理
+            --
+            + getUserId(): UserId                   // 获取用户ID
+            + getLoginAt(): LocalDateTime           // 获取登录时间
+            + getIpAddress(): String                // 获取IP地址
+            + getUserAgent(): String                // 获取用户代理
+        }
+        
+        ' 领域事件 - 用户资料更新事件
+        class UserProfileUpdated <<DomainEvent>> {
+            - userId: UserId                        // 用户ID
+            - updatedFields: Map<String, Object>    // 更新的字段
+            - updatedAt: LocalDateTime              // 更新时间
+            --
+            + getUserId(): UserId                   // 获取用户ID
+            + getUpdatedFields(): Map<String, Object>   // 获取更新的字段
+            + getUpdatedAt(): LocalDateTime         // 获取更新时间
+        }
+        
+        ' 领域事件 - 用户状态变更事件
+        class UserStatusChanged <<DomainEvent>> {
+            - userId: UserId                        // 用户ID
+            - oldStatus: UserStatus                 // 原状态
+            - newStatus: UserStatus                 // 新状态
+            - changedAt: LocalDateTime              // 变更时间
+            - reason: String                        // 变更原因
+            --
+            + getUserId(): UserId                   // 获取用户ID
+            + getOldStatus(): UserStatus            // 获取原状态
+            + getNewStatus(): UserStatus            // 获取新状态
+            + getChangedAt(): LocalDateTime         // 获取变更时间
+            + getReason(): String                   // 获取变更原因
+        }
+    }
+    
+    package "application.service" {
+        
+        ' 应用服务 - 用户应用服务
+        class UserApplicationService <<ApplicationService>> {
+            - userRepository: UserRepository                        // 用户仓储
+            - userDomainService: UserDomainService                  // 用户领域服务
+            - authenticationService: UserAuthenticationService     // 认证服务
+            - eventPublisher: DomainEventPublisher                 // 事件发布器
+            --
+            + registerUser(command: RegisterUserCommand): UserId                    // 注册用户
+            + loginUser(command: LoginUserCommand): AuthToken                       // 用户登录
+            + updateUserProfile(command: UpdateUserProfileCommand): void           // 更新用户资料
+            + changeUserPassword(command: ChangePasswordCommand): void             // 修改用户密码
+            + activateUser(command: ActivateUserCommand): void                      // 激活用户
+            + deactivateUser(command: DeactivateUserCommand): void                  // 停用用户
+        }
+    }
+    
+    package "application.query" {
+        
+        ' 查询服务 - 用户查询服务
+        class UserQueryService <<QueryService>> {
+            - userRepository: UserRepository                                        // 用户仓储
+            --
+            + getUserProfile(userId: UserId): UserProfileDTO                        // 获取用户资料
+            + getUserPermissions(userId: UserId): UserPermissionsDTO                // 获取用户权限
+            + listUsers(criteria: UserSearchCriteria): Page<UserSummaryDTO>         // 用户列表查询
+            + searchUsers(keyword: String, pageable: Pageable): Page<UserSummaryDTO>    // 用户搜索
+            + getUserStatistics(): UserStatisticsDTO                               // 获取用户统计信息
+        }
+    }
+}
+
+' 聚合内部关系 - Aggregate Internal Relationships
+User ||--|| UserProfile : contains / 包含
+User ||--|| UserId : has / 拥有
+User ||--|| Email : has / 拥有
+User ||--|| Password : has / 拥有
+User ||--|| UserStatus : has / 拥有
+UserProfile ||--|| ProfileId : has / 拥有
+UserProfile ||--|| UserPreferences : has / 拥有
+
+' 服务依赖关系 - Service Dependencies
+UserApplicationService --> UserRepository : uses / 使用
+UserApplicationService --> UserDomainService : uses / 使用
+UserApplicationService --> UserAuthenticationService : uses / 使用
+UserDomainService --> UserRepository : uses / 使用
+UserAuthenticationService --> PasswordEncryptionService : uses / 使用
+UserQueryService --> UserRepository : uses / 使用
+
+' 事件发布关系 - Event Publishing
+' 注意：事件由应用服务层的DomainEventPublisher直接发布
+' 聚合根触发业务操作，应用服务负责发布相应事件
+User ..> UserRegistered : triggers / 触发
+User ..> UserLoggedIn : triggers / 触发
+User ..> UserProfileUpdated : triggers / 触发
+User ..> UserStatusChanged : triggers / 触发
+
+' 继承关系 - Inheritance
+UserRegistered --|> DomainEvent
+UserLoggedIn --|> DomainEvent
+UserProfileUpdated --|> DomainEvent
+UserStatusChanged --|> DomainEvent
+
+' 设计说明和注释 - Design Notes
+note top of User : **用户聚合根 (User Aggregate Root)**\n• 负责用户核心业务逻辑\n• 确保业务规则的一致性\n• 管理用户生命周期\n• 触发领域事件（由应用服务发布）
+
+note top of UserRepository : **用户仓储接口 (User Repository)**\n• 定义用户持久化契约\n• 由基础设施层实现\n• 支持查询和持久化操作\n• 提供分页和统计功能
+
+note top of UserDomainService : **用户领域服务 (User Domain Service)**\n• 处理跨聚合的业务逻辑\n• 邮箱唯一性检查\n• 用户注册验证\n• 复杂业务规则处理
+
+note top of UserApplicationService : **用户应用服务 (User Application Service)**\n• 协调用例执行\n• 事务边界管理\n• 命令处理和编排\n• 通过DomainEventPublisher直接发布事件
+
+note top of UserQueryService : **用户查询服务 (User Query Service)**\n• 处理用户查询请求\n• 提供只读数据访问\n• 支持复杂查询和搜索\n• 返回DTO对象
+
+@enduml

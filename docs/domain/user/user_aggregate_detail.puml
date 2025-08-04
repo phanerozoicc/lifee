@@ -1,0 +1,373 @@
+@startuml User Aggregate Detail
+!include single.puml
+
+Title("用户聚合详细设计", "User Aggregate Detailed Design", "v1.0", "2024")
+
+' 样式定义
+skinparam class {
+    BackgroundColor<<AggregateRoot>> #FDFD9D
+    BackgroundColor<<Entity>> #E1F5FE
+    BackgroundColor<<ValueObject>> #F3E5F5
+    BackgroundColor<<BusinessRule>> #FFE0B2
+    BackgroundColor<<DomainEvent>> #FFCB81
+    BorderColor #333333
+    FontSize 11
+}
+
+skinparam note {
+    BackgroundColor #FFFACD
+    BorderColor #DDD
+}
+
+package "User Aggregate" {
+    
+    ' 聚合根 - 用户
+    class User <<AggregateRoot>> {
+        - userId: UserId {id}                       // 用户ID（主键）
+        - email: Email {unique}                     // 邮箱地址（唯一）
+        - password: Password                        // 密码
+        - profile: UserProfile                      // 用户资料
+        - status: UserStatus                        // 用户状态
+        - createdAt: LocalDateTime                  // 创建时间
+        - updatedAt: LocalDateTime                  // 更新时间
+        - version: Long {optimistic lock}           // 版本号（乐观锁）
+        ' 注意：不存储领域事件，而是在业务操作时直接发布
+        ==
+        ' 工厂方法 - Factory Methods
+        + {static} register(email: Email, password: Password): User        // 用户注册
+        + {static} fromSnapshot(snapshot: UserSnapshot): User              // 从快照恢复
+        ==
+        ' 业务行为 - Business Behaviors
+        + login(password: Password): void                                   // 用户登录
+        + updateProfile(nickname: String, bio: String): void               // 更新资料
+        + changePassword(oldPassword: Password, newPassword: Password): void   // 修改密码
+        + updateAvatar(avatarUrl: String): void                             // 更新头像
+        + updatePreferences(preferences: UserPreferences): void             // 更新偏好
+        ==
+        ' 状态管理 - Status Management
+        + activate(): void                                                  // 激活用户
+        + deactivate(): void                                                // 停用用户
+        + suspend(reason: String): void                                     // 暂停用户
+        + unsuspend(): void                                                 // 解除暂停
+        ==
+        ' 查询方法 - Query Methods
+        + isActive(): boolean                                               // 是否激活
+        + canLogin(): boolean                                               // 是否可登录
+        + hasPermission(permission: Permission): boolean                    // 是否有权限
+        + getDisplayName(): String                                          // 获取显示名称
+        + getLastLoginTime(): Optional<LocalDateTime>                       // 获取最后登录时间
+        ==
+        ' 验证方法 - Validation Methods
+        + validatePassword(password: Password): boolean                     // 验证密码
+        - validatePasswordStrength(password: Password): void               // 验证密码强度
+        - validateEmailFormat(email: Email): void                          // 验证邮箱格式
+        ==
+        ' 事件发布 - Event Publishing
+        ' 注意：事件在业务操作执行时通过DomainEventPublisher直接发布
+        ' 不在聚合内存储事件，保持聚合的纯净性
+    }
+    
+    ' 实体 - 用户资料
+    class UserProfile <<Entity>> {
+        - profileId: ProfileId                      // 资料ID（主键）
+        - nickname: String                          // 昵称
+        - avatar: String                            // 头像URL
+        - bio: String                               // 个人简介
+        - preferences: UserPreferences              // 用户偏好
+        - lastLoginAt: LocalDateTime                // 最后登录时间
+        - loginCount: Integer                       // 登录次数
+        ==
+        + updateNickname(nickname: String): void    // 更新昵称
+        + updateAvatar(avatar: String): void        // 更新头像
+        + updateBio(bio: String): void              // 更新简介
+        + updatePreferences(preferences: UserPreferences): void  // 更新偏好
+        + recordLogin(): void                       // 记录登录
+        + incrementLoginCount(): void               // 增加登录次数
+        ==
+        - validateNickname(nickname: String): void  // 验证昵称
+        - validateBio(bio: String): void            // 验证简介
+    }
+    
+    ' 值对象 - Value Objects
+    class UserId <<ValueObject>> {
+        - value: String                             // 用户ID值（自增ID前面补0，如USER_000001）
+        ==
+        + {static} of(value: String): UserId        // 从字符串创建
+        + {static} generate(): UserId               // 生成新的自增ID
+        + getValue(): String                        // 获取ID值
+        + toString(): String                        // 转换为字符串
+        + equals(other: Object): boolean            // 相等性比较
+        + hashCode(): int                           // 哈希码
+    }
+    
+    class Email <<ValueObject>> {
+        - value: String                             // 邮箱地址值
+        ==
+        + {static} of(value: String): Email         // 从字符串创建
+        + getValue(): String                        // 获取邮箱值
+        + getLocalPart(): String                    // 获取本地部分
+        + getDomain(): String                       // 获取域名部分
+        + isValid(): boolean                        // 是否有效
+        + toString(): String                        // 转换为字符串
+        + equals(other: Object): boolean            // 相等性比较
+        + hashCode(): int                           // 哈希码
+        ==
+        - validateFormat(email: String): void       // 验证邮箱格式
+        - validateDomain(domain: String): void      // 验证域名
+    }
+    
+    class Password <<ValueObject>> {
+        - hashedValue: String                       // 哈希后的密码
+        - salt: String                              // 盐值
+        - algorithm: String                         // 加密算法
+        - createdAt: LocalDateTime                  // 创建时间
+        ==
+        + {static} of(plainText: String): Password  // 从明文创建
+        + {static} fromHash(hashedValue: String, salt: String): Password  // 从哈希创建
+        + matches(plainText: String): boolean       // 匹配明文密码
+        + isExpired(maxAge: Duration): boolean      // 是否过期
+        + needsRehash(): boolean                    // 是否需要重新哈希
+        + getHashedValue(): String                  // 获取哈希值
+        + getSalt(): String                         // 获取盐值
+        + getStrength(): PasswordStrength           // 获取密码强度
+        ==
+        - validateStrength(plainText: String): void // 验证密码强度
+        - generateSalt(): String                    // 生成盐值
+        - hashPassword(plainText: String, salt: String): String  // 哈希密码
+    }
+    
+    class UserStatus <<ValueObject>> {
+        - status: StatusEnum                        // 用户状态枚举
+        - reason: String                            // 状态变更原因
+        - changedAt: LocalDateTime                  // 状态变更时间
+        ==
+        + {static} active(): UserStatus             // 创建激活状态
+        + {static} inactive(): UserStatus           // 创建非激活状态
+        + {static} suspended(reason: String): UserStatus  // 创建暂停状态
+        + {static} pendingActivation(): UserStatus  // 创建待激活状态
+        ==
+        + isActive(): boolean                       // 是否激活
+        + canLogin(): boolean                       // 是否可登录
+        + canPerformActions(): boolean              // 是否可执行操作
+        + getStatus(): StatusEnum                   // 获取状态枚举
+        + getReason(): String                       // 获取状态原因
+        + getChangedAt(): LocalDateTime             // 获取变更时间
+    }
+    
+    enum StatusEnum {
+        ACTIVE                                      // 激活
+        INACTIVE                                    // 非激活
+        PENDING_ACTIVATION                          // 待激活
+        SUSPENDED                                   // 暂停
+        DELETED                                     // 已删除
+    }
+    
+    class UserPreferences <<ValueObject>> {
+        - language: String                          // 语言偏好
+        - timezone: String                          // 时区偏好
+        - theme: String                             // 主题偏好
+        - dateFormat: String                        // 日期格式偏好
+        - notifications: NotificationSettings       // 通知设置
+        ==
+        + {static} defaultPreferences(): UserPreferences    // 创建默认偏好
+        + updateLanguage(language: String): UserPreferences // 更新语言偏好
+        + updateTimezone(timezone: String): UserPreferences // 更新时区偏好
+        + updateTheme(theme: String): UserPreferences       // 更新主题偏好
+        + updateNotifications(settings: NotificationSettings): UserPreferences  // 更新通知设置
+        ==
+        - validateLanguage(language: String): void  // 验证语言代码
+        - validateTimezone(timezone: String): void  // 验证时区代码
+    }
+    
+    class NotificationSettings <<ValueObject>> {
+        - emailNotifications: boolean               // 邮件通知开关
+        - pushNotifications: boolean                // 推送通知开关
+        - smsNotifications: boolean                 // 短信通知开关
+        - marketingEmails: boolean                  // 营销邮件开关
+        ==
+        + {static} allEnabled(): NotificationSettings       // 创建全部启用设置
+        + {static} allDisabled(): NotificationSettings      // 创建全部禁用设置
+        + enableEmail(): NotificationSettings       // 启用邮件通知
+        + disableEmail(): NotificationSettings      // 禁用邮件通知
+        + enablePush(): NotificationSettings        // 启用推送通知
+        + disablePush(): NotificationSettings       // 禁用推送通知
+    }
+}
+
+package "Business Rules" {
+    
+    ' 密码策略业务规则
+    class PasswordPolicy <<BusinessRule>> {
+        + {static} MIN_LENGTH: int = 8                  // 最小长度
+        + {static} MAX_LENGTH: int = 128                // 最大长度
+        + {static} REQUIRE_UPPERCASE: boolean = true    // 需要大写字母
+        + {static} REQUIRE_LOWERCASE: boolean = true    // 需要小写字母
+        + {static} REQUIRE_DIGITS: boolean = true       // 需要数字
+        + {static} REQUIRE_SPECIAL_CHARS: boolean = true // 需要特殊字符
+        + {static} MAX_AGE_DAYS: int = 90               // 密码最大有效期（天）
+        ==
+        + {static} validate(password: String): void     // 验证密码策略
+        + {static} calculateStrength(password: String): PasswordStrength  // 计算密码强度
+        + {static} isExpired(createdAt: LocalDateTime): boolean  // 检查是否过期
+    }
+    
+    ' 邮箱策略业务规则
+    class EmailPolicy <<BusinessRule>> {
+        + {static} ALLOWED_DOMAINS: Set<String>         // 允许的域名列表
+        + {static} BLOCKED_DOMAINS: Set<String>         // 禁止的域名列表
+        + {static} MAX_LENGTH: int = 254                // 邮箱最大长度
+        ==
+        + {static} validate(email: String): void        // 验证邮箱策略
+        + {static} isDomainAllowed(domain: String): boolean  // 检查域名是否允许
+        + {static} isFormatValid(email: String): boolean     // 检查格式是否有效
+    }
+    
+    ' 用户策略业务规则
+    class UserPolicy <<BusinessRule>> {
+        + {static} MAX_LOGIN_ATTEMPTS: int = 5          // 最大登录尝试次数
+        + {static} LOCKOUT_DURATION_MINUTES: int = 30   // 锁定持续时间（分钟）
+        + {static} SESSION_TIMEOUT_MINUTES: int = 120   // 会话超时时间（分钟）
+        + {static} MAX_NICKNAME_LENGTH: int = 50        // 昵称最大长度
+        + {static} MAX_BIO_LENGTH: int = 500            // 简介最大长度
+        ==
+        + {static} validateNickname(nickname: String): void  // 验证昵称
+        + {static} validateBio(bio: String): void            // 验证简介
+        + {static} isAccountLocked(failedAttempts: int, lastAttempt: LocalDateTime): boolean  // 检查账户是否锁定
+    }
+}
+
+package "Domain Events" {
+    
+    ' 用户注册事件
+    class UserRegistered <<DomainEvent>> {
+        - userId: UserId                            // 用户ID
+        - email: Email                              // 注册邮箱
+        - registeredAt: LocalDateTime               // 注册时间
+        - ipAddress: String                         // 注册IP地址
+        ==
+        + getUserId(): UserId                       // 获取用户ID
+        + getEmail(): Email                         // 获取邮箱
+        + getRegisteredAt(): LocalDateTime          // 获取注册时间
+        + getIpAddress(): String                    // 获取IP地址
+    }
+    
+    ' 用户登录事件
+    class UserLoggedIn <<DomainEvent>> {
+        - userId: UserId                            // 用户ID
+        - loginAt: LocalDateTime                    // 登录时间
+        - ipAddress: String                         // 登录IP地址
+        - userAgent: String                         // 用户代理
+        - sessionId: String                         // 会话ID
+        ==
+        + getUserId(): UserId                       // 获取用户ID
+        + getLoginAt(): LocalDateTime               // 获取登录时间
+        + getIpAddress(): String                    // 获取IP地址
+        + getUserAgent(): String                    // 获取用户代理
+        + getSessionId(): String                    // 获取会话ID
+    }
+    
+    ' 用户资料更新事件
+    class UserProfileUpdated <<DomainEvent>> {
+        - userId: UserId                            // 用户ID
+        - updatedFields: Map<String, Object>        // 更新的字段
+        - previousValues: Map<String, Object>       // 之前的值
+        - updatedAt: LocalDateTime                  // 更新时间
+        ==
+        + getUserId(): UserId                       // 获取用户ID
+        + getUpdatedFields(): Map<String, Object>   // 获取更新字段
+        + getPreviousValues(): Map<String, Object>  // 获取之前的值
+        + getUpdatedAt(): LocalDateTime             // 获取更新时间
+        + hasFieldChanged(fieldName: String): boolean  // 检查字段是否变更
+    }
+    
+    ' 用户状态变更事件
+    class UserStatusChanged <<DomainEvent>> {
+        - userId: UserId                            // 用户ID
+        - oldStatus: UserStatus                     // 旧状态
+        - newStatus: UserStatus                     // 新状态
+        - changedAt: LocalDateTime                  // 变更时间
+        - reason: String                            // 变更原因
+        - changedBy: UserId                         // 变更操作者
+        ==
+        + getUserId(): UserId                       // 获取用户ID
+        + getOldStatus(): UserStatus                // 获取旧状态
+        + getNewStatus(): UserStatus                // 获取新状态
+        + getChangedAt(): LocalDateTime             // 获取变更时间
+        + getReason(): String                       // 获取变更原因
+        + getChangedBy(): UserId                    // 获取变更操作者
+    }
+    
+    ' 密码变更事件
+    class PasswordChanged <<DomainEvent>> {
+        - userId: UserId                            // 用户ID
+        - changedAt: LocalDateTime                  // 变更时间
+        - ipAddress: String                         // 变更IP地址
+        - isAdminReset: boolean                     // 是否管理员重置
+        ==
+        + getUserId(): UserId                       // 获取用户ID
+        + getChangedAt(): LocalDateTime             // 获取变更时间
+        + getIpAddress(): String                    // 获取IP地址
+        + isAdminReset(): boolean                   // 是否管理员重置
+    }
+}
+
+' 关系定义 - Relationships
+User ||--|| UserId : "聚合标识 - Aggregate Identity"
+User ||--|| Email : "唯一邮箱 - Unique Email"
+User ||--|| Password : "加密密码 - Encrypted Password"
+User ||--|| UserProfile : "用户资料 - User Profile"
+User ||--|| UserStatus : "用户状态 - User Status"
+
+UserProfile ||--|| UserPreferences : "用户偏好 - User Preferences"
+UserPreferences ||--|| NotificationSettings : "通知设置 - Notification Settings"
+UserStatus ||--|| StatusEnum : "状态枚举 - Status Enum"
+
+' 业务规则关系 - Business Rule Relationships
+Password ..> PasswordPolicy : "遵循密码策略 - Follows Password Policy"
+Email ..> EmailPolicy : "遵循邮箱策略 - Follows Email Policy"
+User ..> UserPolicy : "遵循用户策略 - Follows User Policy"
+
+' 事件发布关系 - Event Publishing Relationships
+User ..> UserRegistered : "发布注册事件 - Publishes Registration Event"
+User ..> UserLoggedIn : "发布登录事件 - Publishes Login Event"
+User ..> UserProfileUpdated : "发布资料更新事件 - Publishes Profile Update Event"
+User ..> UserStatusChanged : "发布状态变更事件 - Publishes Status Change Event"
+User ..> PasswordChanged : "发布密码变更事件 - Publishes Password Change Event"
+
+' 注释说明
+note top of User
+  用户聚合根
+  ================
+  • 确保用户数据的一致性
+  • 封装用户业务规则
+  • 管理用户生命周期
+  • 发布领域事件
+  • 支持乐观锁并发控制
+end note
+
+note right of UserProfile
+  用户资料实体
+  ================
+  • 管理用户展示信息
+  • 记录用户行为数据
+  • 支持个性化设置
+end note
+
+note bottom of Password
+  密码值对象
+  ================
+  • 不可变对象
+  • 自动加密存储
+  • 支持强度验证
+  • 支持过期检查
+end note
+
+note left of PasswordPolicy
+  密码策略
+  ================
+  • 定义密码复杂度要求
+  • 控制密码生命周期
+  • 提供安全验证规则
+end note
+
+@enduml
