@@ -1,6 +1,6 @@
 package com.github.phanerozoicc.user.handler
 
-import com.github.phanerozoicc.domain.DomainEventPublisher
+import com.github.phanerozoicc.base.domain.DomainEventPublisher
 import com.github.phanerozoicc.user.domain.cqrs.CommandHandler
 import com.github.phanerozoicc.user.domain.cqrs.CommandResult
 import com.github.phanerozoicc.user.domain.cqrs.RegisterUserCommand

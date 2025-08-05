@@ -1,7 +1,6 @@
 package com.github.phanerozoicc.user.domain.cqrs
 
 import com.github.phanerozoicc.user.domain.model.UserId
-import com.github.phanerozoicc.user.domain.query.*
 import java.time.LocalDateTime
 
 /**

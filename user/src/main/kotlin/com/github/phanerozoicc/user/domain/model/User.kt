@@ -1,6 +1,6 @@
 package com.github.phanerozoicc.user.domain.model
 
-import com.github.phanerozoicc.domain.AggregateRoot
+import com.github.phanerozoicc.base.domain.AggregateRoot
 import com.github.phanerozoicc.user.domain.event.*
 import java.time.Duration
 import java.time.LocalDateTime
@@ -61,7 +61,7 @@ class User(
             )
             
             // 发布用户注册事件
-            publisher().publish(
+            user.addDomainEvent(
                 UserRegistered(
                     userId = userId,
                     email = email,
@@ -114,7 +114,7 @@ class User(
         updatedAt = LocalDateTime.now()
         
         // 发布登录事件
-        publisher().publish(
+        addDomainEvent(
             UserLoggedIn(
                 userId = id,
                 email = email,
@@ -139,7 +139,7 @@ class User(
         updatedAt = LocalDateTime.now()
         
         // 发布登录失败事件
-        publisher().publish(
+        addDomainEvent(
             UserLoginFailed(
                 email = email,
                 failureReason = reason,
@@ -175,7 +175,7 @@ class User(
             updatedAt = LocalDateTime.now()
             
             // 发布资料更新事件
-            publisher().publish(
+            addDomainEvent(
                 UserProfileUpdated(
                     userId = id,
                     oldProfile = oldProfile,
@@ -187,25 +187,6 @@ class User(
         }
     }
     
-    /**
-     * 检测资料变更字段
-     */
-    private fun detectProfileChanges(oldProfile: UserProfile, newProfile: UserProfile): Set<String> {
-        val changes = mutableSetOf<String>()
-        
-        if (oldProfile.getNickname() != newProfile.getNickname()) changes.add("nickname")
-        if (oldProfile.getFirstName() != newProfile.getFirstName()) changes.add("firstName")
-        if (oldProfile.getLastName() != newProfile.getLastName()) changes.add("lastName")
-        if (oldProfile.getAvatar() != newProfile.getAvatar()) changes.add("avatar")
-        if (oldProfile.getBio() != newProfile.getBio()) changes.add("bio")
-        if (oldProfile.getBirthDate() != newProfile.getBirthDate()) changes.add("birthDate")
-        if (oldProfile.getGender() != newProfile.getGender()) changes.add("gender")
-        if (oldProfile.getPhoneNumber() != newProfile.getPhoneNumber()) changes.add("phoneNumber")
-        if (oldProfile.getAddress() != newProfile.getAddress()) changes.add("address")
-        if (oldProfile.getWebsite() != newProfile.getWebsite()) changes.add("website")
-        
-        return changes
-    }
 
     /**
      * 修改密码
@@ -238,7 +219,7 @@ class User(
         updatedAt = LocalDateTime.now()
         
         // 发布密码变更事件
-        publisher().publish(
+        addDomainEvent(
             PasswordChanged(
                 userId = id,
                 ipAddress = ipAddress
@@ -268,7 +249,7 @@ class User(
         lastFailedLoginAt = null
         
         // 发布密码变更事件
-        publisher().publish(
+        addDomainEvent(
             PasswordChanged(
                 userId = id,
                 ipAddress = ipAddress,
@@ -288,7 +269,7 @@ class User(
         updatedAt = LocalDateTime.now()
         
         // 发布状态变更事件
-        publisher().publish(
+        addDomainEvent(
             UserStatusChanged(
                 userId = id,
                 oldStatus = oldStatus,
@@ -310,7 +291,7 @@ class User(
         updatedAt = LocalDateTime.now()
         
         // 发布状态变更事件
-        publisher().publish(
+        addDomainEvent(
             UserStatusChanged(
                 userId = id,
                 oldStatus = oldStatus,
@@ -332,7 +313,7 @@ class User(
         updatedAt = LocalDateTime.now()
         
         // 发布状态变更事件
-        publisher().publish(
+        addDomainEvent(
             UserStatusChanged(
                 userId = id,
                 oldStatus = oldStatus,
@@ -357,7 +338,7 @@ class User(
         lastFailedLoginAt = null
         
         // 发布状态变更事件
-        publisher().publish(
+        addDomainEvent(
             UserStatusChanged(
                 userId = id,
                 oldStatus = oldStatus,
@@ -384,7 +365,7 @@ class User(
         }
         
         // 发布邮箱验证事件
-        publisher().publish(
+        addDomainEvent(
             UserEmailVerified(
                 userId = id,
                 email = email,
@@ -408,7 +389,7 @@ class User(
             updatedAt = LocalDateTime.now()
             
             // 发布偏好设置更新事件
-            publisher().publish(
+            addDomainEvent(
                 UserPreferencesUpdated(
                     userId = id,
                     oldPreferences = oldPreferences,
@@ -436,7 +417,7 @@ class User(
         updatedAt = LocalDateTime.now()
         
         // 发布用户删除事件
-        publisher().publish(
+        addDomainEvent(
             UserDeleted(
                 userId = id,
                 email = email,
@@ -447,7 +428,7 @@ class User(
         )
         
         // 发布状态变更事件
-        publisher().publish(
+        addDomainEvent(
             UserStatusChanged(
                 userId = id,
                 oldStatus = oldStatus,

@@ -3,8 +3,6 @@ package com.github.phanerozoicc.user.application
 import com.github.phanerozoicc.response.ApiResponse
 import com.github.phanerozoicc.response.PageResponse
 import com.github.phanerozoicc.user.application.*
-import com.github.phanerozoicc.user.application.dto.UserDto
-import com.github.phanerozoicc.user.application.dto.UserSummaryDto
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.tags.Tag

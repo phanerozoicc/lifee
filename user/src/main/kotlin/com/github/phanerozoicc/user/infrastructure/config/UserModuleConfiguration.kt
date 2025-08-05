@@ -1,17 +1,14 @@
 package com.github.phanerozoicc.user.infrastructure.config
 
-import com.github.phanerozoicc.domain.DomainEventPublisher
-import com.github.phanerozoicc.domain.DomainEvent
 import com.github.phanerozoicc.user.application.command.*
 import com.github.phanerozoicc.user.application.query.*
 import com.github.phanerozoicc.user.application.service.UserApplicationService
 import com.github.phanerozoicc.user.domain.cqrs.*
-import com.github.phanerozoicc.user.domain.policy.PasswordPolicy
-import com.github.phanerozoicc.user.domain.policy.UserPolicy
+import com.github.phanerozoicc.user.domain.model.PasswordSpecification
+import com.github.phanerozoicc.user.domain.model.UserSpecification
 import com.github.phanerozoicc.user.domain.repository.UserRepository
 import com.github.phanerozoicc.user.domain.service.UserDomainService
 import com.github.phanerozoicc.user.infrastructure.cqrs.*
-import com.github.phanerozoicc.user.infrastructure.repository.UserRepositoryImpl
 import org.springframework.boot.autoconfigure.domain.EntityScan
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationEventPublisher
@@ -37,16 +34,16 @@ class UserModuleConfiguration {
      * 密码策略
      */
     @Bean
-    fun passwordPolicy(): PasswordPolicy {
-        return PasswordPolicy()
+    fun passwordSpecification(): PasswordSpecification {
+        return PasswordSpecification()
     }
     
     /**
      * 用户策略
      */
     @Bean
-    fun userPolicy(): UserPolicy {
-        return UserPolicy()
+    fun userSpecification(): UserSpecification {
+        return UserSpecification()
     }
     
     /**
