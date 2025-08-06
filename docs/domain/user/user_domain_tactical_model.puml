@@ -1,5 +1,5 @@
 @startuml User Domain Tactical Model
-!include single.puml
+!include ../single.puml
 
 Title("LifeE用户域战术建模", "User Domain Tactical Design", "v1.0", "2024")
 

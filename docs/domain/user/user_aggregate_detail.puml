@@ -1,5 +1,5 @@
 @startuml User Aggregate Detail
-!include single.puml
+!include ../single.puml
 
 Title("用户聚合详细设计", "User Aggregate Detailed Design", "v1.0", "2024")
 

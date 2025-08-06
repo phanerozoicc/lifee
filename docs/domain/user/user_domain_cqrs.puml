@@ -1,5 +1,5 @@
 @startuml User Domain CQRS
-!include single.puml
+!include ../single.puml
 
 Title("用户域CQRS模型", "User Domain CQRS Model", "v1.0", "2024")
 
@@ -511,12 +511,17 @@ RegisterUserCommandHandler --> RegisterUserCommand : handles
 LoginUserCommandHandler --> LoginUserCommand : handles
 UpdateUserProfileCommandHandler --> UpdateUserProfileCommand : handles
 ChangePasswordCommandHandler --> ChangePasswordCommand : handles
+DeactivateUserCommandHandler --> DeactivateUserCommand : handles
+ActivateUserCommandHandler --> ActivateUserCommand : handles
+
 
 ' 事件发布关系 - 命令处理器发布领域事件
 RegisterUserCommandHandler ..> UserRegistered : publishes
 LoginUserCommandHandler ..> UserLoggedIn : publishes
 UpdateUserProfileCommandHandler ..> UserProfileUpdated : publishes
 ChangePasswordCommandHandler ..> PasswordChanged : publishes
+DeactivateUserCommandHandler ..> UserDeactivated : publishes
+ActivateUserCommandHandler ..> UserActivated : publishes
 
 ' 查询端关系 - 查询处理器处理对应的查询
 GetUserProfileQueryHandler --> GetUserProfileQuery : handles

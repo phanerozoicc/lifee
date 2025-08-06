@@ -1,5 +1,5 @@
 @startuml User Domain Event Flow
-!include single.puml
+!include ../single.puml
 
 Title("用户域事件流程图", "User Domain Event Flow", "v1.0", "2024")
 
@@ -24,20 +24,20 @@ skinparam note {
 ' 用户注册流程
 partition "用户注册流程" {
     start
-    
+
     :用户提交注册表单;
     note right: 包含邮箱、密码、昵称等信息
-    
+
     :RegisterUserCommand;
     note right #COMMAND_COLOR: 注册用户命令
-    
+
     :RegisterUserCommandHandler;
     note right #SERVICE_COLOR
         验证邮箱唯一性
         验证密码强度
         创建用户聚合
     end note
-    
+
     if (邮箱已存在?) then (是)
         :抛出EmailAlreadyExistsException;
         stop
@@ -49,9 +49,9 @@ partition "用户注册流程" {
             加密密码
             设置初始状态
         end note
-        
+
         :保存用户到数据库;
-        
+
         :发布UserRegistered事件;
         note right #EVENT_COLOR
             userId: String (自增ID格式)
@@ -60,7 +60,7 @@ partition "用户注册流程" {
             ipAddress: String
         end note
     endif
-    
+
     fork
         :UserProfileProjection;
         note right: 创建用户读模型
@@ -74,7 +74,7 @@ partition "用户注册流程" {
         :创建默认知识库;
         note right #EXTERNAL_COLOR: 知识库域
     end fork
-    
+
     :返回UserId;
     stop
 }
@@ -82,13 +82,13 @@ partition "用户注册流程" {
 ' 用户登录流程
 partition "用户登录流程" {
     start
-    
+
     :用户提交登录表单;
     note right: 包含邮箱、密码
-    
+
     :LoginUserCommand;
     note right #COMMAND_COLOR: 用户登录命令
-    
+
     :LoginUserCommandHandler;
     note right #SERVICE_COLOR
         查找用户
@@ -96,7 +96,7 @@ partition "用户登录流程" {
         检查账户状态
         生成认证令牌
     end note
-    
+
     if (用户不存在?) then (是)
         :抛出UserNotFoundException;
         stop
@@ -116,10 +116,10 @@ partition "用户登录流程" {
                     更新最后登录时间
                     重置失败尝试次数
                 end note
-                
+
                 :生成JWT令牌;
                 note right #SERVICE_COLOR: UserAuthenticationService
-                
+
                 :发布UserLoggedIn事件;
                 note right #EVENT_COLOR
                     userId: String (自增ID格式)
@@ -130,7 +130,7 @@ partition "用户登录流程" {
             endif
         endif
     endif
-    
+
     fork
         :UserProfileProjection;
         note right: 更新最后登录时间
@@ -141,7 +141,7 @@ partition "用户登录流程" {
         :记录用户行为;
         note right #EXTERNAL_COLOR: 推荐域
     end fork
-    
+
     :返回AuthToken;
     stop
 }
@@ -149,20 +149,20 @@ partition "用户登录流程" {
 ' 用户资料更新流程
 partition "用户资料更新流程" {
     start
-    
+
     :用户提交资料更新;
     note right: 昵称、头像、个人简介等
-    
+
     :UpdateUserProfileCommand;
     note right #COMMAND_COLOR: 更新用户资料命令
-    
+
     :UpdateUserProfileCommandHandler;
     note right #SERVICE_COLOR
         加载用户聚合
         验证输入数据
         更新用户资料
     end note
-    
+
     :User.updateProfile();
     note right #AGGREGATE_COLOR
         验证昵称长度
@@ -170,9 +170,9 @@ partition "用户资料更新流程" {
         更新UserProfile实体
         记录变更字段
     end note
-    
+
     :保存用户变更;
-    
+
     :发布UserProfileUpdated事件;
     note right #EVENT_COLOR
         userId: String (自增ID格式)
@@ -180,7 +180,7 @@ partition "用户资料更新流程" {
         previousValues: Map<String, Object>
         updatedAt: LocalDateTime
     end note
-    
+
     fork
         :UserProfileProjection;
         note right: 更新用户读模型
@@ -188,7 +188,7 @@ partition "用户资料更新流程" {
         :更新用户偏好;
         note right #EXTERNAL_COLOR: 推荐域
     end fork
-    
+
     :返回成功响应;
     stop
 }
@@ -196,20 +196,20 @@ partition "用户资料更新流程" {
 ' 密码修改流程
 partition "密码修改流程" {
     start
-    
+
     :用户提交密码修改;
     note right: 旧密码、新密码、确认密码
-    
+
     :ChangePasswordCommand;
     note right #COMMAND_COLOR: 修改密码命令
-    
+
     :ChangePasswordCommandHandler;
     note right #SERVICE_COLOR
         加载用户聚合
         验证旧密码
         验证新密码强度
     end note
-    
+
     if (旧密码错误?) then (是)
         :抛出InvalidPasswordException;
         stop
@@ -225,9 +225,9 @@ partition "密码修改流程" {
                 更新密码
                 更新修改时间
             end note
-            
+
             :保存密码变更;
-            
+
             :发布PasswordChanged事件;
             note right #EVENT_COLOR
                 userId: String (自增ID格式)
@@ -237,7 +237,7 @@ partition "密码修改流程" {
             end note
         endif
     endif
-    
+
     fork
         :发送密码修改通知;
         note right #EXTERNAL_COLOR: 邮件服务
@@ -248,7 +248,7 @@ partition "密码修改流程" {
         :使所有会话失效;
         note right #SERVICE_COLOR: 会话管理服务
     end fork
-    
+
     :返回成功响应;
     stop
 }
@@ -256,36 +256,36 @@ partition "密码修改流程" {
 ' 用户状态变更流程
 partition "用户状态变更流程" {
     start
-    
+
     :管理员操作用户状态;
     note right: 激活、停用、暂停等
-    
+
     if (操作类型) then (激活)
         :ActivateUserCommand;
         note right #COMMAND_COLOR: 激活用户命令
-        
+
         :User.activate();
         note right #AGGREGATE_COLOR
             检查当前状态
             更新为ACTIVE状态
             记录变更原因
         end note
-        
+
     else (停用)
         :DeactivateUserCommand;
         note right #COMMAND_COLOR: 停用用户命令
-        
+
         :User.deactivate();
         note right #AGGREGATE_COLOR
             检查当前状态
             更新为INACTIVE状态
             记录变更原因
         end note
-        
+
     else (暂停)
         :SuspendUserCommand;
         note right #COMMAND_COLOR: 暂停用户命令
-        
+
         :User.suspend();
         note right #AGGREGATE_COLOR
             检查当前状态
@@ -293,9 +293,9 @@ partition "用户状态变更流程" {
             记录暂停原因
         end note
     endif
-    
+
     :保存状态变更;
-    
+
     :发布UserStatusChanged事件;
     note right #EVENT_COLOR
         userId: String (自增ID格式)
@@ -305,7 +305,7 @@ partition "用户状态变更流程" {
         reason: String
         changedBy: String (自增ID格式)
     end note
-    
+
     fork
         :UserProfileProjection;
         note right: 更新用户状态
@@ -321,30 +321,30 @@ partition "用户状态变更流程" {
             note right #SERVICE_COLOR: 会话管理
         endif
     end fork
-    
+
     :返回成功响应;
     stop
 }
 
 ' 跨域事件处理
 partition "跨域事件处理" {
-    
+
     note as N1
         用户域发布的事件会被其他域订阅：
-        
+
         **UserRegistered事件：**
         • 知识库域：创建默认知识库
         • 推荐域：创建用户画像
         • 通知域：发送欢迎消息
-        
+
         **UserLoggedIn事件：**
         • 推荐域：记录用户行为
         • 统计域：更新活跃用户数据
-        
+
         **UserProfileUpdated事件：**
         • 推荐域：更新用户偏好
         • 搜索域：更新用户索引
-        
+
         **UserStatusChanged事件：**
         • 知识库域：处理访问权限
         • 对话域：处理会话状态

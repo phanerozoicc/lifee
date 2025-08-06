@@ -2,7 +2,6 @@ package com.github.phanerozoicc.user.domain.service
 
 import com.github.phanerozoicc.user.domain.model.*
 import com.github.phanerozoicc.user.domain.repository.UserRepository
-import com.github.phanerozoicc.user.domain.model.PasswordStrength
 import java.time.LocalDateTime
 
 /**
