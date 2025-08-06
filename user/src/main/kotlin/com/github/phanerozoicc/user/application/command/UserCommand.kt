@@ -1,6 +1,5 @@
 package com.github.phanerozoicc.user.application.command
 
-import com.github.phanerozoicc.user.bak.domain.cqrs.CommandResult
 import com.github.phanerozoicc.user.domain.model.UserId
 import java.time.LocalDateTime
 
@@ -15,6 +14,14 @@ abstract class UserCommand {
     abstract val userAgent: String?
 }
 
+/**
+ * 命令执行结果
+ */
+sealed class CommandResult {
+    data class Success(val message: String? = null, val data: Any? = null) : CommandResult()
+    data class Failure(val error: String, val errorCode: String? = null, val details: Map<String, Any>? = null) : CommandResult()
+    data class ValidationError(val errors: Map<String, List<String>>) : CommandResult()
+}
 
 /**
  * 命令处理器接口
@@ -34,6 +41,4 @@ interface CommandHandler<T : UserCommand> {
      */
     fun validate(command: T): CommandResult
 }
-
-
 

@@ -1,7 +1,6 @@
 package com.github.phanerozoicc.user.application.command
 
 import com.github.phanerozoicc.base.domain.DomainEventPublisher
-import com.github.phanerozoicc.user.bak.domain.cqrs.CommandResult
 import com.github.phanerozoicc.user.domain.service.UserDomainService
 import com.github.phanerozoicc.user.domain.model.Email
 import com.github.phanerozoicc.user.domain.model.User

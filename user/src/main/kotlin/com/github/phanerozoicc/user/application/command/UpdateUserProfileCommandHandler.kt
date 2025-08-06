@@ -1,12 +1,11 @@
 package com.github.phanerozoicc.user.application.command
 
 import com.github.phanerozoicc.base.domain.DomainEventPublisher
-import com.github.phanerozoicc.user.bak.domain.cqrs.CommandResult
-import com.github.phanerozoicc.user.bak.domain.repository.UserRepository
 import com.github.phanerozoicc.user.domain.service.UserDomainService
 import com.github.phanerozoicc.user.domain.model.Gender
 import com.github.phanerozoicc.user.domain.model.UserId
 import com.github.phanerozoicc.user.domain.model.UserProfile
+import com.github.phanerozoicc.user.domain.repository.UserRepository
 import org.springframework.stereotype.Service
 import java.time.LocalDate
 import java.time.LocalDateTime
