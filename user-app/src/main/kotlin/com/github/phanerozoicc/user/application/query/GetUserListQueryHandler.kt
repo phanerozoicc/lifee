@@ -6,6 +6,7 @@ import com.github.phanerozoicc.user.bak.domain.cqrs.QueryResult
 import com.github.phanerozoicc.user.bak.domain.repository.UserRepository
 import com.github.phanerozoicc.user.bak.domain.repository.UserSearchCriteria
 import com.github.phanerozoicc.user.domain.model.UserStatus
+import com.github.phanerozoicc.user.domain.repository.UserRepository
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort

@@ -1,10 +1,7 @@
 package com.github.phanerozoicc.user.interfaces.rest
 
-import com.github.phanerozoicc.user.bak.bak.application.AuthenticateUserCommand
-import com.github.phanerozoicc.user.bak.bak.application.ChangePasswordCommand
-import com.github.phanerozoicc.user.bak.bak.application.RegisterUserCommand
-import com.github.phanerozoicc.user.bak.bak.application.UpdateUserProfileCommand
-import com.github.phanerozoicc.user.bak.bak.application.UserApplicationService
+import com.github.phanerozoicc.user.application.service.UserApplicationService
+import io.swagger.v3.oas.annotations.Operation
 import jakarta.validation.Valid
 import org.springframework.data.domain.Pageable
 import org.springframework.data.web.PageableDefault
@@ -38,8 +35,11 @@ class UserController(
     /**
      * 用户注册
      */
+    @Operation(summary = "用户注册", description = "创建新用户账户")
     @PostMapping("/register")
-    fun register(@Valid @RequestBody request: RegisterUserRequest): ResponseEntity<ApiResponse<String>> {
+    fun register(@Valid @RequestBody request: RegisterUserRequest, ): ResponseEntity<ApiResponse<String>> {
+        userApplicationService.register(request)
+
         return try {
             // 简化实现，直接返回成功响应
             ResponseEntity.status(HttpStatus.CREATED)
@@ -250,7 +250,6 @@ class UserController(
 ) {
 
     @PostMapping("/register")
-    @Operation(summary = "用户注册", description = "创建新用户账户")
     fun register(
         @Valid @RequestBody command: RegisterUserCommand
     ): ApiResponse<UserDto> {

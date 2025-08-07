@@ -1,20 +1,17 @@
 package com.github.phanerozoicc.user.application.command
 
 import com.github.phanerozoicc.base.domain.DomainEventPublisher
-import com.github.phanerozoicc.user.domain.service.UserDomainService
 import com.github.phanerozoicc.user.domain.model.Email
 import com.github.phanerozoicc.user.domain.model.User
 import com.github.phanerozoicc.user.domain.model.UserId
 import com.github.phanerozoicc.user.domain.repository.UserRepository
+import com.github.phanerozoicc.user.domain.service.UserDomainService
 import org.springframework.stereotype.Service
-import java.time.LocalDateTime
 
 /**
  * 用户注册命令
  */
 data class RegisterUserCommand(
-    override val commandId: String,
-    override val timestamp: LocalDateTime = LocalDateTime.now(),
     override val userId: UserId? = null,
     override val ipAddress: String? = null,
     override val userAgent: String? = null,

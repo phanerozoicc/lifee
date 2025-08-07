@@ -73,6 +73,12 @@ data class RegisterUserRequest(
     val lastName: String? = null
 )
 
+data class RegisterUserResponse(
+    val userId: String,
+    val username: String,
+    val email: String,
+)
+
 /**
  * 用户登录请求
  */

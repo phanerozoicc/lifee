@@ -1,6 +1,5 @@
 package com.github.phanerozoicc.user.infrastructure.cqrs
 
-import com.github.phanerozoicc.user.domain.cqrs.*
 import org.springframework.context.ApplicationContext
 import org.springframework.stereotype.Component
 import kotlin.reflect.KClass

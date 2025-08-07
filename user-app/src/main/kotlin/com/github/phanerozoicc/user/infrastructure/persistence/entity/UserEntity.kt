@@ -175,8 +175,8 @@ class UserEntity(
                 lockedUntil = null,
                 lastPasswordChangeAt = null,
                 lastProfileUpdateAt = null,
-                createdAt = java.time.LocalDateTime.now(),
-                updatedAt = java.time.LocalDateTime.now()
+                createdAt = LocalDateTime.now(),
+                updatedAt = LocalDateTime.now()
             )
         }
     }
