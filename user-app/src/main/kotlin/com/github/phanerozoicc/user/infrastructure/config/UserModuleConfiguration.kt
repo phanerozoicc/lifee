@@ -5,6 +5,16 @@ import com.github.phanerozoicc.base.domain.DomainEventPublisher
 import com.github.phanerozoicc.user.application.command.*
 import com.github.phanerozoicc.user.application.query.*
 import com.github.phanerozoicc.user.application.service.UserApplicationService
+import com.github.phanerozoicc.user.bak.application.query.ExportUserDataQueryHandler
+import com.github.phanerozoicc.user.bak.application.query.GetUserActivityQueryHandler
+import com.github.phanerozoicc.user.bak.application.query.GetUserPermissionsQueryHandler
+import com.github.phanerozoicc.user.bak.application.query.GetUserPreferencesQueryHandler
+import com.github.phanerozoicc.user.bak.application.query.GetUserProfileQueryHandler
+import com.github.phanerozoicc.user.bak.application.query.GetUserSecurityReportQueryHandler
+import com.github.phanerozoicc.user.bak.application.query.GetUserStatisticsQueryHandler
+import com.github.phanerozoicc.user.bak.application.query.GetUsersNeedingAttentionQueryHandler
+import com.github.phanerozoicc.user.bak.application.query.SearchUsersQueryHandler
+import com.github.phanerozoicc.user.bak.application.query.ValidateUniquenessQueryHandler
 import com.github.phanerozoicc.user.domain.cqrs.CommandBus
 import com.github.phanerozoicc.user.domain.cqrs.QueryBus
 import com.github.phanerozoicc.user.domain.model.PasswordSpecification
@@ -31,8 +41,15 @@ import org.springframework.transaction.annotation.EnableTransactionManagement
 @EntityScan(
     basePackages = ["com.github.phanerozoicc.user.infrastructure.persistence.entity"]
 )
-@EnableTransactionManagement
 class UserModuleConfiguration {
+
+    /**
+     * 命令总线
+     */
+    @Bean
+    fun userCommandBus(
+        userCommandhandlers: List<>
+    )
     
     /**
      * 密码策略

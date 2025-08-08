@@ -1,4 +1,4 @@
-package com.github.phanerozoicc.user.bak.bak
+package com.github.phanerozoicc.user
 
 import org.junit.jupiter.api.Test
 import org.springframework.boot.test.context.SpringBootTest

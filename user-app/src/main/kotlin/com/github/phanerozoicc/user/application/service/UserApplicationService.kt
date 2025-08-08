@@ -4,14 +4,14 @@ import com.github.phanerozoicc.user.application.command.RegisterUserCommand
 import com.github.phanerozoicc.user.interfaces.rest.RegisterUserRequest
 
 class UserApplicationService(
-    val
+    val commandBus: CommandBus,
 ) {
 
 
     /**
      * 注册流程
      */
-    fun register(request: RegisterUserRequest) {
+    fun register(request: RegisterUserRequest, ipAddr: String, userAgent: String) {
         // 1. 封装注册command
         val registerCommand = RegisterUserCommand(
             email = request.email,
@@ -20,7 +20,11 @@ class UserApplicationService(
             firstName = request.firstName,
             lastName = request.lastName,
             acceptTerms = request.acceptTerms,
-            marketingConsent = request.marketingConsent
+            marketingConsent = request.marketingConsent,
+            ipAddress = ipAddr,
+            userAgent = userAgent
         )
+        // 2. 使用命令总线发生command
+        commandBus.send(registerCommand)
     }
 }

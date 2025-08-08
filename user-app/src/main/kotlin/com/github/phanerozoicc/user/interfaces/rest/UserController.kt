@@ -1,7 +1,12 @@
 package com.github.phanerozoicc.user.interfaces.rest
 
+import com.github.phanerozoicc.user.application.command.ChangePasswordCommand
+import com.github.phanerozoicc.user.application.command.RegisterUserCommand
+import com.github.phanerozoicc.user.application.command.UpdateUserProfileCommand
 import com.github.phanerozoicc.user.application.service.UserApplicationService
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.tags.Tag
+import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
 import org.springframework.data.domain.Pageable
 import org.springframework.data.web.PageableDefault
@@ -17,6 +22,7 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
@@ -35,10 +41,16 @@ class UserController(
     /**
      * 用户注册
      */
+    // TODO 添加网关服务
+    //  从网关获取用户IP和UserAgent
     @Operation(summary = "用户注册", description = "创建新用户账户")
     @PostMapping("/register")
-    fun register(@Valid @RequestBody request: RegisterUserRequest, ): ResponseEntity<ApiResponse<String>> {
-        userApplicationService.register(request)
+    fun register(@Valid @RequestBody registerRequest: RegisterUserRequest,
+                 @RequestHeader("X-User-Agent") userAgent: String,
+                 @RequestHeader("X-Forwarded-For") remoteIp: String
+                 ): ResponseEntity<ApiResponse<String>> {
+
+        userApplicationService.register(registerRequest, remoteIp, userAgent)
 
         return try {
             // 简化实现，直接返回成功响应

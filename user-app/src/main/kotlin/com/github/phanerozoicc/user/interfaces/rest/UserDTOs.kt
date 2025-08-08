@@ -70,7 +70,14 @@ data class RegisterUserRequest(
     val firstName: String? = null,
     
     @field:Size(max = 50, message = "姓氏长度不能超过50位")
-    val lastName: String? = null
+    val lastName: String? = null,
+
+    @field:NotNull("必须确认条款")
+    val acceptTerms: Boolean = false,
+
+    @field:NotNull("需要确认是否接收营销消息")
+    val marketingConsent: Boolean = true
+
 )
 
 data class RegisterUserResponse(
