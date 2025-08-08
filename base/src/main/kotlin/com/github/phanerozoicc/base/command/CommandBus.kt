@@ -1,19 +1,27 @@
 package com.github.phanerozoicc.base.command
 
-interface CommandHandler<T> {
-    handle(command: T): Comm
+import com.github.phanerozoicc.base.domain.DomainEventPublisher
+import org.springframework.transaction.support.TransactionTemplate
+
+interface CommandBus {
+    fun <R> send(command: Command): R
 }
 
-abstract class CommandBus {
-    protected val handlers = mutableMapOf<String, (Any) -> Unit>()
-
-    fun <T> registerHandler(commandHandler: CommandH) {
-        handler::class.supertypes.first { it.arguments.isNotEmpty() }
-            .arguments[0].
+class SpringCommandBus(
+    private val commandHandlers: List<CommandHandler<*, *>>,
+    private val eventPublisher: DomainEventPublisher,
+    private val transitionTemplate: TransactionTemplate
+) : CommandBus {
+    override fun <R> send(command: Command): R {
+        val handler = commandHandlers.find { it.canHandle(command) }
+            ?: throw IllegalArgumentException("No handler found for command ${command.commandType}")
+        return transitionTemplate.execute {
+            val result = (handler as CommandHandler<Command, R>).handle(command)
+            if (result is CommandResult.Success<*> && result.events.isNotEmpty()) {
+                result.events.forEach { eventPublisher.publish(it) }
+            }
+            result
+        } as R
     }
 
-    fun dispatch(command: Any) {
-        handlers[command::class.qualifiedName]?.invoke(command)
-            ?: throw IllegalArgumentException("未注册处理器: ${command::class.simpleName}")
-    }
 }
