@@ -1,0 +1,234 @@
+# Lifee User Service Configuration
+spring:
+  application:
+    name: lifee-user-service
+  
+  profiles:
+    active: dev
+  
+  # Database Configuration
+  datasource:
+    url: jdbc:postgresql://localhost:5432/lifee_user
+    username: lifee_user
+    password: lifee_password
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      idle-timeout: 300000
+      connection-timeout: 20000
+      leak-detection-threshold: 60000
+  
+  # JPA Configuration
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        use_sql_comments: true
+        jdbc:
+          batch_size: 20
+        order_inserts: true
+        order_updates: true
+  
+  # Redis Configuration
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: 
+      database: 0
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+          max-wait: -1ms
+  
+  # Kafka Configuration
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      acks: all
+      retries: 3
+      batch-size: 16384
+      linger-ms: 1
+      buffer-memory: 33554432
+    consumer:
+      group-id: lifee-user-service
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      properties:
+        spring.json.trusted.packages: "com.lifee.*"
+    listener:
+      ack-mode: manual_immediate
+  
+  # Security Configuration
+  security:
+    jwt:
+      secret: lifee-jwt-secret-key-change-in-production
+      expiration: 86400 # 24 hours in seconds
+      refresh-expiration: 604800 # 7 days in seconds
+  
+  # Cache Configuration
+  cache:
+    type: redis
+    redis:
+      time-to-live: 600000 # 10 minutes
+  
+  # Mail Configuration
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          connectiontimeout: 5000
+          timeout: 3000
+          writetimeout: 5000
+
+# Server Configuration
+server:
+  port: 8081
+  servlet:
+    context-path: /api/v1
+  error:
+    include-message: always
+    include-binding-errors: always
+
+# Management Configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+# Logging Configuration
+logging:
+  level:
+    com.lifee: DEBUG
+    org.springframework.security: DEBUG
+    org.springframework.kafka: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/lifee-user-service.log
+    max-size: 10MB
+    max-history: 30
+
+# Application Specific Configuration
+lifee:
+  user:
+    password:
+      min-length: 8
+      require-uppercase: true
+      require-lowercase: true
+      require-digit: true
+      require-special-char: true
+    email:
+      verification:
+        enabled: true
+        expiration: 86400000 # 24 hours
+    registration:
+      auto-activation: false
+      require-email-verification: true
+  
+  # Mail Configuration
+  mail:
+    from: ${MAIL_FROM:noreply@lifee.com}
+    activation-url: ${ACTIVATION_URL:http://localhost:8080/activate}
+    reset-password-url: ${RESET_PASSWORD_URL:http://localhost:8080/reset-password}
+
+---
+# Development Profile
+spring:
+  config:
+    activate:
+      on-profile: dev
+  
+  datasource:
+    url: jdbc:postgresql://localhost:5432/lifee_user_dev
+    username: lifee_user_dev
+    password: lifee_password_dev
+  
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+  
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      database: 1
+  
+  kafka:
+    bootstrap-servers: localhost:9092
+
+logging:
+  level:
+    com.lifee: DEBUG
+    org.springframework: INFO
+
+---
+# Production Profile
+spring:
+  config:
+    activate:
+      on-profile: prod
+  
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/lifee_user}
+    username: ${DATABASE_USERNAME:lifee_user}
+    password: ${DATABASE_PASSWORD:lifee_password}
+  
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+  
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      database: ${REDIS_DATABASE:0}
+  
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+  
+  security:
+    jwt:
+      secret: ${JWT_SECRET:lifee-jwt-secret-key-change-in-production}
+
+logging:
+  level:
+    com.lifee: INFO
+    org.springframework: WARN
+    org.hibernate: WARN
+  file:
+    name: /var/log/lifee-user-service.log

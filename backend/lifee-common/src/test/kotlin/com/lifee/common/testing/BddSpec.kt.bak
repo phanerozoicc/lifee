@@ -1,0 +1,38 @@
+package com.lifee.common.testing
+
+import io.kotest.core.spec.style.BehaviorSpec
+
+/**
+ * BDD测试基类
+ * 提供Given-When-Then风格的测试结构
+ */
+abstract class BddSpec : BehaviorSpec() {
+    
+    /**
+     * Given步骤 - 设置测试前置条件
+     */
+    protected fun <T> given(description: String, block: () -> T): T {
+        return block()
+    }
+    
+    /**
+     * When步骤 - 执行被测试的操作
+     */
+    protected fun <T> `when`(description: String, block: () -> T): T {
+        return block()
+    }
+    
+    /**
+     * Then步骤 - 验证结果
+     */
+    protected fun then(description: String, block: () -> Unit) {
+        block()
+    }
+    
+    /**
+     * And步骤 - 附加条件或验证
+     */
+    protected fun <T> and(description: String, block: () -> T): T {
+        return block()
+    }
+}
