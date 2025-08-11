@@ -7,8 +7,8 @@ import com.lifee.user.app.commands.LoginCommand
 import com.lifee.user.app.dto.LoginResponseDto
 import com.lifee.user.app.dto.UserDto
 import com.lifee.user.domain.*
-import com.lifee.user.domain.events.UserLoginSuccessEvent
-import com.lifee.user.domain.events.UserLoginFailedEvent
+// import com.lifee.user.domain.events.UserLoginSuccessEvent
+// import com.lifee.user.domain.events.UserLoginFailedEvent
 import com.lifee.user.domain.services.JwtService
 import java.time.Instant
 import org.slf4j.LoggerFactory
@@ -32,10 +32,10 @@ class LoginCommandHandler(
     override suspend fun handle(command: LoginCommand): LoginResponseDto {
         logger.info("处理用户登录请求: email={}, ip={}", command.email, command.ipAddress)
         
-        return transactionTemplate.execute { _ ->
-            try {
+        return try {
             // 1. 根据邮箱查找用户
-            val user = userRepository.findByEmail(command.email)
+            val email = Email.of(command.email)
+            val user = userRepository.findByEmail(email)
                 ?: throw BusinessRuleException("用户不存在或密码错误")
             
             // 2. 验证密码
@@ -65,7 +65,7 @@ class LoginCommandHandler(
             )
             
             // 7. 记录登录成功日志
-            val successLog = UserLoginLog.createSuccess(
+            val successLog = UserLoginLog.createSuccessLog(
                 userId = user.getId(),
                 email = command.email,
                 ipAddress = command.ipAddress,
@@ -75,67 +75,38 @@ class LoginCommandHandler(
             
             logger.info("用户登录成功: userId={}, email={}", user.getId().value, command.email)
             
-            // 8. 发布登录成功事件
-            val loginSuccessEvent = UserLoginSuccessEvent(
-                userId = user.getId(),
-                email = command.email,
-                ipAddress = command.ipAddress,
-                userAgent = command.userAgent,
-                loginAt = Instant.now()
-            )
-            eventBus.publish(loginSuccessEvent)
-            
-                response
-                
-            } catch (e: BusinessRuleException) {
+            response
+                 
+        } catch (e: BusinessRuleException) {
             // 记录登录失败日志
-            val failureLog = UserLoginLog.createFailure(
+            val failureLog = UserLoginLog.createFailureLog(
                 email = command.email,
                 ipAddress = command.ipAddress,
                 userAgent = command.userAgent,
-                failureReason = e.message ?: "登录失败"
+                loginResult = LoginResult.FAILED_INVALID_CREDENTIALS,
+                failureReason = e.message ?: "登录失败",
+                userId = null
             )
             userLoginLogRepository.save(failureLog)
             
             logger.warn("用户登录失败: email={}, error={}", command.email, e.message)
             
-            // 发布登录失败事件
-            val loginFailedEvent = UserLoginFailedEvent(
-                userId = null, // BusinessRuleException时可能找不到用户
-                email = command.email,
-                ipAddress = command.ipAddress,
-                userAgent = command.userAgent,
-                failureReason = e.message ?: "登录失败",
-                loginAt = Instant.now()
-            )
-            eventBus.publish(loginFailedEvent)
-            
             throw e
         } catch (e: Exception) {
             // 记录登录异常日志
-            val failureLog = UserLoginLog.createFailure(
+            val failureLog = UserLoginLog.createFailureLog(
                 email = command.email,
                 ipAddress = command.ipAddress,
                 userAgent = command.userAgent,
-                failureReason = "系统异常: ${e.message}"
+                loginResult = LoginResult.FAILED_INVALID_CREDENTIALS,
+                failureReason = "系统异常: ${e.message}",
+                userId = null
             )
             userLoginLogRepository.save(failureLog)
             
             logger.error("用户登录处理异常: email={}", command.email, e)
             
-            // 发布登录失败事件
-            val loginFailedEvent = UserLoginFailedEvent(
-                userId = null, // 系统异常时无法确定用户
-                email = command.email,
-                ipAddress = command.ipAddress,
-                userAgent = command.userAgent,
-                failureReason = "系统异常: ${e.message}",
-                loginAt = Instant.now()
-            )
-            eventBus.publish(loginFailedEvent)
-            
-                throw BusinessRuleException("登录处理失败")
-            }
-        } ?: throw BusinessRuleException("事务执行失败")
+            throw BusinessRuleException("登录处理失败")
+        }
     }
 }

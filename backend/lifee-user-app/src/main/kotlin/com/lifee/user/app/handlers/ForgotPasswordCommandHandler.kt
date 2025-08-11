@@ -25,8 +25,7 @@ class ForgotPasswordCommandHandler(
     override suspend fun handle(command: ForgotPasswordCommand) {
         logger.info("处理忘记密码命令: email={}", command.email)
         
-        transactionTemplate.execute { _ ->
-            val email = Email.of(command.email)
+        val email = Email.of(command.email)
         
         // 查找用户
         val user = userRepository.findByEmail(email)
@@ -59,7 +58,6 @@ class ForgotPasswordCommandHandler(
             resetToken = resetToken.value
         )
         
-            logger.info("密码重置令牌已生成并发送邮件: userId={}, email={}", user.getId().value, command.email)
-        }
+        logger.info("密码重置令牌已生成并发送邮件: userId={}, email={}", user.getId().value, command.email)
     }
 }

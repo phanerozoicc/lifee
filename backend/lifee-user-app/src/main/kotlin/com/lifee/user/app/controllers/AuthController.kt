@@ -53,7 +53,7 @@ class AuthController(
             userAgent = httpRequest.getHeader("User-Agent")
         )
         
-        val response = commandBus.send<LoginResponseDto>(command)
+        val response = commandBus.send<LoginCommand, LoginResponseDto>(command)
         
         return ResponseEntity.ok(response)
     }

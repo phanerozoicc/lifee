@@ -25,8 +25,7 @@ class UpdateUserProfileCommandHandler(
     override suspend fun handle(command: UpdateUserProfileCommand) {
         logger.info("处理更新用户档案命令: userId={}", command.userId)
         
-        transactionTemplate.execute { _ ->
-            // 查找用户
+        // 查找用户
         val userId = UserId.fromString(command.userId)
         val user = userRepository.findById(userId)
             ?: throw BusinessRuleException("用户不存在: ${command.userId}")
@@ -47,7 +46,6 @@ class UpdateUserProfileCommandHandler(
         eventBus.publishAll(savedUser.getDomainEvents())
         savedUser.clearDomainEvents()
         
-            logger.info("用户档案更新成功: userId={}", command.userId)
-        }
+        logger.info("用户档案更新成功: userId={}", command.userId)
     }
 }

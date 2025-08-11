@@ -5,6 +5,7 @@ import com.lifee.common.cqrs.events.EventBus
 import com.lifee.common.exceptions.BusinessRuleException
 import com.lifee.user.app.commands.RegisterUserCommand
 import com.lifee.user.domain.*
+import com.lifee.user.domain.events.UserRegisteredEvent
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import org.springframework.transaction.support.TransactionTemplate
@@ -25,8 +26,7 @@ class RegisterUserCommandHandler(
     override suspend fun handle(command: RegisterUserCommand) {
         logger.info("处理用户注册命令: {}", command.email)
         
-        transactionTemplate.execute { _ ->
-            // 验证邮箱是否已存在
+        // 验证邮箱是否已存在
         val email = Email.of(command.email)
         val emailExists = userRepository.existsByEmail(email)
         
@@ -71,7 +71,6 @@ class RegisterUserCommandHandler(
         eventBus.publishAll(domainEvents)
         savedUser.clearDomainEvents()
         
-            logger.info("用户注册成功: userId={}, email={}", savedUser.getId(), command.email)
-        }
+        logger.info("用户注册成功: userId={}, email={}", savedUser.getId(), command.email)
     }
 }

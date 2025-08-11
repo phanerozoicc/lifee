@@ -35,7 +35,7 @@ class JwtServiceImpl(
         val expiryDate = now.plus(jwtExpiration, ChronoUnit.SECONDS)
         
         return Jwts.builder()
-            .setSubject(user.getId().value)
+            .setSubject(user.getId().value.toString())
             .claim("email", user.getEmail())
             .claim("type", "access")
             .setIssuedAt(Date.from(now))
@@ -49,7 +49,7 @@ class JwtServiceImpl(
         val expiryDate = now.plus(refreshTokenExpiration, ChronoUnit.SECONDS)
         
         return Jwts.builder()
-            .setSubject(user.getId().value)
+            .setSubject(user.getId().value.toString())
             .claim("email", user.getEmail())
             .claim("type", "refresh")
             .setIssuedAt(Date.from(now))
@@ -60,7 +60,7 @@ class JwtServiceImpl(
     
     override fun validateToken(token: String): Boolean {
         return try {
-            Jwts.parserBuilder()
+            Jwts.parser()
                 .setSigningKey(secretKey)
                 .build()
                 .parseClaimsJws(token)
@@ -76,7 +76,7 @@ class JwtServiceImpl(
     
     override fun extractUserId(token: String): String? {
         return try {
-            val claims = Jwts.parserBuilder()
+            val claims = Jwts.parser()
                 .setSigningKey(secretKey)
                 .build()
                 .parseClaimsJws(token)
@@ -90,7 +90,7 @@ class JwtServiceImpl(
     
     override fun extractEmail(token: String): String? {
         return try {
-            val claims = Jwts.parserBuilder()
+            val claims = Jwts.parser()
                 .setSigningKey(secretKey)
                 .build()
                 .parseClaimsJws(token)
@@ -104,7 +104,7 @@ class JwtServiceImpl(
     
     override fun getTokenExpiration(token: String): Instant? {
         return try {
-            val claims = Jwts.parserBuilder()
+            val claims = Jwts.parser()
                 .setSigningKey(secretKey)
                 .build()
                 .parseClaimsJws(token)

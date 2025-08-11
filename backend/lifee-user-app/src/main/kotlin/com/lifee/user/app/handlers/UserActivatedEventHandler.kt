@@ -31,8 +31,8 @@ class UserActivatedEventHandler(
                     emailService.sendWelcomeEmail(
                         userId = user.getId(),
                         email = user.getEmail(),
-                        firstName = user.getProfile().getFirstName(),
-                        lastName = user.getProfile().getLastName()
+                        firstName = user.getProfile().firstName,
+                        lastName = user.getProfile().lastName
                     )
                     
                     logger.info("用户激活事件处理完成: userId={}", event.userId.value)

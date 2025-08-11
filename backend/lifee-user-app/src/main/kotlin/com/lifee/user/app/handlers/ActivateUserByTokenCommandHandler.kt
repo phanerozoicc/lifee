@@ -1,10 +1,10 @@
 package com.lifee.user.app.handlers
 
-import com.lifee.shared.cqrs.AsyncCommandHandler
+import com.lifee.common.cqrs.commands.AsyncCommandHandler
+import com.lifee.common.cqrs.events.EventBus
 import com.lifee.user.app.commands.ActivateUserByTokenCommand
-import com.lifee.user.domain.repositories.ActivationTokenRepository
-import com.lifee.user.domain.repositories.UserRepository
-import com.lifee.shared.cqrs.EventBus
+import com.lifee.user.domain.ActivationTokenRepository
+import com.lifee.user.domain.UserRepository
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
@@ -18,7 +18,7 @@ class ActivateUserByTokenCommandHandler(
     private val userRepository: UserRepository,
     private val activationTokenRepository: ActivationTokenRepository,
     private val eventBus: EventBus
-) : AsyncCommandHandler<ActivateUserByTokenCommand> {
+) : AsyncCommandHandler<ActivateUserByTokenCommand, Unit> {
     
     private val logger = LoggerFactory.getLogger(ActivateUserByTokenCommandHandler::class.java)
     
@@ -61,4 +61,6 @@ class ActivateUserByTokenCommandHandler(
         eventBus.publishAll(user.getDomainEvents())
         user.clearDomainEvents()
         
-        logger.info("用户激活成功: userId={}", user.id.
+        logger.info("用户激活成功: userId={}", user.getId().value)
+    }
+}

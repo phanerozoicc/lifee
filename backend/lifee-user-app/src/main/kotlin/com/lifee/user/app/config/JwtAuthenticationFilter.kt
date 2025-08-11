@@ -47,11 +47,11 @@ class JwtAuthenticationFilter(
                     // 设置到安全上下文
                     SecurityContextHolder.getContext().authentication = authentication
                     
-                    logger.debug("JWT认证成功: userId={}, email={}", userId, email)
+                    logger.debug("JWT认证成功: userId=${userId}, email=${email}")
                 }
             }
         } catch (e: Exception) {
-            logger.debug("JWT认证失败: {}", e.message)
+            logger.debug("JWT认证失败: ${e.message}", e)
             // 清除安全上下文
             SecurityContextHolder.clearContext()
         }
