@@ -5,51 +5,51 @@ import jakarta.validation.constraints.*
 import java.time.LocalDate
 import java.time.LocalDateTime
 
-/**
- * 通用API响应
- */
-data class ApiResponse<T>(
-    val success: Boolean,
-    val data: T? = null,
-    val message: String? = null,
-    val error: String? = null,
-    val details: String? = null,
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    val timestamp: LocalDateTime = LocalDateTime.now()
-) {
-    companion object {
-        fun <T> success(data: T, message: String? = null): ApiResponse<T> {
-            return ApiResponse(
-                success = true,
-                data = data,
-                message = message
-            )
-        }
-        
-        fun <T> error(error: String, details: String? = null): ApiResponse<T> {
-            return ApiResponse(
-                success = false,
-                error = error,
-                details = details
-            )
-        }
-    }
-}
+///**
+// * 通用API响应
+// */
+//data class ApiResponse<T>(
+//    val success: Boolean,
+//    val data: T? = null,
+//    val message: String? = null,
+//    val error: String? = null,
+//    val details: String? = null,
+//    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+//    val timestamp: LocalDateTime = LocalDateTime.now()
+//) {
+//    companion object {
+//        fun <T> success(data: T, message: String? = null): ApiResponse<T> {
+//            return ApiResponse(
+//                success = true,
+//                data = data,
+//                message = message
+//            )
+//        }
+//
+//        fun <T> error(error: String, details: String? = null): ApiResponse<T> {
+//            return ApiResponse(
+//                success = false,
+//                error = error,
+//                details = details
+//            )
+//        }
+//    }
+//}
 
-/**
- * 分页响应
- */
-data class PageResponse<T>(
-    val content: List<T>,
-    val page: Int,
-    val size: Int,
-    val totalElements: Long,
-    val totalPages: Int,
-    val first: Boolean = page == 0,
-    val last: Boolean = page == totalPages - 1,
-    val numberOfElements: Int = content.size
-)
-
+///**
+// * 分页响应
+// */
+//data class PageResponse<T>(
+//    val content: List<T>,
+//    val page: Int,
+//    val size: Int,
+//    val totalElements: Long,
+//    val totalPages: Int,
+//    val first: Boolean = page == 0,
+//    val last: Boolean = page == totalPages - 1,
+//    val numberOfElements: Int = content.size
+//)
+//
 /**
  * 用户注册请求
  */
@@ -96,6 +96,8 @@ data class LoginUserRequest(
     
     @field:NotBlank(message = "密码不能为空")
     val password: String,
+
+    val rememberMe: Boolean = false,
     
     val ipAddress: String? = null,
     val userAgent: String? = null

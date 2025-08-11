@@ -11,8 +11,8 @@ data class PageResponse<T>(
     val size: Int,
     val totalElements: Long,
     val totalPages: Int,
-    val first: Boolean,
-    val last: Boolean,
+    val first: Boolean = page == 0,
+    val last: Boolean = page == totalPages - 1,
     val hasNext: Boolean,
     val hasPrevious: Boolean
 ) {

@@ -1,7 +1,10 @@
 package com.github.phanerozoicc.user.interfaces.rest
 
 import com.github.phanerozoicc.base.command.CommandBus
+import com.github.phanerozoicc.base.response.ApiResponse
+import com.github.phanerozoicc.base.response.PageResponse
 import com.github.phanerozoicc.user.application.command.ChangePasswordCommand
+import com.github.phanerozoicc.user.application.command.LoginUserCommand
 import com.github.phanerozoicc.user.application.command.RegisterUserCommand
 import com.github.phanerozoicc.user.application.command.UpdateUserProfileCommand
 import com.github.phanerozoicc.user.application.service.UserApplicationService
@@ -47,10 +50,10 @@ class UserController(
     //  从网关获取用户IP和UserAgent
     @Operation(summary = "用户注册", description = "创建新用户账户")
     @PostMapping("/register")
-    fun register(@Valid @RequestBody registerRequest: RegisterUserRequest,
-                 @RequestHeader("X-User-Agent") userAgent: String,
-                 @RequestHeader("X-Forwarded-For") remoteIp: String
-                 ): ResponseEntity<ApiResponse<String>> {
+    suspend fun register(@Valid @RequestBody registerRequest: RegisterUserRequest,
+                         @RequestHeader("X-User-Agent") userAgent: String,
+                         @RequestHeader("X-Forwarded-For") remoteIp: String
+                 ): ResponseEntity<ApiResponse<Unit>> {
         val registerCommand = RegisterUserCommand(
             email = registerRequest.email,
             password = registerRequest.password,
@@ -62,15 +65,32 @@ class UserController(
             ipAddress = remoteIp,
             userAgent = userAgent
         )
+
         return try {
             // 事件都用同步处理(一般)
-            commandBus.sendAndWait(registerCommand)
-            ResponseEntity.ok(ApiResponse.success("用户注册成功"))
+            commandBus.sendAndWait<RegisterUserCommand>(registerCommand)
+            ResponseEntity.ok(ApiResponse.success("用户注册成功，请检查邮箱进行激活"))
         } catch (e: Exception) {
             ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error<String>("用户注册失败", e.message))
+                .body(ApiResponse.error("用户注册失败", e.message))
         }
     }
+
+
+    /**
+     * 激活用户
+     */
+    @PutMapping("/{userId}/activate")
+    @Operation(summary = "激活用户", description = "激活指定用户账户")
+    fun activateUser(@PathVariable userId: String): ResponseEntity<ApiResponse<String>> {
+        return try {
+            ResponseEntity.ok(ApiResponse.success("用户激活成功", "用户ID: $userId"))
+        } catch (e: Exception) {
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiResponse.error<String>("用户激活失败", e.message))
+        }
+    }
+
 
     /**
      * 用户登录
@@ -78,7 +98,11 @@ class UserController(
     @PostMapping("/login")
     fun login(@Valid @RequestBody request: LoginUserRequest): ResponseEntity<ApiResponse<String>> {
         return try {
-            // 简化实现，直接返回成功响应
+            val loginCommand = LoginUserCommand(
+                email = request.email,
+                password = request.password,
+                rememberMe = request.rememberMe,
+            )
             ResponseEntity.ok(ApiResponse.success("登录成功", "用户登录成功"))
         } catch (e: Exception) {
             ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -220,18 +244,6 @@ class UserController(
         }
     }
 
-    /**
-     * 激活用户
-     */
-    @PutMapping("/{userId}/activate")
-    fun activateUser(@PathVariable userId: String): ResponseEntity<ApiResponse<String>> {
-        return try {
-            ResponseEntity.ok(ApiResponse.success("用户激活成功", "用户ID: $userId"))
-        } catch (e: Exception) {
-            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error<String>("用户激活失败", e.message))
-        }
-    }
 
     /**
      * 停用用户
@@ -271,13 +283,6 @@ class UserController(
     private val userApplicationService: UserApplicationService
 ) {
 
-    @PostMapping("/register")
-    fun register(
-        @Valid @RequestBody command: RegisterUserCommand
-    ): ApiResponse<UserDto> {
-        val user = userApplicationService.registerUser(command)
-        return ApiResponse.success(UserDto.Companion.fromDomain(user))
-    }
 
     @PostMapping("/login")
     @Operation(summary = "用户登录", description = "用户身份验证")
@@ -340,15 +345,7 @@ class UserController(
         return ApiResponse.success("密码修改成功")
     }
 
-    @PutMapping("/{userId}/activate")
-    @Operation(summary = "激活用户", description = "激活指定用户账户")
-    @PreAuthorize("hasRole('ADMIN')")
-    fun activateUser(
-        @Parameter(description = "用户ID") @PathVariable userId: String
-    ): ApiResponse<String> {
-        userApplicationService.activateUser(userId)
-        return ApiResponse.success("用户激活成功")
-    }
+
 
     @PutMapping("/{userId}/deactivate")
     @Operation(summary = "停用用户", description = "停用指定用户账户")

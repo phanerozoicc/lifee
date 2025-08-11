@@ -5,15 +5,12 @@ import com.github.phanerozoicc.user.domain.model.Email
 import com.github.phanerozoicc.user.domain.model.UserId
 import com.github.phanerozoicc.user.domain.repository.UserRepository
 import org.springframework.stereotype.Service
-import java.time.LocalDateTime
 
 
 /**
  * 用户登录命令
  */
 data class LoginUserCommand(
-    override val commandId: String,
-    override val timestamp: LocalDateTime = LocalDateTime.now(),
     override val userId: UserId? = null,
     override val ipAddress: String? = null,
     override val userAgent: String? = null,

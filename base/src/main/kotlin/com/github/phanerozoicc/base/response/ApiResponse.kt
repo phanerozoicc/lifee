@@ -7,7 +7,7 @@ import java.time.LocalDateTime
  */
 data class ApiResponse<T>(
     val success: Boolean,
-    val message: String,
+    val message: String?,
     val data: T? = null,
     val error: String? = null,
     val timestamp: LocalDateTime = LocalDateTime.now()
@@ -25,14 +25,14 @@ data class ApiResponse<T>(
             return ApiResponse(
                 success = true,
                 message = message,
-                data = Unit
+//                data = Unit
             )
         }
         
-        fun <T> error(message: String, error: String? = null): ApiResponse<T> {
+        fun <T> error(error: String, details: String? = null): ApiResponse<T> {
             return ApiResponse(
                 success = false,
-                message = message,
+                message = details,
                 error = error
             )
         }
