@@ -4,7 +4,10 @@ import com.github.phanerozoicc.base.domain.DomainEvent
 
 interface CommandHandler<T:Command, R> {
     fun handle(command: T): R
-    fun canHandle(command: Command): Boolean
+}
+
+interface AsyncCommandHandler<T:Command, R> {
+    suspend fun handle(command: T): R
 }
 
 sealed class CommandResult<T> {

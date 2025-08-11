@@ -62,10 +62,14 @@ class UserController(
             ipAddress = remoteIp,
             userAgent = userAgent
         )
-        // 事件都用同步处理(一般)
-        commandBus.sendAndWait(registerCommand)
-        return ResponseEntity.status(HttpStatus.OK)
-            .body(mapOf<>("massage" to "用户注册成功，请检查邮箱进行激活 "));
+        return try {
+            // 事件都用同步处理(一般)
+            commandBus.sendAndWait(registerCommand)
+            ResponseEntity.ok(ApiResponse.success("用户注册成功"))
+        } catch (e: Exception) {
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiResponse.error<String>("用户注册失败", e.message))
+        }
     }
 
     /**

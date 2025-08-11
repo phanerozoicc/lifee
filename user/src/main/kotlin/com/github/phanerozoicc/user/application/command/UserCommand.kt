@@ -1,5 +1,6 @@
 package com.github.phanerozoicc.user.application.command
 
+import com.github.phanerozoicc.base.command.Command
 import com.github.phanerozoicc.user.domain.model.UserId
 import java.time.LocalDateTime
 import java.util.*
@@ -7,7 +8,7 @@ import java.util.*
 /**
  * 命令基类
  */
-abstract class UserCommand {
+abstract class UserCommand: Command {
     val commandId: String = UUID.randomUUID().toString()
     val timestamp: LocalDateTime = LocalDateTime.now()
     abstract val userId: UserId?
