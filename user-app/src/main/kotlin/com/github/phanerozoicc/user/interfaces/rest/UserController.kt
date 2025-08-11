@@ -1,5 +1,6 @@
 package com.github.phanerozoicc.user.interfaces.rest
 
+import com.github.phanerozoicc.base.command.CommandBus
 import com.github.phanerozoicc.user.application.command.ChangePasswordCommand
 import com.github.phanerozoicc.user.application.command.RegisterUserCommand
 import com.github.phanerozoicc.user.application.command.UpdateUserProfileCommand
@@ -35,7 +36,8 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api/v1/users")
 @CrossOrigin(origins = ["*"])
 class UserController(
-    private val userApplicationService: UserApplicationService
+    val commandBus: CommandBus,
+
 ) {
 
     /**
@@ -49,17 +51,21 @@ class UserController(
                  @RequestHeader("X-User-Agent") userAgent: String,
                  @RequestHeader("X-Forwarded-For") remoteIp: String
                  ): ResponseEntity<ApiResponse<String>> {
-
-        userApplicationService.register(registerRequest, remoteIp, userAgent)
-
-        return try {
-            // 简化实现，直接返回成功响应
-            ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success("注册成功", "用户注册成功"))
-        } catch (e: Exception) {
-            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error<String>("用户注册失败", e.message))
-        }
+        val registerCommand = RegisterUserCommand(
+            email = registerRequest.email,
+            password = registerRequest.password,
+            nickname = registerRequest.nickname,
+            firstName = registerRequest.firstName,
+            lastName = registerRequest.lastName,
+            acceptTerms = registerRequest.acceptTerms,
+            marketingConsent = registerRequest.marketingConsent,
+            ipAddress = remoteIp,
+            userAgent = userAgent
+        )
+        // 事件都用同步处理(一般)
+        commandBus.sendAndWait(registerCommand)
+        return ResponseEntity.status(HttpStatus.OK)
+            .body(mapOf<>("massage" to "用户注册成功，请检查邮箱进行激活 "));
     }
 
     /**
