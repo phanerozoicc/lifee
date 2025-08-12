@@ -11,10 +11,7 @@ import java.time.LocalDateTime
 class UserDomainService(
     private val userRepository: UserRepository
 ) {
-    private val emailSpecification = EmailSpecification()
-    private val passwordSpecification = PasswordSpecification()
-    private val userSpecification = UserSpecification()
-    
+
     /**
      * 验证用户注册信息的唯一性
      * @param email 邮箱地址
@@ -22,9 +19,7 @@ class UserDomainService(
      * @throws IllegalArgumentException 如果邮箱或昵称已存在
      */
     fun validateUserUniqueness(email: Email, nickname: String) {
-         // 验证邮箱策略
-         emailSpecification.validateEmail(email)
-         
+
          // 检查邮箱唯一性
          if (userRepository.existsByEmail(email)) {
              throw IllegalArgumentException("邮箱地址已被注册")

@@ -44,8 +44,8 @@ class User(
             ipAddress: String? = null,
             userAgent: String? = null
         ): User {
-            // 验证密码策略
-            passwordSpecification.validatePassword(plainPassword)
+//            // 验证密码策略
+//            passwordSpecification.validatePassword(plainPassword)
             
             val userId = UserId.generate()
             val password = Password.of(plainPassword)

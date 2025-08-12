@@ -1,8 +1,6 @@
 package com.github.phanerozoicc.base.command
 
-import com.github.phanerozoicc.base.domain.DomainEventPublisher
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import mu.KLogging
@@ -16,34 +14,34 @@ interface CommandBus {
 
 
 
-class SpringEventCommandBus(
-    private val commandHandlers: MutableMap<Command, CommandHandler<out Command, *>>,
-    private val eventPublisher: DomainEventPublisher,
-//    private val transitionTemplate: TransactionTemplate
-) : CommandBus {
-    override suspend fun <R> sendAndWait(command: Command): R {
-        val handler = commandHandlers[command]
-            ?: throw IllegalArgumentException("No handler found for command ${command.commandType}")
-        // 处理command
-        val result = (handler as CommandHandler<Command, R>).handle(command)
-        // 统一发送产生的领域事件
-        if (result is CommandResult.Success<*> && result.events.isNotEmpty()) {
-            result.events.forEach { eventPublisher.publish(it) }
-        }
-        return result
-    }
-
-    override suspend fun <R> send(command: Command): R {
-        // spring事务且考虑到命令大多为同步处理
-        // 仅作同步处理
-        return sendAndWait(command)
-    }
-
-    fun register(command: Command, handler: CommandHandler<out Command, *>) {
-        commandHandlers[command] = handler
-    }
-}
-
+//class SpringEventCommandBus(
+//    private val commandHandlers: MutableMap<Command, CommandHandler<out Command, *>>,
+//    private val eventPublisher: DomainEventPublisher,
+////    private val transitionTemplate: TransactionTemplate
+//) : CommandBus {
+//    override suspend fun <R> sendAndWait(command: Command): R {
+//        val handler = commandHandlers[command]
+//            ?: throw IllegalArgumentException("No handler found for command ${command.commandType}")
+//        // 处理command
+//        val result = (handler as CommandHandler<Command, R>).handle(command)
+//        // 统一发送产生的领域事件
+//        if (result is CommandResult.Success<*> && result.events.isNotEmpty()) {
+//            result.events.forEach { eventPublisher.publish(it) }
+//        }
+//        return result
+//    }
+//
+//    override suspend fun <R> send(command: Command): R {
+//        // spring事务且考虑到命令大多为同步处理
+//        // 仅作同步处理
+//        return sendAndWait(command)
+//    }
+//
+//    fun register(command: Command, handler: CommandHandler<out Command, *>) {
+//        commandHandlers[command] = handler
+//    }
+//}
+//
 
 
 class DefaultCommandBus(
