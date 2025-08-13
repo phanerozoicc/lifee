@@ -3,6 +3,7 @@ package com.lifee.user.domain
 import com.lifee.common.domain.AggregateRoot
 import com.lifee.common.exceptions.BusinessRuleException
 import com.lifee.user.domain.events.*
+import com.lifee.user.domain.services.UserIdGenerator
 import java.time.Instant
 
 /**
@@ -23,19 +24,19 @@ class User(
     
     companion object {
         /**
-         * 创建新用户
+         * 创建新用户（指定ID）
          */
         fun create(
+            id: UserId,
             email: Email,
             password: Password,
             firstName: String,
             lastName: String
         ): User {
-            val userId = UserId.generate()
             val profile = UserProfile.create(firstName, lastName)
-            
+
             val user = User(
-                id = userId,
+                id = id,
                 email = email,
                 password = password,
                 profile = profile
@@ -44,7 +45,7 @@ class User(
             // 发布用户注册事件
             user.addDomainEvent(
                 UserRegisteredEvent(
-                    userId = userId,
+                    userId = id,
                     email = email,
                     firstName = firstName,
                     lastName = lastName,

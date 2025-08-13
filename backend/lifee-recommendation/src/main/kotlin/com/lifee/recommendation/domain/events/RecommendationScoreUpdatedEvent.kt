@@ -1,7 +1,10 @@
 package com.lifee.recommendation.domain.events
 
 import com.lifee.common.domain.DomainEvent
-import com.lifee.recommendation.domain.valueobjects.*
+import com.lifee.recommendation.domain.valueobjects.RecommendationId
+import com.lifee.recommendation.domain.valueobjects.ContentId
+import com.lifee.recommendation.domain.valueobjects.RecommendationScore
+import com.lifee.user.domain.UserId
 import java.time.Instant
 
 /**

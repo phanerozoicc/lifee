@@ -5,7 +5,10 @@ import com.lifee.common.cqrs.queries.QueryBus
 import com.lifee.recommendation.app.application.commands.*
 import com.lifee.recommendation.app.application.dtos.*
 import com.lifee.recommendation.app.application.queries.*
-import com.lifee.recommendation.domain.valueobjects.*
+import com.lifee.recommendation.domain.valueobjects.RecommendationId
+import com.lifee.recommendation.domain.valueobjects.ContentId
+import com.lifee.recommendation.domain.valueobjects.RecommendationType
+import com.lifee.user.domain.UserId
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -30,7 +33,7 @@ class RecommendationController(
     ): ResponseEntity<Void> {
         val command = CreateRecommendationCommand(
             recommendationId = RecommendationId.generate(),
-            userId = UserId.from(request.userId)
+            userId = UserId(request.userId)
         )
         
         commandBus.send<CreateRecommendationCommand, Unit>(command)
@@ -60,7 +63,7 @@ class RecommendationController(
         @PathVariable userId: String
     ): ResponseEntity<RecommendationDetailDto> {
         val query = GetUserRecommendationQuery(
-            userId = UserId.from(userId)
+            userId = UserId(userId)
         )
         
         val result = queryBus.send<GetUserRecommendationQuery, RecommendationDetailDto>(query)
@@ -115,7 +118,7 @@ class RecommendationController(
         @RequestParam(defaultValue = "10") limit: Int
     ): ResponseEntity<List<RecommendationItemDto>> {
         val query = GetHighQualityRecommendationsQuery(
-            userId = UserId.from(userId),
+            userId = UserId(userId),
             limit = limit
         )
         
@@ -197,7 +200,7 @@ class RecommendationController(
         @PathVariable userId: String
     ): ResponseEntity<RecommendationStatsDto> {
         val query = GetRecommendationStatsQuery(
-            userId = UserId.from(userId)
+            userId = UserId(userId)
         )
         
         val result = queryBus.send<GetRecommendationStatsQuery, RecommendationStatsDto>(query)

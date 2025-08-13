@@ -28,7 +28,7 @@ class ActivationTokenRepositoryImpl(
     }
     
     override suspend fun findValidTokenByUserId(userId: UserId): ActivationToken? = withContext(Dispatchers.IO) {
-        jpaActivationTokenRepository.findValidTokenByUserId(userId.value.toString())?.toDomain()
+        jpaActivationTokenRepository.findValidTokenByUserId(userId.value)?.toDomain()
     }
     
     override suspend fun delete(token: ActivationToken) = withContext(Dispatchers.IO) {
@@ -37,7 +37,7 @@ class ActivationTokenRepositoryImpl(
     
     @Transactional
     override suspend fun deleteByUserId(userId: UserId) = withContext(Dispatchers.IO) {
-        jpaActivationTokenRepository.deleteByUserId(userId.value.toString())
+        jpaActivationTokenRepository.deleteByUserId(userId.value)
     }
     
     @Transactional

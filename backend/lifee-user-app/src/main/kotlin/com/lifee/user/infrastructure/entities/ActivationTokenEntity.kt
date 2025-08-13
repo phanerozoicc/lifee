@@ -15,7 +15,7 @@ data class ActivationTokenEntity(
     @Column(name = "token_value", length = 32)
     val tokenValue: String,
     
-    @Column(name = "user_id", nullable = false, length = 36)
+    @Column(name = "user_id", nullable = false, length = 9)
     val userId: String,
     
     @Column(name = "expires_at", nullable = false)
@@ -44,7 +44,7 @@ data class ActivationTokenEntity(
         fun fromDomain(token: ActivationToken): ActivationTokenEntity {
             return ActivationTokenEntity(
                 tokenValue = token.value,
-                userId = token.userId.value.toString(),
+                userId = token.userId.value,
                 expiresAt = token.expiresAt,
                 createdAt = token.createdAt
             )

@@ -21,17 +21,17 @@ interface SpringDataRecommendationRepository : JpaRepository<RecommendationJpaEn
     /**
      * 根据用户ID查找推荐
      */
-    fun findByUserId(userId: UUID): RecommendationJpaEntity?
+    fun findByUserId(userId: String): RecommendationJpaEntity?
     
     /**
      * 根据用户ID分页查询推荐
      */
-    fun findByUserId(userId: UUID, pageable: Pageable): Page<RecommendationJpaEntity>
+    fun findByUserId(userId: String, pageable: Pageable): Page<RecommendationJpaEntity>
     
     /**
      * 检查用户是否存在推荐
      */
-    fun existsByUserId(userId: UUID): Boolean
+    fun existsByUserId(userId: String): Boolean
     
     /**
      * 统计用户推荐数量

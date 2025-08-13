@@ -2,8 +2,10 @@ package com.lifee.recommendation.domain.aggregates
 
 import com.lifee.common.domain.AggregateRoot
 import com.lifee.recommendation.domain.entities.RecommendationItem
-import com.lifee.recommendation.domain.events.*
-import com.lifee.recommendation.domain.valueobjects.*
+import com.lifee.recommendation.domain.events.RecommendationCreatedEvent
+import com.lifee.recommendation.domain.valueobjects.RecommendationId
+import com.lifee.recommendation.domain.valueobjects.ContentId
+import com.lifee.user.domain.UserId
 import java.time.Instant
 
 /**

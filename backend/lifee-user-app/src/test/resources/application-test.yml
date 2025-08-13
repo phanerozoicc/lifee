@@ -1,0 +1,37 @@
+# 测试环境配置
+spring:
+  redis:
+    host: localhost
+    port: 6379
+    database: 15  # 使用不同的数据库避免与开发环境冲突
+    timeout: 2000ms
+    lettuce:
+      pool:
+        max-active: 8
+        max-idle: 8
+        min-idle: 0
+
+# Redisson配置
+redisson:
+  singleServerConfig:
+    address: "redis://localhost:6379"
+    database: 15
+    connectionPoolSize: 10
+    connectionMinimumIdleSize: 5
+    timeout: 3000
+    retryAttempts: 3
+    retryInterval: 1500
+
+# 日志配置
+logging:
+  level:
+    com.lifee: DEBUG
+    org.redisson: INFO
+    org.springframework.data.redis: DEBUG
+
+# 禁用不必要的自动配置
+spring:
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration
+      - org.springframework.boot.autoconfigure.mail.MailSenderAutoConfiguration

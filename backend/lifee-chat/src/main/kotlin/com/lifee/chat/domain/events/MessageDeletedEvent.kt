@@ -2,6 +2,7 @@ package com.lifee.chat.domain.events
 
 import com.lifee.common.domain.DomainEvent
 import com.lifee.chat.domain.valueobjects.*
+import com.lifee.user.domain.UserId
 import java.time.Instant
 
 /**

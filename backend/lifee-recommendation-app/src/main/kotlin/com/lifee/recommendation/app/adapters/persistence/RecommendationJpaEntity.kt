@@ -2,7 +2,11 @@ package com.lifee.recommendation.app.adapters.persistence
 
 import com.lifee.recommendation.domain.aggregates.Recommendation
 import com.lifee.recommendation.domain.entities.RecommendationItem
-import com.lifee.recommendation.domain.valueobjects.*
+import com.lifee.recommendation.domain.valueobjects.RecommendationId
+import com.lifee.recommendation.domain.valueobjects.ContentId
+import com.lifee.recommendation.domain.valueobjects.RecommendationType
+import com.lifee.recommendation.domain.valueobjects.RecommendationScore
+import com.lifee.user.domain.UserId
 import jakarta.persistence.*
 import java.time.LocalDateTime
 import java.util.*
@@ -17,8 +21,8 @@ data class RecommendationJpaEntity(
     @Column(name = "id", columnDefinition = "UUID")
     val id: UUID,
     
-    @Column(name = "user_id", nullable = false, columnDefinition = "UUID")
-    val userId: UUID,
+    @Column(name = "user_id", nullable = false, length = 9)
+    val userId: String,
     
     @Column(name = "created_at", nullable = false)
     val createdAt: LocalDateTime,

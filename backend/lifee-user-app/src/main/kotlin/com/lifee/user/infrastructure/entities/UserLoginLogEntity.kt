@@ -19,7 +19,7 @@ data class UserLoginLogEntity(
     @Column(name = "id")
     val id: String,
     
-    @Column(name = "user_id", nullable = false)
+    @Column(name = "user_id", nullable = false, length = 9)
     val userId: String,
     
     @Column(name = "email", nullable = false)
@@ -66,7 +66,7 @@ data class UserLoginLogEntity(
         fun fromDomain(loginLog: UserLoginLog): UserLoginLogEntity {
             return UserLoginLogEntity(
                 id = loginLog.getId().value,
-                userId = loginLog.getUserId().value.toString(),
+                userId = loginLog.getUserId().value,
                 email = loginLog.getEmail(),
                 ipAddress = loginLog.getIpAddress(),
                 userAgent = loginLog.getUserAgent(),

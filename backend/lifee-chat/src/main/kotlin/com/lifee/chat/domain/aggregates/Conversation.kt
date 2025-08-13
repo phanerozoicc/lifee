@@ -4,6 +4,7 @@ import com.lifee.common.domain.AggregateRoot
 import com.lifee.chat.domain.entities.Message
 import com.lifee.chat.domain.events.*
 import com.lifee.chat.domain.valueobjects.*
+import com.lifee.user.domain.UserId
 import java.time.Instant
 
 /**

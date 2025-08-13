@@ -24,7 +24,8 @@ class UserRepositoryImpl(
     }
     
     override suspend fun findById(id: UserId): User? = withContext(Dispatchers.IO) {
-        jpaUserRepository.findById(id.value.toString()).orElse(null)?.toDomain()
+        val idValue: String = id.value
+        jpaUserRepository.findById(idValue).orElse(null)?.toDomain()
     }
     
     override suspend fun findByEmail(email: Email): User? = withContext(Dispatchers.IO) {
@@ -52,10 +53,12 @@ class UserRepositoryImpl(
     }
     
     override suspend fun delete(user: User): Unit = withContext(Dispatchers.IO) {
-        jpaUserRepository.deleteById(user.getId().value.toString())
+        val idValue: String = user.getId().value
+        jpaUserRepository.deleteById(idValue)
     }
     
     override suspend fun deleteById(id: UserId): Unit = withContext(Dispatchers.IO) {
-        jpaUserRepository.deleteById(id.value.toString())
+        val idValue: String = id.value
+        jpaUserRepository.deleteById(idValue)
     }
 }

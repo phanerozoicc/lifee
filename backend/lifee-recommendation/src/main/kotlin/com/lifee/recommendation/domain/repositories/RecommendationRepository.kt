@@ -2,7 +2,7 @@ package com.lifee.recommendation.domain.repositories
 
 import com.lifee.recommendation.domain.aggregates.Recommendation
 import com.lifee.recommendation.domain.valueobjects.RecommendationId
-import com.lifee.common.valueobjects.UserId
+import com.lifee.user.domain.UserId
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 

@@ -13,4 +13,4 @@ data class UserLoginSuccessEvent(
     val ipAddress: String?,
     val userAgent: String?,
     val loginAt: Instant
-) : DomainEvent(userId.value
+) : DomainEvent(userId.value, Instant.now())

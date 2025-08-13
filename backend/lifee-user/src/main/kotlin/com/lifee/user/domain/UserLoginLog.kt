@@ -59,7 +59,7 @@ data class UserLoginLog(
         ): UserLoginLog {
             return UserLoginLog(
                 id = UserLoginLogId.generate(),
-                userId = userId ?: UserId.generate(), // 如果用户不存在，生成一个临时ID
+                userId = userId ?: UserId.fromString("U99999999"), // 如果用户不存在，使用临时ID
                 email = email,
                 ipAddress = ipAddress,
                 userAgent = userAgent,

@@ -18,7 +18,7 @@ import java.time.Instant
 @EntityListeners(AuditingEntityListener::class)
 data class UserEntity(
     @Id
-    @Column(name = "id", length = 36)
+    @Column(name = "id", length = 9)
     val id: String,
     
     @Column(name = "email", unique = true, nullable = false, length = 255)
@@ -96,7 +96,7 @@ data class UserEntity(
          */
         fun fromDomain(user: User): UserEntity {
             return UserEntity(
-                id = user.getId().value.toString(),
+                id = user.getId().value,
                 email = user.getEmail().value,
                 passwordHash = user.getPassword().hashedValue,
                 firstName = user.getProfile().firstName,

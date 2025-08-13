@@ -1,7 +1,10 @@
 package com.lifee.recommendation.app.application.commands
 
 import com.lifee.common.cqrs.commands.Command
-import com.lifee.recommendation.domain.valueobjects.*
+import com.lifee.recommendation.domain.valueobjects.RecommendationId
+import com.lifee.recommendation.domain.valueobjects.ContentId
+import com.lifee.recommendation.domain.valueobjects.RecommendationType
+import com.lifee.user.domain.UserId
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.DecimalMax

@@ -2,7 +2,7 @@ package com.lifee.chat.domain.repositories
 
 import com.lifee.chat.domain.aggregates.Conversation
 import com.lifee.chat.domain.valueobjects.ConversationId
-import com.lifee.common.valueobjects.UserId
+import com.lifee.user.domain.UserId
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 

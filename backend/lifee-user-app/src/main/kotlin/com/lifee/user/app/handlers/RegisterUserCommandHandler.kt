@@ -5,6 +5,7 @@ import com.lifee.common.cqrs.events.EventBus
 import com.lifee.common.exceptions.BusinessRuleException
 import com.lifee.user.app.commands.RegisterUserCommand
 import com.lifee.user.domain.*
+import com.lifee.user.domain.services.UserFactory
 import com.lifee.user.domain.events.UserRegisteredEvent
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
@@ -18,7 +19,8 @@ class RegisterUserCommandHandler(
     private val userRepository: UserRepository,
     private val activationTokenRepository: ActivationTokenRepository,
     private val eventBus: EventBus,
-    private val transactionTemplate: TransactionTemplate
+    private val transactionTemplate: TransactionTemplate,
+    private val userFactory: UserFactory
 ) : AsyncCommandHandler<RegisterUserCommand, Unit> {
     
     private val logger = LoggerFactory.getLogger(RegisterUserCommandHandler::class.java)
@@ -38,8 +40,8 @@ class RegisterUserCommandHandler(
         // 创建密码
         val password = Password.fromPlainText(command.password)
         
-        // 创建用户
-        val user = User.create(
+        // 创建用户（ID自动生成）
+        val user = userFactory.createUser(
             email = email,
             password = password,
             firstName = command.firstName,

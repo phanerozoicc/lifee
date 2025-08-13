@@ -1,8 +1,7 @@
 # TODO:
 
-- [x] kafka-subscription-1: 完善Kafka事件总线，添加KafkaListener配置和事件反序列化功能 (priority: High)
-- [x] event-refactor-1: 重构UserRegisteredEventHandler，移除UserInitializationService的直接调用 (priority: High)
-- [x] config-event-handler: 在config模块创建UserRegisteredEvent订阅处理器，实现配置初始化 (priority: High)
-- [x] recommendation-event-handler: 在recommendation模块创建UserRegisteredEvent订阅处理器，实现推荐初始化 (priority: High)
-- [x] knowledge-event-handler: 在knowledge模块创建UserRegisteredEvent订阅处理器，实现知识库初始化 (priority: High)
-- [x] event-retry-mechanism: 添加事件重试机制和错误处理，确保事件处理的幂等性 (priority: Medium)
+- [x] user-factory-1: 分析当前User.create()方法的架构问题和用户需求 (priority: High)
+- [x] user-factory-2: 设计UserFactory领域服务，封装用户创建和ID生成逻辑 (priority: High)
+- [x] user-factory-3: 实现UserFactory类，包含createUser方法 (priority: High)
+- [x] user-factory-4: 修改RegisterUserCommandHandler使用UserFactory (priority: Medium)
+- [x] user-factory-5: 测试新的用户创建流程确保功能正常 (priority: Medium)

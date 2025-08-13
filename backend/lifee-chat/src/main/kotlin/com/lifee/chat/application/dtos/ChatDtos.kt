@@ -12,7 +12,7 @@ import java.util.*
 data class ConversationDto(
     val id: UUID,
     val title: String,
-    val userId: UUID,
+    val userId: String,
     val messageCount: Int,
     val lastMessage: MessageDto?,
     val createdAt: Instant,
@@ -41,7 +41,7 @@ data class MessageDto(
     val content: String,
     val type: MessageType,
     val conversationId: UUID,
-    val userId: UUID,
+    val userId: String,
     val createdAt: Instant,
     val updatedAt: Instant
 ) {
@@ -66,7 +66,7 @@ data class MessageDto(
 data class ConversationDetailDto(
     val id: UUID,
     val title: String,
-    val userId: UUID,
+    val userId: String,
     val messages: List<MessageDto>,
     val createdAt: Instant,
     val updatedAt: Instant

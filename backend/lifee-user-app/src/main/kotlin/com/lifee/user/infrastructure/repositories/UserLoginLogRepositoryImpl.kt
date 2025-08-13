@@ -36,7 +36,7 @@ class UserLoginLogRepositoryImpl(
         offset: Int
     ): List<UserLoginLog> = withContext(Dispatchers.IO) {
         val pageable = PageRequest.of(offset / limit, limit)
-        jpaRepository.findByUserIdOrderByCreatedAtDesc(userId.value.toString(), pageable)
+        jpaRepository.findByUserIdOrderByCreatedAtDesc(userId.value, pageable)
             .map { it.toDomain() }
     }
     

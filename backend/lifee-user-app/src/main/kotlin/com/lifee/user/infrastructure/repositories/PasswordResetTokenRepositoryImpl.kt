@@ -32,7 +32,7 @@ class PasswordResetTokenRepositoryImpl(
     
     override suspend fun findValidTokenByUserId(userId: UserId): PasswordResetToken? = withContext(Dispatchers.IO) {
         val now = LocalDateTime.now(ZoneOffset.UTC)
-        jpaRepository.findValidTokenByUserId(userId.value.toString(), now)?.toDomain()
+        jpaRepository.findValidTokenByUserId(userId.value, now)?.toDomain()
     }
     
     @Transactional
@@ -42,7 +42,7 @@ class PasswordResetTokenRepositoryImpl(
     
     @Transactional
     override suspend fun deleteAllByUserId(userId: UserId) = withContext(Dispatchers.IO) {
-        jpaRepository.deleteAllByUserId(userId.value.toString())
+        jpaRepository.deleteAllByUserId(userId.value)
     }
     
     @Transactional
@@ -53,6 +53,6 @@ class PasswordResetTokenRepositoryImpl(
     
     override suspend fun hasValidTokenForUser(userId: UserId): Boolean = withContext(Dispatchers.IO) {
         val now = LocalDateTime.now(ZoneOffset.UTC)
-        jpaRepository.hasValidTokenForUser(userId.value.toString(), now)
+        jpaRepository.hasValidTokenForUser(userId.value, now)
     }
 }

@@ -53,6 +53,20 @@ spring:
           max-idle: 8
           min-idle: 0
           max-wait: -1ms
+
+# Redisson Configuration
+redisson:
+  config: |
+    singleServerConfig:
+      address: "redis://localhost:6379"
+      database: 0
+      connectionPoolSize: 64
+      connectionMinimumIdleSize: 10
+      idleConnectionTimeout: 10000
+      connectTimeout: 10000
+      timeout: 3000
+      retryAttempts: 3
+      retryInterval: 1500
   
   # Kafka Configuration
   kafka:
@@ -194,6 +208,12 @@ spring:
   kafka:
     bootstrap-servers: localhost:9092
 
+redisson:
+  config: |
+    singleServerConfig:
+      address: "redis://localhost:6379"
+      database: 1
+
 logging:
   level:
     com.lifee: DEBUG
@@ -229,6 +249,13 @@ spring:
   security:
     jwt:
       secret: ${JWT_SECRET:lifee-jwt-secret-key-change-in-production}
+
+redisson:
+  config: |
+    singleServerConfig:
+      address: "redis://${REDIS_HOST:localhost}:${REDIS_PORT:6379}"
+      password: "${REDIS_PASSWORD:}"
+      database: ${REDIS_DATABASE:0}
 
 logging:
   level:

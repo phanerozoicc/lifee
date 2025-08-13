@@ -3,7 +3,7 @@ package com.lifee.chat.domain.events
 import com.lifee.common.cqrs.events.DomainEvent
 import com.lifee.chat.domain.valueobjects.ConversationId
 import com.lifee.chat.domain.valueobjects.ConversationTitle
-import com.lifee.chat.domain.valueobjects.UserId
+import com.lifee.user.domain.UserId
 import java.time.Instant
 
 /**

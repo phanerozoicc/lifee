@@ -1,7 +1,9 @@
 package com.lifee.recommendation.app.application.queries
 
 import com.lifee.common.cqrs.queries.Query
-import com.lifee.recommendation.domain.valueobjects.*
+import com.lifee.recommendation.domain.valueobjects.RecommendationId
+import com.lifee.recommendation.domain.valueobjects.RecommendationType
+import com.lifee.user.domain.UserId
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Min
 
