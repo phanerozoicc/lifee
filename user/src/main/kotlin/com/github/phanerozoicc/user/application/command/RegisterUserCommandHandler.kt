@@ -4,6 +4,7 @@ import com.github.phanerozoicc.base.command.CommandHandler
 import com.github.phanerozoicc.base.domain.DomainEventPublisher
 import com.github.phanerozoicc.user.domain.model.*
 import com.github.phanerozoicc.user.domain.repository.UserRepository
+import com.github.phanerozoicc.user.domain.service.ActivationToken
 import com.github.phanerozoicc.user.domain.service.UserDomainService
 import org.springframework.stereotype.Service
 
@@ -47,6 +48,7 @@ class RegisterUserCommandHandler(
         // 验证唯一性
         userDomainService.validateUserUniqueness(email, command.nickname)
 
+
         // 创建用户
         val user = User.register(
             email = email,
@@ -67,6 +69,12 @@ class RegisterUserCommandHandler(
 
         // 保存用户
         val savedUser = userRepository.save(user)
+
+        // 生成验证token
+        // 生成激活令牌
+        val activationToken = ActivationToken.generate(savedUser.getId())
+        activationTokenRepository.save(activationToken)
+
 
         // 发布领域事件
         savedUser.getDomainEvents().forEach { event ->

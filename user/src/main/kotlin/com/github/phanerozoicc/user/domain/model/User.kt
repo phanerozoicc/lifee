@@ -2,6 +2,7 @@ package com.github.phanerozoicc.user.domain.model
 
 import com.github.phanerozoicc.base.domain.AggregateRoot
 import com.github.phanerozoicc.user.domain.event.*
+import com.github.phanerozoicc.user.domain.service.UserIdGenerate
 import java.time.Duration
 import java.time.LocalDateTime
 
@@ -47,7 +48,7 @@ class User(
 //            // 验证密码策略
 //            passwordSpecification.validatePassword(plainPassword)
             
-            val userId = UserId.generate()
+            val userId = UserIdGenerate.generateNext()
             val password = Password.of(plainPassword)
             val profile = UserProfile.of(nickname)
             val status = UserStatus.pending("等待邮箱验证")
