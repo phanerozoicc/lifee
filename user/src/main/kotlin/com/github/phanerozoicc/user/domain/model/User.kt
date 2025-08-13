@@ -2,7 +2,6 @@ package com.github.phanerozoicc.user.domain.model
 
 import com.github.phanerozoicc.base.domain.AggregateRoot
 import com.github.phanerozoicc.user.domain.event.*
-import com.github.phanerozoicc.user.domain.service.UserIdGenerate
 import java.time.Duration
 import java.time.LocalDateTime
 
@@ -28,54 +27,9 @@ class User(
     companion object {
         private val passwordSpecification = PasswordSpecification()
         private val userSpecification = UserSpecification()
-        
-        /**
-         * 创建新用户（注册）
-         * @param email 邮箱地址
-         * @param plainPassword 明文密码
-         * @param nickname 昵称
-         * @param ipAddress 注册IP地址
-         * @param userAgent 用户代理
-         * @return 新用户实例
-         */
-        fun register(
-            email: Email,
-            plainPassword: String,
-            nickname: String,
-            ipAddress: String? = null,
-            userAgent: String? = null
-        ): User {
-//            // 验证密码策略
-//            passwordSpecification.validatePassword(plainPassword)
-            
-            val userId = UserIdGenerate.generateNext()
-            val password = Password.of(plainPassword)
-            val profile = UserProfile.of(nickname)
-            val status = UserStatus.pending("等待邮箱验证")
-            
-            val user = User(
-                id = userId,
-                email = email,
-                password = password,
-                profile = profile,
-                status = status
-            )
-            
-            // 发布用户注册事件
-            user.addDomainEvent(
-                UserRegistered(
-                    userId = userId,
-                    email = email,
-                    nickname = nickname,
-                    ipAddress = ipAddress,
-                    userAgent = userAgent
-                )
-            )
-            
-            return user
-        }
+
     }
-    
+
     /**
      * 用户登录
      * @param plainPassword 明文密码
@@ -206,7 +160,7 @@ class User(
         require(password.matches(oldPassword)) { "原密码不正确" }
         
         // 检查修改频率限制
-        require(userSpecification.canChangePassword(password.getCreatedAt())) {
+        require(userSpecification.canChangePassword(password.createdAt)) {
             "密码修改过于频繁，请稍后再试"
         }
         

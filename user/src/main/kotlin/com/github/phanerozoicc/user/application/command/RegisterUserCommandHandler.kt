@@ -2,9 +2,12 @@ package com.github.phanerozoicc.user.application.command
 
 import com.github.phanerozoicc.base.command.CommandHandler
 import com.github.phanerozoicc.base.domain.DomainEventPublisher
+import com.github.phanerozoicc.user.domain.event.UserRegistered
+import com.github.phanerozoicc.user.domain.factory.UserFactory
 import com.github.phanerozoicc.user.domain.model.*
 import com.github.phanerozoicc.user.domain.repository.UserRepository
-import com.github.phanerozoicc.user.domain.service.ActivationToken
+import com.github.phanerozoicc.user.domain.model.ActivationToken
+import com.github.phanerozoicc.user.domain.repository.ActivationTokenRepository
 import com.github.phanerozoicc.user.domain.service.UserDomainService
 import org.springframework.stereotype.Service
 
@@ -30,7 +33,9 @@ data class RegisterUserCommand(
  */
 @Service
 class RegisterUserCommandHandler(
+    private val userFactory: UserFactory,
     private val userRepository: UserRepository,
+    private val activationTokenRepository: ActivationTokenRepository,
     private val userDomainService: UserDomainService,
     private val domainEventPublisher: DomainEventPublisher
 ) : CommandHandler<RegisterUserCommand, Unit> {
@@ -50,7 +55,7 @@ class RegisterUserCommandHandler(
 
 
         // 创建用户
-        val user = User.register(
+        val user = userFactory.create(
             email = email,
             plainPassword = command.password,
             nickname = command.nickname,
@@ -70,15 +75,21 @@ class RegisterUserCommandHandler(
         // 保存用户
         val savedUser = userRepository.save(user)
 
-        // 生成验证token
         // 生成激活令牌
-        val activationToken = ActivationToken.generate(savedUser.getId())
+        val activationToken = ActivationToken.generate(user.id)
         activationTokenRepository.save(activationToken)
-
 
         // 发布领域事件
         savedUser.getDomainEvents().forEach { event ->
-            domainEventPublisher.publish(event)
+            domainEventPublisher.publish(
+                if(event is UserRegistered) {
+                    event.copy(
+                        activationToken = activationToken.value
+                    )
+                } else {
+                    event
+                }
+            )
         }
         savedUser.clearDomainEvents()
     }

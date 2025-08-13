@@ -1,5 +1,6 @@
 package com.github.phanerozoicc.user.infrastructure.persistence.mapper
 
+import com.github.phanerozoicc.user.domain.factory.UserFactory
 import com.github.phanerozoicc.user.domain.model.*
 import com.github.phanerozoicc.user.infrastructure.persistence.entity.UserEntity
 import java.time.LocalDateTime
@@ -14,7 +15,7 @@ object UserEntityMapper {
      */
     fun toDomain(entity: UserEntity): User {
         // 简化实现，使用User.register方法创建用户
-        return User.register(
+        return User(
             email = Email(entity.email),
             plainPassword = "password",
             nickname = entity.nickname

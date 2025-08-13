@@ -192,28 +192,5 @@ class EmailSpecification {
         return ALLOWED_DOMAINS.contains(domain) || isCorporateEmail(email)
     }
 
-    /**
-     * 获取邮箱风险等级
-     */
-    fun getEmailRiskLevel(email: Email): EmailRiskLevel {
-        val domain = email.getDomain().lowercase()
-
-        return when {
-            BLOCKED_DOMAINS.contains(domain) -> EmailRiskLevel.HIGH
-            ALLOWED_DOMAINS.contains(domain) -> EmailRiskLevel.LOW
-            isCorporateEmail(email) -> EmailRiskLevel.LOW
-            else -> EmailRiskLevel.MEDIUM
-        }
-    }
 }
 
-
-
-/**
- * 邮箱风险等级枚举
- */
-enum class EmailRiskLevel {
-    LOW,     // 低风险
-    MEDIUM,  // 中等风险
-    HIGH     // 高风险
-}

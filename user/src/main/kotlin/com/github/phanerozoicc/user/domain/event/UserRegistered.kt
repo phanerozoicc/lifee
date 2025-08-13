@@ -18,6 +18,7 @@ data class UserRegistered(
     val registrationTime: LocalDateTime = LocalDateTime.now(),
     val ipAddress: String? = null,
     val userAgent: String? = null,
+    val activationToken: String? = null,
     override val eventId: String = UUID.randomUUID().toString(),
     override val occurredOn: Instant = Instant.now(),
     override val eventType: String = "UserRegistered"

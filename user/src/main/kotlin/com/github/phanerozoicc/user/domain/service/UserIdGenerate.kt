@@ -2,7 +2,7 @@ package com.github.phanerozoicc.user.domain.service
 
 import com.github.phanerozoicc.user.domain.model.UserId
 
-internal interface UserIdGenerate {
+interface UserIdGenerate {
     /*·
      * 生成新的UserId
      */

@@ -11,14 +11,14 @@ import java.util.*
  * 封装密码的加密、验证和安全策略
  */
 data class Password(
-    private val hashedValue: String,
-    private val salt: String,
-    private val algorithm: String = "BCrypt",
-    private val createdAt: LocalDateTime = LocalDateTime.now()
+    val hashedValue: String,
+    val salt: String,
+    val createdAt: LocalDateTime = LocalDateTime.now()
 ) {
     companion object {
         private val passwordEncoder = BCryptPasswordEncoder()
         private val secureRandom = SecureRandom()
+        private val passwordSpecification = PasswordSpecification()
         
         // 密码策略常量
         private const val MIN_LENGTH = 8
@@ -43,7 +43,7 @@ data class Password(
          * @throws IllegalArgumentException 如果密码不符合策略要求
          */
         fun of(plainText: String): Password {
-            validateStrength(plainText)
+            passwordSpecification.validatePassword(plainText)
             val salt = generateSalt()
             val hashedValue = hashPassword(plainText, salt)
             return Password(hashedValue, salt)
@@ -65,36 +65,10 @@ data class Password(
         ): Password {
             require(hashedValue.isNotBlank()) { "哈希值不能为空" }
             require(salt.isNotBlank()) { "盐值不能为空" }
-            return Password(hashedValue, salt, algorithm, createdAt)
+            return Password(hashedValue, salt, createdAt)
         }
         
-        /**
-         * 验证密码强度
-         */
-        private fun validateStrength(plainText: String) {
-            require(plainText.isNotBlank()) { "密码不能为空" }
-            require(plainText.length >= MIN_LENGTH) { "密码长度不能少于${MIN_LENGTH}个字符" }
-            require(plainText.length <= MAX_LENGTH) { "密码长度不能超过${MAX_LENGTH}个字符" }
-            
-            if (REQUIRE_UPPERCASE) {
-                require(plainText.any { it.isUpperCase() }) { "密码必须包含至少一个大写字母" }
-            }
-            
-            if (REQUIRE_LOWERCASE) {
-                require(plainText.any { it.isLowerCase() }) { "密码必须包含至少一个小写字母" }
-            }
-            
-            if (REQUIRE_DIGITS) {
-                require(plainText.any { it.isDigit() }) { "密码必须包含至少一个数字" }
-            }
-            
-            if (REQUIRE_SPECIAL_CHARS) {
-                require(plainText.any { SPECIAL_CHARS.contains(it) }) { 
-                    "密码必须包含至少一个特殊字符: ${SPECIAL_CHARS.joinToString("")}"
-                }
-            }
-        }
-        
+
         /**
          * 生成盐值
          */
@@ -140,19 +114,9 @@ data class Password(
      * @return 是否需要重新哈希
      */
     fun needsRehash(): Boolean {
-        // 如果算法不是当前推荐的算法，则需要重新哈希
-        return algorithm != "BCrypt"
+        return passwordEncoder.upgradeEncoding(hashedValue)
+                && getStrength() != PasswordStrength.STRONG
     }
-    
-    /**
-     * 获取哈希值
-     */
-    fun getHashedValue(): String = hashedValue
-    
-    /**
-     * 获取盐值
-     */
-    fun getSalt(): String = salt
     
     /**
      * 获取密码强度等级
@@ -166,20 +130,11 @@ data class Password(
         }
     }
     
-    /**
-     * 获取创建时间
-     */
-    fun getCreatedAt(): LocalDateTime = createdAt
-    
-    /**
-     * 获取算法
-     */
-    fun getAlgorithm(): String = algorithm
-    
+
+
     init {
         require(hashedValue.isNotBlank()) { "哈希值不能为空" }
         require(salt.isNotBlank()) { "盐值不能为空" }
-        require(algorithm.isNotBlank()) { "算法不能为空" }
     }
 }
 

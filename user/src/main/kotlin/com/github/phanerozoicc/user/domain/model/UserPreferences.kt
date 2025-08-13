@@ -8,11 +8,10 @@ import java.util.*
  * 封装用户的个性化配置
  */
 data class UserPreferences(
-    private val language: Locale = Locale.SIMPLIFIED_CHINESE,
-    private val timezone: ZoneId = ZoneId.of("Asia/Shanghai"),
-    private val theme: Theme = Theme.LIGHT,
-    private val dateFormat: DateFormat = DateFormat.YYYY_MM_DD,
-    private val notificationSettings: NotificationSettings = NotificationSettings.default()
+    val language: Locale = Locale.SIMPLIFIED_CHINESE,
+    val timezone: ZoneId = ZoneId.of("Asia/Shanghai"),
+    val theme: Theme = Theme.AUTO,
+    val notificationSettings: NotificationSettings = NotificationSettings.default()
 ) {
     companion object {
         /**
@@ -29,10 +28,9 @@ data class UserPreferences(
             language: Locale = Locale.SIMPLIFIED_CHINESE,
             timezone: ZoneId = ZoneId.of("Asia/Shanghai"),
             theme: Theme = Theme.LIGHT,
-            dateFormat: DateFormat = DateFormat.YYYY_MM_DD,
             notificationSettings: NotificationSettings = NotificationSettings.default()
         ): UserPreferences {
-            return UserPreferences(language, timezone, theme, dateFormat, notificationSettings)
+            return UserPreferences(language, timezone, theme, notificationSettings)
         }
 
         /**
@@ -44,11 +42,10 @@ data class UserPreferences(
         ): Set<String> {
             val changes = mutableSetOf<String>()
 
-            if (oldPreferences.getLanguage() != newPreferences.getLanguage()) changes.add("language")
-            if (oldPreferences.getTimezone() != newPreferences.getTimezone()) changes.add("timezone")
-            if (oldPreferences.getTheme() != newPreferences.getTheme()) changes.add("theme")
-            if (oldPreferences.getDateFormat() != newPreferences.getDateFormat()) changes.add("dateFormat")
-            if (oldPreferences.getNotificationSettings() != newPreferences.getNotificationSettings()) {
+            if (oldPreferences.language != newPreferences.language) changes.add("language")
+            if (oldPreferences.timezone.id != newPreferences.timezone.id) changes.add("timezone")
+            if (oldPreferences.theme != newPreferences.theme) changes.add("theme")
+            if (oldPreferences.notificationSettings != newPreferences.notificationSettings) {
                 changes.add("notificationSettings")
             }
             return changes
@@ -77,43 +74,11 @@ data class UserPreferences(
     }
     
     /**
-     * 更新日期格式设置
-     */
-    fun withDateFormat(dateFormat: DateFormat): UserPreferences {
-        return copy(dateFormat = dateFormat)
-    }
-    
-    /**
      * 更新通知设置
      */
     fun withNotificationSettings(notificationSettings: NotificationSettings): UserPreferences {
         return copy(notificationSettings = notificationSettings)
     }
-    
-    /**
-     * 获取语言设置
-     */
-    fun getLanguage(): Locale = language
-    
-    /**
-     * 获取时区设置
-     */
-    fun getTimezone(): ZoneId = timezone
-    
-    /**
-     * 获取主题设置
-     */
-    fun getTheme(): Theme = theme
-    
-    /**
-     * 获取日期格式设置
-     */
-    fun getDateFormat(): DateFormat = dateFormat
-    
-    /**
-     * 获取通知设置
-     */
-    fun getNotificationSettings(): NotificationSettings = notificationSettings
     
     /**
      * 获取语言代码
@@ -161,16 +126,6 @@ enum class Theme(val displayName: String, val cssClass: String) {
     AUTO("自动主题", "theme-auto")
 }
 
-/**
- * 日期格式枚举
- */
-enum class DateFormat(val displayName: String, val pattern: String) {
-    YYYY_MM_DD("年-月-日", "yyyy-MM-dd"),
-    MM_DD_YYYY("月/日/年", "MM/dd/yyyy"),
-    DD_MM_YYYY("日/月/年", "dd/MM/yyyy"),
-    YYYY_MM_DD_HH_MM("年-月-日 时:分", "yyyy-MM-dd HH:mm"),
-    MM_DD_YYYY_HH_MM("月/日/年 时:分", "MM/dd/yyyy HH:mm")
-}
 
 /**
  * 通知设置值对象

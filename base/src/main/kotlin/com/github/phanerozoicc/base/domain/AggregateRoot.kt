@@ -10,7 +10,7 @@ abstract class AggregateRoot<T>(
 
     private val domainEvents = mutableListOf<DomainEvent>()
 
-    protected fun addDomainEvent(event: DomainEvent) {
+    fun addDomainEvent(event: DomainEvent) {
         domainEvents.add(event)
     }
 

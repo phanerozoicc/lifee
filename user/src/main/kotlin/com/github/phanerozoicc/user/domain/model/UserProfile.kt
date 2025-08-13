@@ -9,17 +9,17 @@ import java.time.Period
  * 封装用户的个人信息
  */
 data class UserProfile(
-    private val nickname: String,
-    private val firstName: String? = null,
-    private val lastName: String? = null,
-    private val avatar: String? = null,
-    private val bio: String? = null,
-    private val birthDate: LocalDate? = null,
-    private val gender: Gender? = null,
-    private val phoneNumber: String? = null,
-    private val address: String? = null,
-    private val website: String? = null,
-    private val updatedAt: LocalDateTime = LocalDateTime.now()
+    val nickname: String,
+    val firstName: String? = null,
+    val lastName: String? = null,
+    val avatar: String? = null,
+    val bio: String? = null,
+    val birthDate: LocalDate? = null,
+    val gender: Gender? = null,
+    val phoneNumber: String? = null,
+    val address: String? = null,
+    val website: String? = null,
+    val updatedAt: LocalDateTime = LocalDateTime.now()
 ) {
     companion object {
         // 昵称长度限制
@@ -176,16 +176,16 @@ data class UserProfile(
         fun detectProfileChanges(oldProfile: UserProfile, newProfile: UserProfile): Set<String> {
             val changes = mutableSetOf<String>()
 
-            if (oldProfile.getNickname() != newProfile.getNickname()) changes.add("nickname")
-            if (oldProfile.getFirstName() != newProfile.getFirstName()) changes.add("firstName")
-            if (oldProfile.getLastName() != newProfile.getLastName()) changes.add("lastName")
-            if (oldProfile.getAvatar() != newProfile.getAvatar()) changes.add("avatar")
-            if (oldProfile.getBio() != newProfile.getBio()) changes.add("bio")
-            if (oldProfile.getBirthDate() != newProfile.getBirthDate()) changes.add("birthDate")
-            if (oldProfile.getGender() != newProfile.getGender()) changes.add("gender")
-            if (oldProfile.getPhoneNumber() != newProfile.getPhoneNumber()) changes.add("phoneNumber")
-            if (oldProfile.getAddress() != newProfile.getAddress()) changes.add("address")
-            if (oldProfile.getWebsite() != newProfile.getWebsite()) changes.add("website")
+            if (oldProfile.nickname != newProfile.nickname) changes.add("nickname")
+            if (oldProfile.firstName != newProfile.firstName) changes.add("firstName")
+            if (oldProfile.lastName != newProfile.lastName) changes.add("lastName")
+            if (oldProfile.avatar != newProfile.avatar) changes.add("avatar")
+            if (oldProfile.bio != newProfile.bio) changes.add("bio")
+            if (oldProfile.birthDate?.isEqual(newProfile.birthDate) == false) changes.add("birthDate")
+            if (oldProfile.gender != newProfile.gender) changes.add("gender")
+            if (oldProfile.phoneNumber != newProfile.phoneNumber) changes.add("phoneNumber")
+            if (oldProfile.address != newProfile.address) changes.add("address")
+            if (oldProfile.website != newProfile.website) changes.add("website")
 
             return changes
         }
@@ -345,19 +345,7 @@ data class UserProfile(
         return (completed * 100) / total
     }
     
-    // Getter方法
-    fun getNickname(): String = nickname
-    fun getFirstName(): String? = firstName
-    fun getLastName(): String? = lastName
-    fun getAvatar(): String? = avatar
-    fun getBio(): String? = bio
-    fun getBirthDate(): LocalDate? = birthDate
-    fun getGender(): Gender? = gender
-    fun getPhoneNumber(): String? = phoneNumber
-    fun getAddress(): String? = address
-    fun getWebsite(): String? = website
-    fun getUpdatedAt(): LocalDateTime = updatedAt
-    
+
     init {
         validateNickname(nickname)
         firstName?.let { validateName(it, "名字") }
