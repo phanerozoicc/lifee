@@ -79,11 +79,7 @@ data class Email(
         }
     }
     
-    /**
-     * 获取邮箱值
-     */
-    fun getValue(): String = value
-    
+
     /**
      * 获取本地部分（@符号前的部分）
      */
@@ -169,7 +165,7 @@ class EmailSpecification {
         }
 
         // 长度检查
-        require(email.getValue().length <= MAX_LENGTH) {
+        require(email.value.length <= MAX_LENGTH) {
             "邮箱地址长度不能超过${MAX_LENGTH}个字符"
         }
     }

@@ -1,7 +1,7 @@
 package com.github.phanerozoicc.knowledge.domain.conversation
 
 import com.github.phanerozoicc.base.domain.AggregateRoot
-import com.github.phanerozoicc.base.domain.DomainEvent
+import com.github.phanerozoicc.base.event.DomainEvent
 import com.github.phanerozoicc.knowledge.domain.knowledgebase.KnowledgeBaseId
 import com.github.phanerozoicc.knowledge.domain.knowledgebase.UserId
 import com.github.phanerozoicc.knowledge.domain.document.DocumentChunk

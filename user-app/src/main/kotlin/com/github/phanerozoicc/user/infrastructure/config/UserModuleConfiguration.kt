@@ -1,7 +1,9 @@
 package com.github.phanerozoicc.user.infrastructure.config
 
-import com.github.phanerozoicc.base.domain.DomainEvent
-import com.github.phanerozoicc.base.domain.DomainEventPublisher
+import com.github.phanerozoicc.base.command.CommandBus
+import com.github.phanerozoicc.base.command.DefaultCommandBus
+import com.github.phanerozoicc.base.event.DomainEvent
+import com.github.phanerozoicc.base.event.DomainEventPublisher
 import com.github.phanerozoicc.user.application.command.*
 import com.github.phanerozoicc.user.application.query.*
 import com.github.phanerozoicc.user.application.service.UserApplicationService
@@ -15,13 +17,8 @@ import com.github.phanerozoicc.user.bak.application.query.GetUserStatisticsQuery
 import com.github.phanerozoicc.user.bak.application.query.GetUsersNeedingAttentionQueryHandler
 import com.github.phanerozoicc.user.bak.application.query.SearchUsersQueryHandler
 import com.github.phanerozoicc.user.bak.application.query.ValidateUniquenessQueryHandler
-import com.github.phanerozoicc.user.domain.cqrs.CommandBus
-import com.github.phanerozoicc.user.domain.cqrs.QueryBus
-import com.github.phanerozoicc.user.domain.model.PasswordSpecification
-import com.github.phanerozoicc.user.domain.model.UserSpecification
 import com.github.phanerozoicc.user.domain.repository.UserRepository
 import com.github.phanerozoicc.user.domain.service.UserDomainService
-import com.github.phanerozoicc.user.infrastructure.cqrs.CommandBusImpl
 import com.github.phanerozoicc.user.infrastructure.cqrs.QueryBusImpl
 import org.springframework.boot.autoconfigure.domain.EntityScan
 import org.springframework.context.ApplicationContext
@@ -29,7 +26,6 @@ import org.springframework.context.ApplicationEventPublisher
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories
-import org.springframework.transaction.annotation.EnableTransactionManagement
 
 /**
  * 用户模块配置类
@@ -47,26 +43,11 @@ class UserModuleConfiguration {
      * 命令总线
      */
     @Bean
-    fun userCommandBus(
-        userCommandhandlers: List<>
-    )
-    
-    /**
-     * 密码策略
-     */
-    @Bean
-    fun passwordSpecification(): PasswordSpecification {
-        return PasswordSpecification()
+    fun userCommandBus(): CommandBus {
+        return DefaultCommandBus()
     }
     
-    /**
-     * 用户策略
-     */
-    @Bean
-    fun userSpecification(): UserSpecification {
-        return UserSpecification()
-    }
-    
+
     /**
      * 领域事件发布器
      */
@@ -90,14 +71,7 @@ class UserModuleConfiguration {
         return UserDomainService(userRepository)
     }
     
-    /**
-     * 命令总线
-     */
-    @Bean
-    fun commandBus(applicationContext: ApplicationContext): CommandBus {
-        return CommandBusImpl(applicationContext)
-    }
-    
+
     /**
      * 查询总线
      */
@@ -106,22 +80,7 @@ class UserModuleConfiguration {
         return QueryBusImpl(applicationContext)
     }
     
-    /**
-     * 用户注册命令处理器
-     */
-    @Bean
-    fun registerUserCommandHandler(
-        userRepository: UserRepository,
-        userDomainService: UserDomainService,
-        domainEventPublisher: DomainEventPublisher
-    ): RegisterUserCommandHandler {
-        return RegisterUserCommandHandler(
-            userRepository,
-            userDomainService,
-            domainEventPublisher
-        )
-    }
-    
+
     /**
      * 用户登录命令处理器
      */

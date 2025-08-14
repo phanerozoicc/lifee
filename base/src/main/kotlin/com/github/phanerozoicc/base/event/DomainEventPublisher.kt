@@ -1,4 +1,4 @@
-package com.github.phanerozoicc.base.domain
+package com.github.phanerozoicc.base.event
 
 interface DomainEventPublisher {
     fun publish(event: DomainEvent)

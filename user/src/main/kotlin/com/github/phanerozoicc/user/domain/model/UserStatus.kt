@@ -7,9 +7,9 @@ import java.time.LocalDateTime
  * 封装用户状态及其变更逻辑
  */
 data class UserStatus(
-    private val status: StatusEnum,
-    private val reason: String? = null,
-    private val changedAt: LocalDateTime = LocalDateTime.now()
+    val status: StatusEnum,
+    val reason: String? = null,
+    val changedAt: LocalDateTime = LocalDateTime.now()
 ) {
     companion object {
         /**
@@ -149,21 +149,7 @@ data class UserStatus(
         }
     }
     
-    /**
-     * 获取状态枚举
-     */
-    fun getStatus(): StatusEnum = status
-    
-    /**
-     * 获取变更原因
-     */
-    fun getReason(): String? = reason
-    
-    /**
-     * 获取变更时间
-     */
-    fun getChangedAt(): LocalDateTime = changedAt
-    
+
     /**
      * 获取状态显示名称
      */

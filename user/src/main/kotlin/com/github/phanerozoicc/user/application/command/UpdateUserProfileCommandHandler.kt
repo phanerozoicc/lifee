@@ -1,6 +1,6 @@
 package com.github.phanerozoicc.user.application.command
 
-import com.github.phanerozoicc.base.domain.DomainEventPublisher
+import com.github.phanerozoicc.base.event.DomainEventPublisher
 import com.github.phanerozoicc.user.domain.service.UserDomainService
 import com.github.phanerozoicc.user.domain.model.Gender
 import com.github.phanerozoicc.user.domain.model.UserId

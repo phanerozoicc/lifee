@@ -9,9 +9,11 @@ import com.github.phanerozoicc.user.application.command.RegisterUserCommand
 import com.github.phanerozoicc.user.application.command.UpdateUserProfileCommand
 import com.github.phanerozoicc.user.application.service.UserApplicationService
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
+import jakarta.validation.constraints.NotBlank
 import org.springframework.data.domain.Pageable
 import org.springframework.data.web.PageableDefault
 import org.springframework.http.HttpStatus
@@ -73,6 +75,23 @@ class UserController(
         } catch (e: Exception) {
             ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ApiResponse.error("用户注册失败", e.message))
+        }
+    }
+
+    @PostMapping("/activate")
+    @Operation(summary = "通过token激活用户", description = "通过token激活用户")
+    fun activateByToken(
+        @Parameter(description = "激活令牌", required = true)
+        @RequestParam @NotBlank token: String
+    ) {
+        val activationByTokenCommand = ActivationByTokenCommand(token)
+        try {
+            commandBus.sendAndWait<ActivationByTokenCommand>(activationByTokenCommand)
+            ResponseEntity.ok(ApiResponse.success("用户注册成功，请检查邮箱进行激活"))
+        } catch (e: Exception) {
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiResponse.error("用户注册失败", e.message))
+        }
         }
     }
 

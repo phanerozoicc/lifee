@@ -8,53 +8,53 @@ import kotlin.reflect.full.isSubclassOf
 /**
  * 命令总线实现
  */
-@Component
-class CommandBusImpl(
-    private val applicationContext: ApplicationContext
-) : CommandBus {
-    
-    private val handlerCache = mutableMapOf<KClass<out UserCommand>, CommandHandler<UserCommand>>()
-    
-    @Suppress("UNCHECKED_CAST")
-    override suspend fun <T : UserCommand> send(command: T): CommandResult {
-        val handler = getHandler(command::class) as CommandHandler<T>
-        return handler.handle(command)
-    }
-    
-    override fun <T : UserCommand> register(commandClass: Class<T>, handler: CommandHandler<T>) {
-        // Implementation for registering command handlers
-    }
-    
-    @Suppress("UNCHECKED_CAST")
-    private fun getHandler(commandClass: KClass<out UserCommand>): CommandHandler<UserCommand> {
-        return handlerCache.getOrPut(commandClass) {
-            findHandler(commandClass) as CommandHandler<UserCommand>
-        }
-    }
-    
-    private fun findHandler(commandClass: KClass<out UserCommand>): CommandHandler<*> {
-        val handlers = applicationContext.getBeansOfType(CommandHandler::class.java).values
-        
-        for (handler in handlers) {
-            val handlerClass = handler::class
-            val interfaces = handlerClass.supertypes
-            
-            for (interfaceType in interfaces) {
-                if (interfaceType.classifier == CommandHandler::class) {
-                    val typeArguments = interfaceType.arguments
-                    if (typeArguments.isNotEmpty()) {
-                        val commandType = typeArguments[0].type?.classifier as? KClass<*>
-                        if (commandType != null && commandClass.isSubclassOf(commandType)) {
-                            return handler
-                        }
-                    }
-                }
-            }
-        }
-        
-        throw IllegalArgumentException("No handler found for command: ${commandClass.simpleName}")
-    }
-}
+//@Component
+//class CommandBusImpl(
+//    private val applicationContext: ApplicationContext
+//) : CommandBus {
+//
+//    private val handlerCache = mutableMapOf<KClass<out UserCommand>, CommandHandler<UserCommand>>()
+//
+//    @Suppress("UNCHECKED_CAST")
+//    override suspend fun <T : UserCommand> send(command: T): CommandResult {
+//        val handler = getHandler(command::class) as CommandHandler<T>
+//        return handler.handle(command)
+//    }
+//
+//    override fun <T : UserCommand> register(commandClass: Class<T>, handler: CommandHandler<T>) {
+//        // Implementation for registering command handlers
+//    }
+//
+//    @Suppress("UNCHECKED_CAST")
+//    private fun getHandler(commandClass: KClass<out UserCommand>): CommandHandler<UserCommand> {
+//        return handlerCache.getOrPut(commandClass) {
+//            findHandler(commandClass) as CommandHandler<UserCommand>
+//        }
+//    }
+//
+//    private fun findHandler(commandClass: KClass<out UserCommand>): CommandHandler<*> {
+//        val handlers = applicationContext.getBeansOfType(CommandHandler::class.java).values
+//
+//        for (handler in handlers) {
+//            val handlerClass = handler::class
+//            val interfaces = handlerClass.supertypes
+//
+//            for (interfaceType in interfaces) {
+//                if (interfaceType.classifier == CommandHandler::class) {
+//                    val typeArguments = interfaceType.arguments
+//                    if (typeArguments.isNotEmpty()) {
+//                        val commandType = typeArguments[0].type?.classifier as? KClass<*>
+//                        if (commandType != null && commandClass.isSubclassOf(commandType)) {
+//                            return handler
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//
+//        throw IllegalArgumentException("No handler found for command: ${commandClass.simpleName}")
+//    }
+//}
 
 /**
  * 查询总线实现

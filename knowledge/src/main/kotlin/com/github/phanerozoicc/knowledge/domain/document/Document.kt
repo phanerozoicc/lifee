@@ -1,7 +1,7 @@
 package com.github.phanerozoicc.knowledge.domain.document
 
 import com.github.phanerozoicc.base.domain.AggregateRoot
-import com.github.phanerozoicc.base.domain.DomainEvent
+import com.github.phanerozoicc.base.event.DomainEvent
 import com.github.phanerozoicc.knowledge.domain.knowledgebase.KnowledgeBaseId
 import java.math.BigInteger
 import java.security.MessageDigest

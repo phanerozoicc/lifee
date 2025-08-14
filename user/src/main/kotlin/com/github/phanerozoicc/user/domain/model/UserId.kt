@@ -25,10 +25,6 @@ data class UserId(
         }
     }
     
-    /**
-     * 获取ID值
-     */
-    fun getValue(): String = value
 
     /**
      * 转换为字符串

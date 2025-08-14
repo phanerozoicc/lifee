@@ -1,5 +1,6 @@
 package com.github.phanerozoicc.user.interfaces.rest
 
+import com.github.phanerozoicc.base.response.ApiResponse
 import jakarta.validation.ConstraintViolationException
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus

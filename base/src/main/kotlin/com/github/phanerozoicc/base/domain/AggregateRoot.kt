@@ -1,5 +1,7 @@
 package com.github.phanerozoicc.base.domain
 
+import com.github.phanerozoicc.base.event.DomainEvent
+
 /**
  * 聚合根基类
  * 提供领域事件管理功能

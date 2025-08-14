@@ -1,6 +1,6 @@
 package com.github.phanerozoicc.user.domain.factory
 
-import com.github.phanerozoicc.user.domain.event.UserRegistered
+import com.github.phanerozoicc.user.domain.event.UserRegisteredEvent
 import com.github.phanerozoicc.user.domain.model.Email
 import com.github.phanerozoicc.user.domain.model.Password
 import com.github.phanerozoicc.user.domain.model.PasswordSpecification
@@ -50,7 +50,7 @@ class UserFactory(
 
         // 发布用户注册事件
         user.addDomainEvent(
-            UserRegistered(
+            UserRegisteredEvent(
                 userId = userId,
                 email = email,
                 nickname = nickname,

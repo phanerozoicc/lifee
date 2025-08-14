@@ -1,13 +1,12 @@
 package com.github.phanerozoicc.user.application.command
 
 import com.github.phanerozoicc.base.command.CommandHandler
-import com.github.phanerozoicc.base.domain.DomainEventPublisher
-import com.github.phanerozoicc.user.domain.event.UserRegistered
+import com.github.phanerozoicc.base.event.DomainEventPublisher
+import com.github.phanerozoicc.user.domain.event.UserRegisteredEvent
 import com.github.phanerozoicc.user.domain.factory.UserFactory
 import com.github.phanerozoicc.user.domain.model.*
-import com.github.phanerozoicc.user.domain.repository.UserRepository
-import com.github.phanerozoicc.user.domain.model.ActivationToken
 import com.github.phanerozoicc.user.domain.repository.ActivationTokenRepository
+import com.github.phanerozoicc.user.domain.repository.UserRepository
 import com.github.phanerozoicc.user.domain.service.UserDomainService
 import org.springframework.stereotype.Service
 
@@ -82,7 +81,7 @@ class RegisterUserCommandHandler(
         // 发布领域事件
         savedUser.getDomainEvents().forEach { event ->
             domainEventPublisher.publish(
-                if(event is UserRegistered) {
+                if(event is UserRegisteredEvent) {
                     event.copy(
                         activationToken = activationToken.value
                     )

@@ -1,6 +1,6 @@
 package com.github.phanerozoicc.user.domain.event
 
-import com.github.phanerozoicc.base.domain.DomainEvent
+import com.github.phanerozoicc.base.event.DomainEvent
 import com.github.phanerozoicc.user.domain.model.UserId
 import com.github.phanerozoicc.user.domain.model.UserProfile
 import java.time.Instant
