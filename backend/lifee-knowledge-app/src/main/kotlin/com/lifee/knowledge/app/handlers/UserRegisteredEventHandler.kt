@@ -1,9 +1,11 @@
 package com.lifee.knowledge.app.handlers
 
+import com.lifee.common.cqrs.events.EventBus
 import com.lifee.common.cqrs.events.EventHandler
 import com.lifee.common.cqrs.events.Idempotent
 import com.lifee.common.cqrs.events.IdempotentKeyStrategy
 import com.lifee.user.domain.events.UserRegisteredEvent
+import com.lifee.knowledge.domain.events.DefaultKnowledgeBaseCreatedEvent
 import com.lifee.knowledge.app.services.UserKnowledgeService
 import kotlinx.coroutines.runBlocking
 import org.slf4j.LoggerFactory
@@ -15,7 +17,8 @@ import org.springframework.stereotype.Component
  */
 @Component
 class UserRegisteredEventHandler(
-    private val userKnowledgeService: UserKnowledgeService
+    private val userKnowledgeService: UserKnowledgeService,
+    private val eventBus: EventBus
 ) : EventHandler<UserRegisteredEvent> {
     
     private val logger = LoggerFactory.getLogger(UserRegisteredEventHandler::class.java)
@@ -27,12 +30,23 @@ class UserRegisteredEventHandler(
         try {
             runBlocking {
                 // 初始化用户知识库
-                userKnowledgeService.initializeUserKnowledgeBase(
+                val knowledgeBaseId = userKnowledgeService.initializeUserKnowledgeBase(
                     userId = event.userId,
                     email = event.email.value,
                     firstName = event.firstName,
                     lastName = event.lastName
                 )
+                
+                // 发布默认知识库创建完成事件
+                val knowledgeBaseCreatedEvent = DefaultKnowledgeBaseCreatedEvent(
+                    userId = event.userId,
+                    knowledgeBaseId = knowledgeBaseId,
+                    knowledgeBaseName = "默认知识库",
+                    email = event.email.value,
+                    firstName = event.firstName,
+                    lastName = event.lastName
+                )
+                eventBus.publish(knowledgeBaseCreatedEvent)
             }
             
             logger.info("Knowledge模块用户注册事件处理完成: userId={}", event.userId.value)

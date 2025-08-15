@@ -7,7 +7,11 @@ import com.lifee.common.domain.ValueObject
  */
 data class ConfigKey(
     val value: String
-) : ValueObject {
+) : ValueObject() {
+    
+    override protected fun getEqualityComponents(): List<Any?> {
+        return listOf(value)
+    }
     
     init {
         require(value.isNotBlank()) { "配置键不能为空" }

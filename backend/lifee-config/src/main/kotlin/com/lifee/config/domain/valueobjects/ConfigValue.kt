@@ -7,7 +7,11 @@ import com.lifee.common.domain.ValueObject
  */
 data class ConfigValue(
     val value: String
-) : ValueObject {
+) : ValueObject() {
+    
+    override protected fun getEqualityComponents(): List<Any?> {
+        return listOf(value)
+    }
     
     init {
         require(value.length <= 5000) { "配置值长度不能超过5000个字符" }

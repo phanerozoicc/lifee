@@ -18,19 +18,20 @@ class UserKnowledgeService(
     
     /**
      * 初始化用户知识库
+     * @return 创建的知识库ID
      */
     suspend fun initializeUserKnowledgeBase(
         userId: UserId,
         email: String,
         firstName: String,
         lastName: String
-    ) {
+    ): String {
         logger.info("开始初始化用户知识库: userId={}", userId.value)
         
-        transactionTemplate.execute {
+        return transactionTemplate.execute {
             try {
                 // 创建用户知识库空间
-                createUserKnowledgeSpace(userId)
+                val knowledgeBaseId = createUserKnowledgeSpace(userId)
                 
                 // 初始化默认知识分类
                 initializeDefaultKnowledgeCategories(userId)
@@ -41,18 +42,20 @@ class UserKnowledgeService(
                 // 初始化知识图谱
                 initializeKnowledgeGraph(userId)
                 
-                logger.info("用户知识库初始化完成: userId={}", userId.value)
+                logger.info("用户知识库初始化完成: userId={}, knowledgeBaseId={}", userId.value, knowledgeBaseId)
+                knowledgeBaseId
             } catch (e: Exception) {
                 logger.error("用户知识库初始化失败: userId={}", userId.value, e)
                 throw e
             }
-        }
+        } ?: throw IllegalStateException("Failed to create knowledge base")
     }
     
     /**
      * 创建用户知识库空间
+     * @return 创建的知识库ID
      */
-    private fun createUserKnowledgeSpace(userId: UserId) {
+    private fun createUserKnowledgeSpace(userId: UserId): String {
         logger.debug("创建用户知识库空间: userId={}", userId.value)
         
         // TODO: 实现用户知识库空间的创建逻辑
@@ -61,7 +64,10 @@ class UserKnowledgeService(
         // 模拟数据库操作
         Thread.sleep(70) // 模拟数据库写入延迟
         
-        logger.debug("用户知识库空间创建完成: userId={}", userId.value)
+        val knowledgeBaseId = "kb_${userId.value}_${System.currentTimeMillis()}"
+        logger.debug("用户知识库空间创建完成: userId={}, knowledgeBaseId={}", userId.value, knowledgeBaseId)
+        
+        return knowledgeBaseId
     }
     
     /**

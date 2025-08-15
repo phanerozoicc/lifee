@@ -10,4 +10,16 @@ import java.util.*
  */
 data class UserActivatedEvent(
     val userId: UserId
-) : DomainEvent(userId.value)
+) : DomainEvent(userId.value) {
+    
+    override fun copy(
+        aggregateId: String,
+        version: Long,
+        occurredOn: Instant,
+        eventId: UUID
+    ): DomainEvent {
+        return this.copy(
+            userId = UserId(aggregateId)
+        )
+    }
+}

@@ -8,7 +8,11 @@ import java.util.*
  */
 data class ConfigId(
     val value: UUID
-) : ValueObject {
+) : ValueObject() {
+    
+    override protected fun getEqualityComponents(): List<Any?> {
+        return listOf(value)
+    }
     
     companion object {
         /**

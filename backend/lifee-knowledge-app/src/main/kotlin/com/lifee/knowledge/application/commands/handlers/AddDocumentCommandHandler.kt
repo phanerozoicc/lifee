@@ -1,7 +1,9 @@
 package com.lifee.knowledge.application.commands.handlers
 
 import com.lifee.common.cqrs.commands.CommandHandler
+import com.lifee.common.cqrs.events.EventBus
 import com.lifee.knowledge.application.commands.AddDocumentCommand
+import com.lifee.knowledge.domain.events.DocumentAddedEvent
 import com.lifee.knowledge.domain.exceptions.*
 import com.lifee.knowledge.domain.repositories.KnowledgeBaseRepository
 import com.lifee.knowledge.domain.services.DocumentValidationService
@@ -16,7 +18,8 @@ import org.springframework.transaction.annotation.Transactional
 @Component
 class AddDocumentCommandHandler(
     private val knowledgeBaseRepository: KnowledgeBaseRepository,
-    private val documentValidationService: DocumentValidationService
+    private val documentValidationService: DocumentValidationService,
+    private val eventBus: EventBus
 ) : CommandHandler<AddDocumentCommand> {
     
     private val logger = LoggerFactory.getLogger(AddDocumentCommandHandler::class.java)
@@ -65,6 +68,18 @@ class AddDocumentCommandHandler(
         
         // 8. 保存知识库
         knowledgeBaseRepository.save(knowledgeBase)
+        
+        // 9. 发布文档添加事件
+        val documentAddedEvent = DocumentAddedEvent(
+            knowledgeBaseId = knowledgeBaseId,
+            documentId = documentId,
+            userId = userId,
+            title = command.title,
+            content = finalContent.value,
+            type = command.type,
+            contentLength = finalContent.getLength()
+        )
+        eventBus.publish(documentAddedEvent)
         
         logger.info("文档添加成功: documentId={}, contentLength={}, type={}", 
             command.documentId, finalContent.getLength(), command.type)

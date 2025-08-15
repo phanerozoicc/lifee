@@ -13,17 +13,22 @@ abstract class DomainEvent(
     /**
      * 聚合根标识符
      */
-    val aggregateId: Any,
+    open val aggregateId: String,
+    
+    /**
+     * 事件版本号
+     */
+    open val version: Long = 0,
     
     /**
      * 事件发生时间
      */
-    val occurredOn: Instant = Instant.now(),
+    open val occurredOn: Instant = Instant.now(),
     
     /**
      * 事件唯一标识符
      */
-    val eventId: UUID = UUID.randomUUID()
+    open val eventId: UUID = UUID.randomUUID()
 ) : Event {
     
     /**
@@ -42,6 +47,17 @@ abstract class DomainEvent(
     }
     
     override fun toString(): String {
-        return "${getEventType()}(eventId=$eventId, aggregateId=$aggregateId, occurredOn=$occurredOn)"
+        return "${getEventType()}(eventId=$eventId, aggregateId=$aggregateId, version=$version, occurredOn=$occurredOn)"
     }
+    
+    /**
+     * 复制事件并更新元数据
+     * 用于事件溯源中设置聚合根ID和版本
+     */
+    abstract fun copy(
+        aggregateId: String,
+        version: Long,
+        occurredOn: Instant,
+        eventId: UUID
+    ): DomainEvent
 }

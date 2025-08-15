@@ -1,6 +1,11 @@
 package com.lifee.common.cqrs.events
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.lifee.common.domain.DomainEvent
+import com.lifee.common.eventsourcing.EventStore
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.slf4j.LoggerFactory
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.stereotype.Component
@@ -14,7 +19,8 @@ import kotlin.reflect.KClass
 @Component
 class DefaultEventBus(
     private val kafkaTemplate: KafkaTemplate<String, Any>,
-    private val objectMapper: ObjectMapper
+    private val objectMapper: ObjectMapper,
+    private val eventStore: EventStore? = null
 ) : EventBus {
     
     private val logger = LoggerFactory.getLogger(DefaultEventBus::class.java)
@@ -34,6 +40,11 @@ class DefaultEventBus(
     override fun publish(event: Event) {
         logger.debug("Publishing event: {}", event::class.simpleName)
         
+        // 如果是领域事件，先持久化到事件存储
+        if (event is DomainEvent && eventStore != null) {
+            persistDomainEvent(event)
+        }
+        
         // 本地事件处理
         handleLocalEvent(event)
         
@@ -43,7 +54,20 @@ class DefaultEventBus(
     
     override fun publishAll(events: List<Event>) {
         logger.debug("Publishing {} events", events.size)
-        events.forEach { publish(it) }
+        
+        // 批量持久化领域事件
+        val domainEvents = events.filterIsInstance<DomainEvent>()
+        if (domainEvents.isNotEmpty() && eventStore != null) {
+            persistDomainEvents(domainEvents)
+        }
+        
+        events.forEach { event ->
+            // 本地事件处理
+            handleLocalEvent(event)
+            
+            // 发布到Kafka
+            publishToKafka(event)
+        }
     }
     
     @Suppress("UNCHECKED_CAST")
@@ -116,4 +140,112 @@ class DefaultEventBus(
     fun <T : Event> hasLocalHandler(eventType: KClass<T>): Boolean {
         return localHandlers[eventType]?.isNotEmpty() == true
     }
+    
+    /**
+     * 持久化单个领域事件
+     */
+    private fun persistDomainEvent(event: DomainEvent) {
+        try {
+            CoroutineScope(Dispatchers.IO).launch {
+                val currentVersion = eventStore?.getCurrentVersion(event.aggregateId.toString()) ?: 0
+                eventStore?.saveEvents(event.aggregateId.toString(), listOf(event), currentVersion)
+                logger.debug("Domain event {} persisted to event store", event::class.simpleName)
+            }
+        } catch (e: Exception) {
+            logger.error("Failed to persist domain event {} to event store: {}", 
+                event::class.simpleName, e.message, e)
+            // 不抛出异常，避免影响事件发布流程
+        }
+    }
+    
+    /**
+     * 批量持久化领域事件
+     */
+    private fun persistDomainEvents(events: List<DomainEvent>) {
+        try {
+            // 按聚合根ID分组事件
+            val eventsByAggregate = events.groupBy { it.aggregateId }
+            
+            CoroutineScope(Dispatchers.IO).launch {
+                eventsByAggregate.forEach { (aggregateId, aggregateEvents) ->
+                    // 获取当前版本并保存事件
+                    val currentVersion = eventStore?.getCurrentVersion(aggregateId.toString()) ?: 0
+                    eventStore?.saveEvents(aggregateId.toString(), aggregateEvents, currentVersion)
+                }
+                logger.debug("Batch persisted {} domain events to event store", events.size)
+            }
+        } catch (e: Exception) {
+            logger.error("Failed to batch persist {} domain events to event store: {}", 
+                events.size, e.message, e)
+            // 不抛出异常，避免影响事件发布流程
+        }
+    }
+    
+    /**
+     * 发布聚合根的未提交事件
+     * 用于事件溯源场景
+     */
+    fun publishUncommittedEvents(aggregateId: String, events: List<DomainEvent>) {
+        logger.debug("Publishing {} uncommitted events for aggregate {}", events.size, aggregateId)
+        
+        if (events.isEmpty()) {
+            return
+        }
+        
+        // 批量持久化事件
+        if (eventStore != null) {
+            try {
+                CoroutineScope(Dispatchers.IO).launch {
+                    val currentVersion = eventStore.getCurrentVersion(aggregateId)
+                    eventStore.saveEvents(aggregateId, events, currentVersion)
+                    logger.debug("Persisted {} uncommitted events for aggregate {}", events.size, aggregateId)
+                }
+            } catch (e: Exception) {
+                logger.error("Failed to persist uncommitted events for aggregate {}: {}", 
+                    aggregateId, e.message, e)
+                throw EventPersistenceException("Failed to persist events for aggregate $aggregateId", e)
+            }
+        }
+        
+        // 发布事件到本地处理器和Kafka
+        events.forEach { event ->
+            handleLocalEvent(event)
+            publishToKafka(event)
+        }
+    }
+    
+    /**
+     * 获取事件存储统计信息
+     */
+    fun getEventStoreStats(): EventStoreStats? {
+        return try {
+            eventStore?.let {
+                EventStoreStats(
+                    totalEvents = 0, // 需要EventStore提供统计方法
+                    totalAggregates = 0,
+                    totalSnapshots = 0
+                )
+            }
+        } catch (e: Exception) {
+            logger.error("Failed to get event store stats: {}", e.message, e)
+            null
+        }
+    }
 }
+
+/**
+ * 事件持久化异常
+ */
+class EventPersistenceException(
+    message: String,
+    cause: Throwable? = null
+) : RuntimeException(message, cause)
+
+/**
+ * 事件存储统计信息
+ */
+data class EventStoreStats(
+    val totalEvents: Long,
+    val totalAggregates: Long,
+    val totalSnapshots: Long
+)

@@ -67,9 +67,7 @@ class KafkaConsumerConfig {
         factory.containerProperties.ackMode = ContainerProperties.AckMode.BATCH
         
         // 设置错误处理
-        factory.setCommonErrorHandler { exception, data ->
-            println("Error in process with Exception {} and the record is {}", exception.message, data)
-        }
+        factory.setCommonErrorHandler(org.springframework.kafka.listener.DefaultErrorHandler())
         
         return factory
     }

@@ -1,6 +1,6 @@
 package com.lifee.config.domain.exceptions
 
-import com.lifee.common.domain.DomainException
+import com.lifee.common.exceptions.DomainException
 import com.lifee.config.domain.valueobjects.ConfigKey
 import com.lifee.config.domain.valueobjects.ConfigId
 import com.lifee.config.domain.valueobjects.Environment

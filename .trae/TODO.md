@@ -1,7 +1,7 @@
 # TODO:
 
-- [x] user-factory-1: 分析当前User.create()方法的架构问题和用户需求 (priority: High)
-- [x] user-factory-2: 设计UserFactory领域服务，封装用户创建和ID生成逻辑 (priority: High)
-- [x] user-factory-3: 实现UserFactory类，包含createUser方法 (priority: High)
-- [x] user-factory-4: 修改RegisterUserCommandHandler使用UserFactory (priority: Medium)
-- [x] user-factory-5: 测试新的用户创建流程确保功能正常 (priority: Medium)
+- [x] compile-fix-1: 修复config模块编译错误：创建缺失的ConfigurationClearedEvent和ConfigurationCopiedEvent事件类 (priority: High)
+- [ ] compile-fix-2: 修复所有事件类的copy方法override问题 (**IN PROGRESS**) (priority: High)
+- [ ] compile-fix-5: 编译所有模块确保整个项目能正常编译 (priority: High)
+- [ ] compile-fix-3: 修复ConfigItem实体类的Entity继承问题 (priority: Medium)
+- [ ] compile-fix-4: 修复Configuration聚合根中的addDomainEvent方法调用问题 (priority: Medium)

@@ -5,7 +5,7 @@ import com.lifee.common.domain.ValueObject
 /**
  * 配置类型枚举
  */
-enum class ConfigType : ValueObject {
+enum class ConfigType {
     /**
      * 字符串类型
      */
@@ -50,14 +50,14 @@ enum class ConfigType : ValueObject {
      * 检查是否为敏感类型
      */
     fun isSensitive(): Boolean {
-        return this == PASSWORD
+        return this == ConfigType.PASSWORD
     }
     
     /**
      * 检查是否为数字类型
      */
     fun isNumeric(): Boolean {
-        return this in setOf(INTEGER, LONG, DOUBLE)
+        return this in setOf(ConfigType.INTEGER, ConfigType.LONG, ConfigType.DOUBLE)
     }
     
     /**
@@ -66,31 +66,31 @@ enum class ConfigType : ValueObject {
     fun validateValue(value: ConfigValue): Boolean {
         return try {
             when (this) {
-                STRING -> true
-                INTEGER -> {
+                ConfigType.STRING -> true
+                ConfigType.INTEGER -> {
                     value.toInt()
                     true
                 }
-                LONG -> {
+                ConfigType.LONG -> {
                     value.toLong()
                     true
                 }
-                DOUBLE -> {
+                ConfigType.DOUBLE -> {
                     value.toDouble()
                     true
                 }
-                BOOLEAN -> {
+                ConfigType.BOOLEAN -> {
                     value.toBoolean()
                     true
                 }
-                JSON -> {
+                ConfigType.JSON -> {
                     // 简单的JSON格式检查
                     val trimmed = value.value.trim()
                     (trimmed.startsWith("{") && trimmed.endsWith("}")) ||
                     (trimmed.startsWith("[") && trimmed.endsWith("]"))
                 }
-                LIST -> true // 列表类型总是有效的
-                PASSWORD -> true // 密码类型总是有效的
+                ConfigType.LIST -> true // 列表类型总是有效的
+                ConfigType.PASSWORD -> true // 密码类型总是有效的
             }
         } catch (e: Exception) {
             false
@@ -102,14 +102,14 @@ enum class ConfigType : ValueObject {
      */
     fun getDefaultValue(): ConfigValue {
         return when (this) {
-            STRING -> ConfigValue.of("")
-            INTEGER -> ConfigValue.of(0)
-            LONG -> ConfigValue.of(0L)
-            DOUBLE -> ConfigValue.of(0.0)
-            BOOLEAN -> ConfigValue.of(false)
-            JSON -> ConfigValue.of("{}")
-            LIST -> ConfigValue.of("")
-            PASSWORD -> ConfigValue.of("")
+            ConfigType.STRING -> ConfigValue.of("")
+            ConfigType.INTEGER -> ConfigValue.of(0)
+            ConfigType.LONG -> ConfigValue.of(0L)
+            ConfigType.DOUBLE -> ConfigValue.of(0.0)
+            ConfigType.BOOLEAN -> ConfigValue.of(false)
+            ConfigType.JSON -> ConfigValue.of("{}")
+            ConfigType.LIST -> ConfigValue.of("")
+            ConfigType.PASSWORD -> ConfigValue.of("")
         }
     }
 }

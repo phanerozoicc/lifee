@@ -1,5 +1,6 @@
 package com.lifee.common.cqrs.events
 
+import com.lifee.common.domain.DomainEvent
 import org.aspectj.lang.ProceedingJoinPoint
 import org.aspectj.lang.annotation.Around
 import org.aspectj.lang.annotation.Aspect
@@ -71,8 +72,10 @@ class IdempotentAspect {
         return when (idempotent.keyStrategy) {
             IdempotentKeyStrategy.EVENT_ID -> {
                 val event = findEventParameter(joinPoint)
-                if (event != null) {
+                if (event is DomainEvent) {
                     "${className}_${methodName}_${event.aggregateId}_${event::class.simpleName}_${event.occurredOn.toEpochMilli()}"
+                } else if (event != null) {
+                    "${className}_${methodName}_${event::class.simpleName}_${System.currentTimeMillis()}"
                 } else {
                     "${className}_${methodName}_${System.currentTimeMillis()}"
                 }
@@ -80,8 +83,10 @@ class IdempotentAspect {
             
             IdempotentKeyStrategy.AGGREGATE_EVENT_TYPE -> {
                 val event = findEventParameter(joinPoint)
-                if (event != null) {
+                if (event is DomainEvent) {
                     "${className}_${methodName}_${event.aggregateId}_${event::class.simpleName}"
+                } else if (event != null) {
+                    "${className}_${methodName}_${event::class.simpleName}"
                 } else {
                     "${className}_${methodName}_unknown"
                 }

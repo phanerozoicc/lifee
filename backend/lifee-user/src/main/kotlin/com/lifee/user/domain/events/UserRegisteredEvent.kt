@@ -16,4 +16,16 @@ data class UserRegisteredEvent(
     val lastName: String,
     val registeredAt: Instant,
     val activationToken: String? = null
-) : DomainEvent(userId.value)
+) : DomainEvent(userId.value) {
+    
+    override fun copy(
+        aggregateId: String,
+        version: Long,
+        occurredOn: Instant,
+        eventId: UUID
+    ): DomainEvent {
+        return this.copy(
+            userId = UserId(aggregateId)
+        )
+    }
+}

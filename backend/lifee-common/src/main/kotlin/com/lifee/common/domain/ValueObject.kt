@@ -5,7 +5,7 @@ package com.lifee.common.domain
  * 所有值对象都应该继承此类
  * 值对象是不可变的，通过值而不是标识符来区分
  */
-abstract class ValueObject {
+abstract class ValueObject() {
     
     /**
      * 获取用于相等性比较的属性

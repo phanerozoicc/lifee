@@ -1,5 +1,6 @@
 package com.lifee.common.cqrs.events
 
+import com.lifee.common.domain.DomainEvent
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import java.util.concurrent.ConcurrentHashMap
@@ -124,8 +125,12 @@ class EventRetryHandler {
      * 生成事件ID
      */
     private fun generateEventId(event: Event): String {
-        // 使用事件的聚合根ID和事件类型生成唯一ID
-        return "${event.aggregateId}_${event::class.simpleName}_${event.occurredOn.toEpochMilli()}"
+        // 使用事件类型和当前时间生成唯一ID
+        return if (event is DomainEvent) {
+            "${event.aggregateId}_${event::class.simpleName}_${event.occurredOn.toEpochMilli()}"
+        } else {
+            "${event::class.simpleName}_${System.currentTimeMillis()}_${event.hashCode()}"
+        }
     }
     
     /**

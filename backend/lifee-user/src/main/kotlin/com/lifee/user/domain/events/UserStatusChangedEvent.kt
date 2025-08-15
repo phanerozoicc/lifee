@@ -14,4 +14,16 @@ data class UserStatusChangedEvent(
     val oldStatus: UserStatus,
     val newStatus: UserStatus,
     val reason: String? = null
-) : DomainEvent(userId.value)
+) : DomainEvent(userId.value) {
+    
+    override fun copy(
+        aggregateId: String,
+        version: Long,
+        occurredOn: Instant,
+        eventId: UUID
+    ): DomainEvent {
+        return this.copy(
+            userId = UserId(aggregateId)
+        )
+    }
+}
