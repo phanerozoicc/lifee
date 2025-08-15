@@ -4,4 +4,5 @@ import com.github.phanerozoicc.user.domain.model.ActivationToken
 
 interface ActivationTokenRepository {
     fun save(activationToken: ActivationToken)
+    fun findByToken(token: String): ActivationToken?
 }

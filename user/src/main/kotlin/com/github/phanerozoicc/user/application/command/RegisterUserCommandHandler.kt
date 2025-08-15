@@ -1,5 +1,6 @@
 package com.github.phanerozoicc.user.application.command
 
+import com.github.phanerozoicc.base.command.Command
 import com.github.phanerozoicc.base.command.CommandHandler
 import com.github.phanerozoicc.base.event.DomainEventPublisher
 import com.github.phanerozoicc.user.domain.event.UserRegisteredEvent
@@ -14,17 +15,16 @@ import org.springframework.stereotype.Service
  * 用户注册命令
  */
 data class RegisterUserCommand(
-    override val userId: UserId? = null,
-    override val ipAddress: String? = null,
-    override val userAgent: String? = null,
     val email: String,
     val password: String,
     val nickname: String,
     val firstName: String? = null,
     val lastName: String? = null,
     val acceptTerms: Boolean = true,
-    val marketingConsent: Boolean = false
-) : UserCommand()
+    val marketingConsent: Boolean = false,
+    val ipAddress: String? = null,
+    val userAgent: String? = null,
+) : Command()
 
 
 /**
