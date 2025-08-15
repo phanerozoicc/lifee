@@ -118,7 +118,7 @@ class User(
         require(status.canPerformActions()) { "用户状态不允许更新资料" }
         
         // 检查更新频率限制
-        require(userSpecification.canUpdateProfile(profile.getUpdatedAt())) {
+        require(userSpecification.canUpdateProfile(profile.updatedAt)) {
             "资料更新过于频繁，请稍后再试"
         }
         
@@ -216,21 +216,29 @@ class User(
     
     /**
      * 激活用户
+     * 默认激活即为邮箱验证通过
      * @param activatedBy 激活操作者
      */
     fun activate(activatedBy: UserId? = null) {
         val oldStatus = status
         status = status.activate()
+        emailVerified = true
         updatedAt = LocalDateTime.now()
-        
+
         // 发布状态变更事件
         addDomainEvent(
-            UserStatusChanged(
+            UserStatusChangedEvent(
                 userId = id,
                 oldStatus = oldStatus,
                 newStatus = status,
                 reason = "用户激活",
                 changedBy = activatedBy
+            )
+        )
+        // 发布激活事件
+        addDomainEvent(
+            UserActivatedEvent(
+                userId = id
             )
         )
     }
@@ -247,7 +255,7 @@ class User(
         
         // 发布状态变更事件
         addDomainEvent(
-            UserStatusChanged(
+            UserStatusChangedEvent(
                 userId = id,
                 oldStatus = oldStatus,
                 newStatus = status,
@@ -269,7 +277,7 @@ class User(
         
         // 发布状态变更事件
         addDomainEvent(
-            UserStatusChanged(
+            UserStatusChangedEvent(
                 userId = id,
                 oldStatus = oldStatus,
                 newStatus = status,
@@ -294,7 +302,7 @@ class User(
         
         // 发布状态变更事件
         addDomainEvent(
-            UserStatusChanged(
+            UserStatusChangedEvent(
                 userId = id,
                 oldStatus = oldStatus,
                 newStatus = status,
@@ -304,31 +312,7 @@ class User(
         )
     }
     
-    /**
-     * 验证邮箱
-     * @param verificationToken 验证令牌
-     */
-    fun verifyEmail(verificationToken: String? = null) {
-        require(!emailVerified) { "邮箱已经验证过了" }
-        
-        emailVerified = true
-        updatedAt = LocalDateTime.now()
-        
-        // 如果用户状态是待激活，则自动激活
-        if (status.isPending()) {
-            activate()
-        }
-        
-        // 发布邮箱验证事件
-        addDomainEvent(
-            UserEmailVerified(
-                userId = id,
-                email = email,
-                verificationToken = verificationToken
-            )
-        )
-    }
-    
+
     /**
      * 更新用户偏好设置
      * @param newPreferences 新的偏好设置
@@ -384,7 +368,7 @@ class User(
         
         // 发布状态变更事件
         addDomainEvent(
-            UserStatusChanged(
+            UserStatusChangedEvent(
                 userId = id,
                 oldStatus = oldStatus,
                 newStatus = status,

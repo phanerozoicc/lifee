@@ -3,25 +3,20 @@ package com.github.phanerozoicc.user.domain.event
 import com.github.phanerozoicc.base.event.DomainEvent
 import com.github.phanerozoicc.user.domain.model.UserId
 import com.github.phanerozoicc.user.domain.model.UserStatus
-import java.time.Instant
-import java.util.*
 
 
 /**
  * 用户状态变更事件
  * 当用户状态发生变更时发布
  */
-data class UserStatusChanged(
+data class UserStatusChangedEvent(
     val userId: UserId,
     val oldStatus: UserStatus,
     val newStatus: UserStatus,
     val reason: String? = null,
     val changedBy: UserId? = null, // 操作者ID
     val ipAddress: String? = null,
-    override val eventId: String = UUID.randomUUID().toString(),
-    override val occurredOn: Instant = Instant.now(),
-    override val eventType: String = "UserStatusChanged"
-) : DomainEvent {
+) : DomainEvent(userId.value, "UserStatusChanged") {
 
     /**
      * 检查是否为激活操作
