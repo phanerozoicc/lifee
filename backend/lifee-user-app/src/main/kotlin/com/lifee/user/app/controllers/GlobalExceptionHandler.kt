@@ -1,6 +1,7 @@
 package com.lifee.user.app.controllers
 
 import com.lifee.common.exceptions.BusinessRuleException
+import com.lifee.common.exceptions.ConcurrencyException
 import com.lifee.common.exceptions.DomainException
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
@@ -61,6 +62,28 @@ class GlobalExceptionHandler {
         )
         
         return ResponseEntity.badRequest().body(errorResponse)
+    }
+    
+    /**
+     * 处理并发冲突异常
+     */
+    @ExceptionHandler(ConcurrencyException::class)
+    fun handleConcurrencyException(
+        ex: ConcurrencyException,
+        request: WebRequest
+    ): ResponseEntity<ErrorResponse> {
+        logger.warn("并发冲突异常: 聚合根ID={}, 期望版本={}, 实际版本={}, 消息={}", 
+            ex.aggregateId, ex.expectedVersion, ex.actualVersion, ex.message)
+        
+        val errorResponse = ErrorResponse(
+            timestamp = Instant.now(),
+            status = HttpStatus.CONFLICT.value(),
+            error = "Concurrency Conflict",
+            message = "数据已被其他用户修改，请刷新后重试",
+            path = request.getDescription(false).removePrefix("uri=")
+        )
+        
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse)
     }
     
     /**

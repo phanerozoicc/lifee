@@ -8,6 +8,7 @@ import com.lifee.knowledge.domain.events.DefaultKnowledgeBaseCreatedEvent
 import com.lifee.user.domain.events.WelcomeNotificationSentEvent
 import com.lifee.user.domain.services.EmailService
 import com.lifee.user.domain.Email
+import com.lifee.user.domain.UserId
 import kotlinx.coroutines.runBlocking
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
@@ -32,18 +33,18 @@ class WelcomeNotificationHandler(
             runBlocking {
                 // 发送欢迎邮件
                 emailService.sendWelcomeEmail(
-                    userId = event.userId,
+                    userId = UserId(event.userId.value),
                     email = Email.of(event.email),
-                    firstName = event.firstName,
-                    lastName = event.lastName
+                    firstName = event.firstName ?: "",
+                    lastName = event.lastName ?: ""
                 )
                 
                 // 发布欢迎通知发送完成事件
                 val welcomeNotificationEvent = WelcomeNotificationSentEvent(
-                    userId = event.userId,
+                    userId = UserId(event.userId.value),
                     email = Email.of(event.email),
-                    firstName = event.firstName,
-                    lastName = event.lastName
+                    firstName = event.firstName ?: "",
+                    lastName = event.lastName ?: ""
                 )
                 eventBus.publish(welcomeNotificationEvent)
             }

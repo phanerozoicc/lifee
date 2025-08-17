@@ -23,8 +23,14 @@ data class RecommendationComputedEvent(
         occurredOn: Instant,
         eventId: java.util.UUID
     ): DomainEvent {
-        return this.copy(
-            userId = UserId(aggregateId)
+        return RecommendationComputedEvent(
+            userId = UserId(aggregateId),
+            algorithm = this.algorithm,
+            candidateCount = this.candidateCount,
+            recommendationCount = this.recommendationCount,
+            computationTimeMs = this.computationTimeMs,
+            aggregateId = aggregateId,
+            version = version
         )
     }
 }

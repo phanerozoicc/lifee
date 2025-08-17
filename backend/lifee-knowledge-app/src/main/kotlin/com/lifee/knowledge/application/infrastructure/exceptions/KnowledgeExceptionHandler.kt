@@ -1,5 +1,6 @@
 package com.lifee.knowledge.application.infrastructure.exceptions
 
+import com.lifee.common.exceptions.ConcurrencyException
 import com.lifee.common.exceptions.ErrorResponse
 import com.lifee.knowledge.domain.exceptions.*
 import org.slf4j.LoggerFactory
@@ -110,6 +111,23 @@ class KnowledgeExceptionHandler {
         )
         
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse)
+    }
+    
+    /**
+     * 处理并发冲突异常
+     */
+    @ExceptionHandler(ConcurrencyException::class)
+    fun handleConcurrencyException(ex: ConcurrencyException): ResponseEntity<ErrorResponse> {
+        logger.warn("知识库并发冲突异常: 聚合根ID={}, 期望版本={}, 实际版本={}, 消息={}", 
+            ex.aggregateId, ex.expectedVersion, ex.actualVersion, ex.message)
+        
+        val errorResponse = ErrorResponse(
+            code = "CONCURRENCY_CONFLICT",
+            message = "知识库数据已被其他用户修改，请刷新后重试",
+            timestamp = System.currentTimeMillis()
+        )
+        
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse)
     }
     
     /**

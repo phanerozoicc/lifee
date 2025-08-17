@@ -2,6 +2,7 @@ package com.lifee.chat.app.infrastructure.exceptions
 
 import com.lifee.chat.domain.exceptions.ConversationNotFoundException
 import com.lifee.chat.domain.exceptions.InvalidMessageContentException
+import com.lifee.common.exceptions.ConcurrencyException
 import com.lifee.common.exceptions.ErrorResponse
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
@@ -47,6 +48,23 @@ class ChatExceptionHandler {
         )
         
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse)
+    }
+    
+    /**
+     * 处理并发冲突异常
+     */
+    @ExceptionHandler(ConcurrencyException::class)
+    fun handleConcurrencyException(ex: ConcurrencyException): ResponseEntity<ErrorResponse> {
+        logger.warn("聊天并发冲突异常: 聚合根ID={}, 期望版本={}, 实际版本={}, 消息={}", 
+            ex.aggregateId, ex.expectedVersion, ex.actualVersion, ex.message)
+        
+        val errorResponse = ErrorResponse(
+            code = "CONCURRENCY_CONFLICT",
+            message = "对话数据已被其他用户修改，请刷新后重试",
+            timestamp = System.currentTimeMillis()
+        )
+        
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse)
     }
     
     /**

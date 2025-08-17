@@ -1,10 +1,9 @@
 package com.lifee.recommendation.domain.aggregates
 
-import com.lifee.common.domain.AggregateRoot
+import com.lifee.common.domain.EventSourcedAggregateRoot
 import com.lifee.recommendation.domain.entities.RecommendationItem
-import com.lifee.recommendation.domain.events.RecommendationCreatedEvent
-import com.lifee.recommendation.domain.valueobjects.RecommendationId
-import com.lifee.recommendation.domain.valueobjects.ContentId
+import com.lifee.recommendation.domain.events.*
+import com.lifee.recommendation.domain.valueobjects.*
 import com.lifee.user.domain.UserId
 import java.time.Instant
 
@@ -17,7 +16,7 @@ class Recommendation private constructor(
     private val items: MutableList<RecommendationItem> = mutableListOf(),
     private val createdAt: Instant = Instant.now(),
     private var updatedAt: Instant = Instant.now()
-) : AggregateRoot<RecommendationId>(id) {
+) : EventSourcedAggregateRoot<RecommendationId>(id) {
     
     companion object {
         /**
@@ -169,4 +168,93 @@ class Recommendation private constructor(
      * 是否为空推荐
      */
     fun isEmpty(): Boolean = items.isEmpty()
+    
+    /**
+     * 序列化聚合根状态
+     */
+    override fun serializeState(): Map<String, Any> {
+        return mapOf(
+            "id" to id.toString(),
+            "userId" to userId.toString(),
+            "createdAt" to createdAt.toString(),
+            "updatedAt" to updatedAt.toString(),
+            "items" to items.map { item ->
+                mapOf(
+                    "contentId" to item.getContentId().toString(),
+                    "score" to item.getScore().value,
+                    "type" to item.getType().toString(),
+                    "createdAt" to item.getCreatedAt().toString(),
+                    "updatedAt" to item.getUpdatedAt().toString()
+                )
+            }
+        )
+    }
+    
+    /**
+     * 反序列化聚合根状态
+     */
+    override fun deserializeState(stateData: Map<String, Any>) {
+        try {
+            // 清空当前推荐项
+            items.clear()
+            
+            // 恢复时间戳
+            updatedAt = Instant.parse(stateData["updatedAt"] as String)
+            
+            // 恢复推荐项
+            @Suppress("UNCHECKED_CAST")
+            val itemsData = stateData["items"] as? List<Map<String, Any>> ?: emptyList()
+            
+            itemsData.forEach { itemData ->
+                try {
+                    val contentId = ContentId.of(itemData["contentId"] as String)
+                    val score = RecommendationScore(itemData["score"] as Double)
+                    val type = RecommendationType.valueOf(itemData["type"] as String)
+                    val createdAt = Instant.parse(itemData["createdAt"] as String)
+                    val updatedAt = Instant.parse(itemData["updatedAt"] as String)
+                    
+                    val item = RecommendationItem.create(
+                        contentId = contentId,
+                        score = score,
+                        type = type,
+                        createdAt = createdAt,
+                        updatedAt = updatedAt
+                    )
+                    
+                    items.add(item)
+                } catch (e: Exception) {
+                    // 记录错误但继续处理其他推荐项
+                    // 在实际应用中可能需要更严格的错误处理
+                }
+            }
+            
+        } catch (e: Exception) {
+            // 在实际应用中需要更严格的错误处理
+            throw IllegalStateException("Failed to deserialize Recommendation state", e)
+        }
+    }
+    
+    /**
+     * 应用领域事件到聚合根
+     */
+    override fun applyEvent(event: com.lifee.common.domain.DomainEvent) {
+        when (event) {
+            is RecommendationCreatedEvent -> {
+                // 推荐创建事件已在构造函数中处理
+            }
+            is RecommendationItemAddedEvent -> {
+                // 推荐项添加事件已在addItem方法中处理
+            }
+            is RecommendationItemRemovedEvent -> {
+                // 推荐项移除事件已在removeItem方法中处理
+            }
+            is RecommendationScoreUpdatedEvent -> {
+                // 推荐分数更新事件已在updateItemScore方法中处理
+            }
+            is RecommendationClearedEvent -> {
+                // 推荐清空事件已在clearItems方法中处理
+            }
+            // 可以根据需要添加更多事件处理
+        }
+    }
 }

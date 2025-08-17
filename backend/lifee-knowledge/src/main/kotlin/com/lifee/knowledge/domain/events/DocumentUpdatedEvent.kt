@@ -8,30 +8,66 @@ import java.util.*
 /**
  * 文档更新事件
  */
-data class DocumentUpdatedEvent(
-    override val aggregateId: String,
-    override val eventId: UUID,
-    override val occurredOn: Instant,
-    override val version: Long,
+class DocumentUpdatedEvent(
     val knowledgeBaseId: KnowledgeBaseId,
     val documentId: DocumentId,
     val newTitle: DocumentTitle,
-    val newContentLength: Int
-) : DomainEvent {
+    val newContentLength: Int,
+    aggregateId: String = knowledgeBaseId.toString(),
+    version: Long = 0,
+    occurredOn: Instant = Instant.now(),
+    eventId: UUID = UUID.randomUUID()
+) : DomainEvent(aggregateId, version, occurredOn, eventId) {
+    
+    override fun copy(
+        aggregateId: String,
+        version: Long,
+        occurredOn: Instant,
+        eventId: UUID
+    ): DomainEvent {
+        return DocumentUpdatedEvent(
+            knowledgeBaseId = KnowledgeBaseId.fromString(aggregateId),
+            documentId = this.documentId,
+            newTitle = this.newTitle,
+            newContentLength = this.newContentLength,
+            aggregateId = aggregateId,
+            version = version,
+            occurredOn = occurredOn,
+            eventId = eventId
+        )
+    }
+    
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is DocumentUpdatedEvent) return false
+        if (!super.equals(other)) return false
+        return knowledgeBaseId == other.knowledgeBaseId &&
+               documentId == other.documentId &&
+               newTitle == other.newTitle &&
+               newContentLength == other.newContentLength
+    }
+    
+    override fun hashCode(): Int {
+        var result = super.hashCode()
+        result = 31 * result + knowledgeBaseId.hashCode()
+        result = 31 * result + documentId.hashCode()
+        result = 31 * result + newTitle.hashCode()
+        result = 31 * result + newContentLength
+        return result
+    }
+    
+    override fun toString(): String {
+        return "DocumentUpdatedEvent(knowledgeBaseId=$knowledgeBaseId, documentId=$documentId, newTitle=$newTitle, newContentLength=$newContentLength, ${super.toString()})"
+    }
     
     companion object {
         fun create(
             knowledgeBaseId: KnowledgeBaseId,
             documentId: DocumentId,
             newTitle: DocumentTitle,
-            newContentLength: Int,
-            version: Long
+            newContentLength: Int
         ): DocumentUpdatedEvent {
             return DocumentUpdatedEvent(
-                aggregateId = knowledgeBaseId.toString(),
-                eventId = UUID.randomUUID(),
-                occurredOn = Instant.now(),
-                version = version,
                 knowledgeBaseId = knowledgeBaseId,
                 documentId = documentId,
                 newTitle = newTitle,

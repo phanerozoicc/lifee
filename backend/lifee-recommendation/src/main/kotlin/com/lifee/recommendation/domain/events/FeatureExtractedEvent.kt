@@ -3,6 +3,7 @@ package com.lifee.recommendation.domain.events
 import com.lifee.common.domain.DomainEvent
 import com.lifee.user.domain.UserId
 import java.time.Instant
+import java.util.*
 
 /**
  * 特征提取完成事件
@@ -19,9 +20,14 @@ data class FeatureExtractedEvent(
     override fun copy(
         aggregateId: String,
         version: Long,
-        occurredOn: Instant
+        occurredOn: Instant,
+        eventId: UUID
     ): DomainEvent {
-        return copy(
+        return FeatureExtractedEvent(
+            userId = UserId(aggregateId),
+            featureType = this.featureType,
+            featureCount = this.featureCount,
+            extractionTimeMs = this.extractionTimeMs,
             aggregateId = aggregateId,
             version = version
         )

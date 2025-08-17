@@ -3,6 +3,7 @@ package com.lifee.recommendation.domain.events
 import com.lifee.common.domain.DomainEvent
 import com.lifee.user.domain.UserId
 import java.time.Instant
+import java.util.*
 
 /**
  * 用户行为收集事件
@@ -21,9 +22,16 @@ data class UserBehaviorCollectedEvent(
     override fun copy(
         aggregateId: String,
         version: Long,
-        occurredOn: Instant
+        occurredOn: Instant,
+        eventId: UUID
     ): DomainEvent {
-        return copy(
+        return UserBehaviorCollectedEvent(
+            userId = UserId(aggregateId),
+            behaviorType = this.behaviorType,
+            targetId = this.targetId,
+            targetType = this.targetType,
+            metadata = this.metadata,
+            timestamp = this.timestamp,
             aggregateId = aggregateId,
             version = version
         )

@@ -8,7 +8,7 @@ import java.util.*
 /**
  * 用户密码更改事件
  */
-data class UserPasswordChangedEvent(
+class UserPasswordChangedEvent(
     val userId: UserId
 ) : DomainEvent(userId.value) {
     
@@ -18,8 +18,25 @@ data class UserPasswordChangedEvent(
         occurredOn: Instant,
         eventId: UUID
     ): DomainEvent {
-        return this.copy(
+        return UserPasswordChangedEvent(
             userId = UserId(aggregateId)
         )
+    }
+    
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is UserPasswordChangedEvent) return false
+        if (!super.equals(other)) return false
+        return userId == other.userId
+    }
+    
+    override fun hashCode(): Int {
+        var result = super.hashCode()
+        result = 31 * result + userId.hashCode()
+        return result
+    }
+    
+    override fun toString(): String {
+        return "UserPasswordChangedEvent(userId=$userId, ${super.toString()})"
     }
 }

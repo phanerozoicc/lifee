@@ -91,7 +91,7 @@ class DocumentValidationService {
         
         if (typeValue !in SUPPORTED_TEXT_FORMATS && typeValue !in SUPPORTED_BINARY_FORMATS) {
             throw InvalidDocumentException(
-                "不支持的文档格式：${type.value}。支持的格式：${(SUPPORTED_TEXT_FORMATS + SUPPORTED_BINARY_FORMATS).joinString()}"
+                "不支持的文档格式：${type.value}。支持的格式：${(SUPPORTED_TEXT_FORMATS + SUPPORTED_BINARY_FORMATS).joinToString()}"
             )
         }
     }

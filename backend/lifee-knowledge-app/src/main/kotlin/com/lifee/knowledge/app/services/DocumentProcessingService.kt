@@ -118,6 +118,25 @@ class DocumentProcessingService(
 
 /**
  * 向量嵌入服务
+ * 
+ * 扩展优化策略：
+ * 1. 模型优化：
+ *    - 多模型支持：集成OpenAI、Cohere、本地BERT等多种嵌入模型
+ *    - 模型微调：基于领域数据微调嵌入模型提高准确性
+ *    - 模型版本管理：支持模型版本切换和A/B测试
+ *    - 动态模型选择：基于文档类型和语言自动选择最优模型
+ * 
+ * 2. 分块优化：
+ *    - 智能分块：基于语义边界进行分块而非固定长度
+ *    - 重叠分块：使用滑动窗口确保语义连续性
+ *    - 层次分块：支持段落、章节、文档多级分块
+ *    - 自适应分块：基于文档结构动态调整分块策略
+ * 
+ * 3. 性能优化：
+ *    - 批量处理：支持批量向量化减少API调用
+ *    - 异步处理：使用消息队列异步处理大文档
+ *    - 缓存机制：缓存常用文档片段的向量表示
+ *    - 增量更新：支持文档增量更新而非全量重新处理
  */
 @Service
 class VectorEmbeddingService {
@@ -155,6 +174,13 @@ class VectorEmbeddingService {
     
     private fun chunkDocument(content: String, type: String): List<String> {
         // TODO: 实现智能分块逻辑
+        // 
+        // 扩展优化建议：
+        // 1. 语义分块：基于句子边界、段落结构进行分块
+        // 2. 重叠分块：使用滑动窗口保持上下文连续性
+        // 3. 结构化分块：针对不同文档类型（PDF、Word、HTML）的专用分块策略
+        // 4. 自适应分块：基于内容密度和复杂度动态调整分块大小
+        // 5. 多级分块：支持章节、段落、句子多级分块索引
         val chunkSize = when (type.uppercase()) {
             "MARKDOWN" -> 1000
             "HTML" -> 800
@@ -166,6 +192,13 @@ class VectorEmbeddingService {
     
     private suspend fun generateEmbeddings(chunks: List<String>): List<FloatArray> {
         // TODO: 调用实际的向量化模型（如OpenAI Embeddings、本地模型等）
+        // 
+        // 扩展优化建议：
+        // 1. 模型集成：支持OpenAI、Cohere、HuggingFace等多种API
+        // 2. 本地模型：集成Sentence-BERT、BGE等本地模型
+        // 3. 批量优化：合并多个chunk减少API调用次数
+        // 4. 重试机制：实现指数退避重试策略
+        // 5. 质量监控：监控向量质量和模型性能
         return chunks.map { FloatArray(768) { Math.random().toFloat() } }
     }
     
@@ -177,6 +210,31 @@ class VectorEmbeddingService {
 
 /**
  * 索引服务
+ * 
+ * 扩展优化策略：
+ * 1. 索引类型优化：
+ *    - 多类型索引：支持倒排索引、向量索引、图索引等
+ *    - 混合索引：结合全文搜索和向量搜索的混合索引
+ *    - 分层索引：构建多层次索引提高查询效率
+ *    - 压缩索引：使用压缩算法减少索引存储空间
+ * 
+ * 2. 搜索引擎集成：
+ *    - Elasticsearch集成：支持复杂查询和聚合分析
+ *    - Solr集成：支持企业级搜索功能
+ *    - 本地索引：使用Lucene构建本地搜索索引
+ *    - 分布式索引：支持索引分片和副本
+ * 
+ * 3. 性能优化：
+ *    - 增量索引：支持文档增量更新索引
+ *    - 并行构建：多线程并行构建索引
+ *    - 索引预热：预加载热点索引到内存
+ *    - 查询优化：索引结构优化和查询计划优化
+ * 
+ * 4. 智能特性：
+ *    - 自动补全：构建前缀索引支持搜索建议
+ *    - 拼写纠错：集成拼写检查和纠错功能
+ *    - 同义词扩展：支持同义词和相关词扩展
+ *    - 个性化索引：基于用户偏好构建个性化索引
  */
 @Service
 class IndexingService {
@@ -224,6 +282,13 @@ class IndexingService {
     
     private fun extractKeywords(content: String): List<String> {
         // TODO: 实现关键词提取（TF-IDF、TextRank等算法）
+        // 
+        // 扩展优化建议：
+        // 1. 算法多样化：集成TF-IDF、TextRank、YAKE等多种算法
+        // 2. NLP增强：使用NER（命名实体识别）提取重要实体
+        // 3. 领域适配：基于不同领域调整关键词提取策略
+        // 4. 多语言支持：支持中文分词和多语言关键词提取
+        // 5. 质量评估：实现关键词质量评估和过滤机制
         return content.split("\\s+").filter { it.length > 2 }.distinct()
     }
     
@@ -237,6 +302,13 @@ class IndexingService {
     
     private suspend fun storeIndex(knowledgeBaseId: KnowledgeBaseId, documentId: DocumentId, index: Map<String, List<Int>>) {
         // TODO: 存储索引数据到搜索引擎（如Elasticsearch、Solr等）
+        // 
+        // 扩展优化建议：
+        // 1. 搜索引擎集成：支持Elasticsearch、Solr、OpenSearch等
+        // 2. 索引分片：基于知识库和文档类型进行索引分片
+        // 3. 副本管理：配置索引副本提高可用性
+        // 4. 索引模板：使用索引模板标准化索引结构
+        // 5. 监控告警：监控索引大小、查询性能等指标
         logger.debug("存储索引数据: documentId={}, indexSize={}", documentId.value, index.size)
     }
 }

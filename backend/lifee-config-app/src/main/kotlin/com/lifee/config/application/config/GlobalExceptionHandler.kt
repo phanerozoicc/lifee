@@ -1,5 +1,6 @@
 package com.lifee.config.application.config
 
+import com.lifee.common.eventsourcing.ConcurrencyException
 import com.lifee.common.exceptions.ApplicationException
 import com.lifee.common.exceptions.DomainException
 import com.lifee.common.exceptions.InfrastructureException
@@ -28,6 +29,9 @@ class GlobalExceptionHandler {
         logger.error("Uncaught exception in coroutine: ${context[CoroutineContext.Key]}", exception)
         
         when (exception) {
+            is ConcurrencyException -> {
+                logger.warn("Concurrency exception in coroutine: aggregateId=${exception.aggregateId}, expectedVersion=${exception.expectedVersion}, actualVersion=${exception.actualVersion}", exception)
+            }
             is DomainException -> {
                 logger.warn("Domain exception in coroutine: ${exception.message}", exception)
             }
@@ -41,6 +45,24 @@ class GlobalExceptionHandler {
                 logger.error("Unknown exception in coroutine: ${exception.message}", exception)
             }
         }
+    }
+    
+    @ExceptionHandler(ConcurrencyException::class)
+    suspend fun handleConcurrencyException(
+        exception: ConcurrencyException,
+        exchange: ServerWebExchange
+    ): ResponseEntity<ErrorResponse> {
+        logger.warn("Concurrency conflict: aggregateId={}, expectedVersion={}, actualVersion={}", 
+            exception.aggregateId, exception.expectedVersion, exception.actualVersion, exception)
+        
+        val errorResponse = ErrorResponse(
+            code = "CONCURRENCY_CONFLICT",
+            message = "数据已被其他用户修改，请刷新后重试",
+            timestamp = System.currentTimeMillis(),
+            path = exchange.request.path.value()
+        )
+        
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse)
     }
     
     @ExceptionHandler(DomainException::class)

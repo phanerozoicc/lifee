@@ -26,8 +26,12 @@ data class ConfigurationPublishedEvent(
         occurredOn: Instant,
         eventId: UUID
     ): DomainEvent {
-        return this.copy(
-            configurationId = ConfigId(UUID.fromString(aggregateId))
+        return ConfigurationPublishedEvent(
+            configurationId = ConfigId(UUID.fromString(aggregateId)),
+            configVersion = this.configVersion,
+            publisherId = this.publisherId,
+            publishTime = this.publishTime,
+            releaseNotes = this.releaseNotes
         )
     }
 }
@@ -52,8 +56,11 @@ data class ConfigurationValidatedEvent(
         occurredOn: Instant,
         eventId: UUID
     ): DomainEvent {
-        return this.copy(
-            configurationId = ConfigId(UUID.fromString(aggregateId))
+        return ConfigurationValidatedEvent(
+            configurationId = ConfigId(UUID.fromString(aggregateId)),
+            isValid = this.isValid,
+            errorCount = this.errorCount,
+            validationTimeMs = this.validationTimeMs
         )
     }
 }
@@ -79,8 +86,12 @@ data class ConfigurationRolledBackEvent(
         occurredOn: Instant,
         eventId: UUID
     ): DomainEvent {
-        return this.copy(
-            configurationId = ConfigId(UUID.fromString(aggregateId))
+        return ConfigurationRolledBackEvent(
+            configurationId = ConfigId(UUID.fromString(aggregateId)),
+            fromVersion = this.fromVersion,
+            toVersion = this.toVersion,
+            rollbackReason = this.rollbackReason,
+            operatorId = this.operatorId
         )
     }
 }
@@ -105,8 +116,11 @@ data class ConfigurationNotificationSentEvent(
         occurredOn: Instant,
         eventId: UUID
     ): DomainEvent {
-        return this.copy(
-            configurationId = ConfigId(UUID.fromString(aggregateId))
+        return ConfigurationNotificationSentEvent(
+            configurationId = ConfigId(UUID.fromString(aggregateId)),
+            notificationType = this.notificationType,
+            channels = this.channels,
+            recipientCount = this.recipientCount
         )
     }
 }

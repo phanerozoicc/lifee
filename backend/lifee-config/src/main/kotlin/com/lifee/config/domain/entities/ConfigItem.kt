@@ -16,7 +16,7 @@ data class ConfigItem(
     private var isEncrypted: Boolean = false,
     val createdAt: LocalDateTime = LocalDateTime.now(),
     private var updatedAt: LocalDateTime = LocalDateTime.now()
-) : Entity {
+) : Entity<ConfigKey>(key) {
     
     init {
         require(description.length <= 500) { "配置描述长度不能超过500个字符" }

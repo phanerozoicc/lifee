@@ -4,6 +4,11 @@ import com.lifee.config.app.application.commands.BatchUpdateConfigItemsCommand
 import com.lifee.config.app.application.dtos.*
 import com.lifee.config.app.application.services.ConfigurationApplicationService
 import com.lifee.config.domain.valueobjects.ConfigType
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.responses.ApiResponses
+import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
@@ -13,18 +18,32 @@ import org.springframework.web.bind.annotation.*
 
 /**
  * 配置控制器
+ * 提供系统配置的管理功能
  */
 @RestController
 @RequestMapping("/api/v1/configurations")
+@Tag(name = "配置管理", description = "系统配置的创建、查询、更新、删除功能")
 class ConfigurationController(
     private val configurationService: ConfigurationApplicationService
 ) {
     
     /**
      * 创建配置
+     * 
+     * @param request 创建配置请求，包含命名空间和环境
+     * @return 创建成功无返回内容
      */
+    @Operation(summary = "创建配置", description = "为指定命名空间和环境创建新的配置")
+    @ApiResponses(
+        value = [
+            ApiResponse(responseCode = "201", description = "配置创建成功"),
+            ApiResponse(responseCode = "400", description = "请求参数错误"),
+            ApiResponse(responseCode = "409", description = "配置已存在")
+        ]
+    )
     @PostMapping
     suspend fun createConfiguration(
+        @Parameter(description = "创建配置请求", required = true)
         @Valid @RequestBody request: CreateConfigurationRequest
     ): ResponseEntity<Void> {
         configurationService.createConfiguration(
@@ -160,14 +179,106 @@ class ConfigurationController(
     
     /**
      * 搜索配置项
+     * 
+     * 支持多维度搜索指定命名空间和环境下的配置项，包含完整的分页、排序和高级过滤功能。
+     * 
+     * @param namespace 命名空间，必填
+     * @param environment 环境，必填
+     * @param keyword 搜索关键词，支持按配置键名和描述进行模糊搜索
+     * @param configType 配置类型过滤，支持：STRING、NUMBER、BOOLEAN、JSON、ARRAY
+     * @param isEncrypted 是否加密过滤，true表示只查询加密配置，false表示只查询非加密配置
+     * @param page 页码，从0开始，默认为0，最小值为0
+     * @param size 每页数量，默认为20，取值范围1-100
+     * @param sortBy 排序字段，支持：key（配置键）、type（配置类型）、createdAt（创建时间）、updatedAt（更新时间）
+     * @param sortOrder 排序方向，支持：asc（升序）、desc（降序），默认为asc
+     * @param includeValues 是否包含配置值，默认为true，设为false时只返回配置元数据
+     * @param tags 标签过滤，支持按配置标签进行过滤，多个标签用逗号分隔
+     * @return 分页的配置项搜索结果
      */
+    @Operation(
+        summary = "搜索配置项", 
+        description = "多维度搜索指定命名空间和环境下的配置项，支持关键词搜索、类型过滤、排序和分页"
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(responseCode = "200", description = "搜索成功，返回分页的配置项列表"),
+            ApiResponse(responseCode = "400", description = "搜索参数错误、分页参数无效或排序参数错误"),
+            ApiResponse(responseCode = "401", description = "用户未认证"),
+            ApiResponse(responseCode = "403", description = "无权限访问指定命名空间或环境")
+        ]
+    )
     @GetMapping("/items/search")
     suspend fun searchConfigItems(
-        @RequestParam namespace: String,
-        @RequestParam environment: String,
+        @Parameter(description = "命名空间", required = true, example = "app")
+        @RequestParam @NotBlank namespace: String,
+        
+        @Parameter(description = "环境", required = true, example = "production")
+        @RequestParam @NotBlank environment: String,
+        
+        @Parameter(
+            description = "搜索关键词，支持按配置键名和描述进行模糊搜索",
+            example = "database"
+        )
         @RequestParam(defaultValue = "") keyword: String,
+        
+        @Parameter(
+            description = "配置类型过滤",
+            example = "STRING",
+            schema = io.swagger.v3.oas.annotations.media.Schema(
+                allowableValues = ["STRING", "NUMBER", "BOOLEAN", "JSON", "ARRAY"]
+            )
+        )
+        @RequestParam(required = false) configType: String?,
+        
+        @Parameter(
+            description = "是否加密过滤，true表示只查询加密配置，false表示只查询非加密配置",
+            example = "false"
+        )
+        @RequestParam(required = false) isEncrypted: Boolean?,
+        
+        @Parameter(
+            description = "页码，从0开始",
+            example = "0",
+            schema = io.swagger.v3.oas.annotations.media.Schema(minimum = "0")
+        )
         @RequestParam(defaultValue = "0") page: Int,
-        @RequestParam(defaultValue = "20") size: Int
+        
+        @Parameter(
+            description = "每页返回的记录数量，取值范围1-100",
+            example = "20",
+            schema = io.swagger.v3.oas.annotations.media.Schema(minimum = "1", maximum = "100")
+        )
+        @RequestParam(defaultValue = "20") size: Int,
+        
+        @Parameter(
+            description = "排序字段",
+            example = "key",
+            schema = io.swagger.v3.oas.annotations.media.Schema(
+                allowableValues = ["key", "type", "createdAt", "updatedAt"]
+            )
+        )
+        @RequestParam(defaultValue = "key") sortBy: String,
+        
+        @Parameter(
+            description = "排序方向",
+            example = "asc",
+            schema = io.swagger.v3.oas.annotations.media.Schema(
+                allowableValues = ["asc", "desc"]
+            )
+        )
+        @RequestParam(defaultValue = "asc") sortOrder: String,
+        
+        @Parameter(
+            description = "是否包含配置值，默认为true，设为false时只返回配置元数据",
+            example = "true"
+        )
+        @RequestParam(defaultValue = "true") includeValues: Boolean,
+        
+        @Parameter(
+            description = "标签过滤，支持按配置标签进行过滤，多个标签用逗号分隔",
+            example = "database,cache"
+        )
+        @RequestParam(required = false) tags: String?
     ): ResponseEntity<ConfigItemPageDto> {
         val result = configurationService.searchConfigItems(namespace, environment, keyword, page, size)
         return ResponseEntity.ok(result)

@@ -2,7 +2,7 @@ package com.lifee.knowledge.domain.repositories
 
 import com.lifee.knowledge.domain.aggregates.KnowledgeBase
 import com.lifee.knowledge.domain.valueobjects.KnowledgeBaseId
-import com.lifee.common.valueobjects.UserId
+import com.lifee.common.domain.valueobjects.UserId
 
 /**
  * 知识库仓储接口

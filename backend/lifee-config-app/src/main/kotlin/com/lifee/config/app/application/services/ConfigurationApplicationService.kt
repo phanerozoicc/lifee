@@ -2,10 +2,13 @@ package com.lifee.config.app.application.services
 
 import com.lifee.common.cqrs.commands.CommandBus
 import com.lifee.common.cqrs.queries.QueryBus
+import com.lifee.common.eventsourcing.ConcurrencyException
+import com.lifee.common.exceptions.ApplicationException
 import com.lifee.config.app.application.commands.*
 import com.lifee.config.app.application.dtos.*
 import com.lifee.config.app.application.queries.*
 import com.lifee.config.domain.valueobjects.ConfigType
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -18,6 +21,35 @@ class ConfigurationApplicationService(
     private val queryBus: QueryBus
 ) {
     
+    private val logger = LoggerFactory.getLogger(ConfigurationApplicationService::class.java)
+    private val maxRetryAttempts = 3
+    
+    /**
+     * 执行命令并处理并发冲突
+     */
+    private fun <T> executeCommandWithRetry(command: T, operation: String): Unit {
+        var attemptCount = 0
+        
+        while (attemptCount < maxRetryAttempts) {
+            try {
+                commandBus.send(command)
+                return
+            } catch (e: ConcurrencyException) {
+                attemptCount++
+                logger.warn("Configuration {} conflict (attempt {}): aggregateId={}, expectedVersion={}, actualVersion={}",
+                    operation, attemptCount, e.aggregateId, e.expectedVersion, e.actualVersion)
+                
+                if (attemptCount >= maxRetryAttempts) {
+                    logger.error("Configuration {} failed after {} attempts: {}", operation, maxRetryAttempts, e.message)
+                    throw ApplicationException("配置${operation}冲突，请重试", e)
+                }
+                
+                // 延迟重试
+                Thread.sleep(attemptCount * 100L)
+            }
+        }
+    }
+    
     /**
      * 创建配置
      */
@@ -27,7 +59,7 @@ class ConfigurationApplicationService(
             namespace = namespace,
             environment = environment
         )
-        commandBus.send(command)
+        executeCommandWithRetry(command, "创建")
     }
     
     /**
@@ -52,7 +84,7 @@ class ConfigurationApplicationService(
             description = description,
             isEncrypted = isEncrypted
         )
-        commandBus.send(command)
+        executeCommandWithRetry(command, "添加配置项")
     }
     
     /**
@@ -73,7 +105,7 @@ class ConfigurationApplicationService(
             value = value,
             description = description
         )
-        commandBus.send(command)
+        executeCommandWithRetry(command, "更新配置项")
     }
     
     /**
@@ -90,7 +122,7 @@ class ConfigurationApplicationService(
             environment = environment,
             key = key
         )
-        commandBus.send(command)
+        executeCommandWithRetry(command, "删除配置项")
     }
     
     /**
@@ -107,7 +139,7 @@ class ConfigurationApplicationService(
             environment = environment,
             items = items
         )
-        commandBus.send(command)
+        executeCommandWithRetry(command, "批量更新配置项")
     }
     
     /**
@@ -122,7 +154,7 @@ class ConfigurationApplicationService(
             namespace = namespace,
             environment = environment
         )
-        commandBus.send(command)
+        executeCommandWithRetry(command, "清空配置")
     }
     
     /**
@@ -137,7 +169,7 @@ class ConfigurationApplicationService(
             namespace = namespace,
             environment = environment
         )
-        commandBus.send(command)
+        executeCommandWithRetry(command, "删除配置")
     }
     
     /**
@@ -158,7 +190,7 @@ class ConfigurationApplicationService(
             targetEnvironment = targetEnvironment,
             overwrite = overwrite
         )
-        commandBus.send(command)
+        executeCommandWithRetry(command, "复制配置")
     }
     
     /**

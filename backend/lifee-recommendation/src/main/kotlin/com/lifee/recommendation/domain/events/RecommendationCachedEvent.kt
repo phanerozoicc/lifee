@@ -3,6 +3,7 @@ package com.lifee.recommendation.domain.events
 import com.lifee.common.domain.DomainEvent
 import com.lifee.user.domain.UserId
 import java.time.Instant
+import java.util.*
 
 /**
  * 推荐缓存完成事件
@@ -20,9 +21,15 @@ data class RecommendationCachedEvent(
     override fun copy(
         aggregateId: String,
         version: Long,
-        occurredOn: Instant
+        occurredOn: Instant,
+        eventId: UUID
     ): DomainEvent {
-        return copy(
+        return RecommendationCachedEvent(
+            userId = UserId(aggregateId),
+            algorithm = this.algorithm,
+            recommendationCount = this.recommendationCount,
+            cacheTimeMs = this.cacheTimeMs,
+            ttlSeconds = this.ttlSeconds,
             aggregateId = aggregateId,
             version = version
         )

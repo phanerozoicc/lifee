@@ -4,6 +4,7 @@ import com.lifee.common.domain.DomainEvent
 import com.lifee.chat.domain.valueobjects.ConversationId
 import com.lifee.user.domain.UserId
 import java.time.Instant
+import java.util.*
 
 /**
  * 响应生成事件
@@ -23,9 +24,17 @@ data class ResponseGeneratedEvent(
     override fun copy(
         aggregateId: String,
         version: Long,
-        occurredOn: Instant
+        occurredOn: Instant,
+        eventId: UUID
     ): DomainEvent {
-        return copy(
+        return ResponseGeneratedEvent(
+            conversationId = ConversationId(aggregateId),
+            userId = this.userId,
+            userMessage = this.userMessage,
+            assistantResponse = this.assistantResponse,
+            retrievedDocumentCount = this.retrievedDocumentCount,
+            tokensUsed = this.tokensUsed,
+            processingTimeMs = this.processingTimeMs,
             aggregateId = aggregateId,
             version = version
         )

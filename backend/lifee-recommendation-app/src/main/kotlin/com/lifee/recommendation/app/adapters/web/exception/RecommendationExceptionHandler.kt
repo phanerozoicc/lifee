@@ -1,5 +1,6 @@
 package com.lifee.recommendation.app.adapters.web.exception
 
+import com.lifee.common.exceptions.ConcurrencyException
 import com.lifee.common.exceptions.ErrorResponse
 import com.lifee.recommendation.domain.exceptions.InvalidRecommendationException
 import com.lifee.recommendation.domain.exceptions.RecommendationNotFoundException
@@ -115,6 +116,35 @@ class RecommendationExceptionHandler {
             details = mapOf(
                 "error_type" to "DuplicateRecommendationException",
                 "module" to "recommendation"
+            )
+        )
+        
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse)
+    }
+    
+    /**
+     * 处理并发冲突异常
+     */
+    @ExceptionHandler(ConcurrencyException::class)
+    fun handleConcurrencyException(
+        ex: ConcurrencyException,
+        request: WebRequest
+    ): ResponseEntity<ErrorResponse> {
+        logger.warn("推荐并发冲突异常: 聚合根ID={}, 期望版本={}, 实际版本={}, 消息={}", 
+            ex.aggregateId, ex.expectedVersion, ex.actualVersion, ex.message)
+        
+        val errorResponse = ErrorResponse(
+            code = "CONCURRENCY_CONFLICT",
+            message = "推荐数据已被其他用户修改，请刷新后重试",
+            timestamp = LocalDateTime.now(),
+            path = request.getDescription(false).removePrefix("uri="),
+            status = HttpStatus.CONFLICT.value(),
+            details = mapOf(
+                "error_type" to "ConcurrencyException",
+                "module" to "recommendation",
+                "aggregate_id" to ex.aggregateId,
+                "expected_version" to ex.expectedVersion.toString(),
+                "actual_version" to ex.actualVersion.toString()
             )
         )
         

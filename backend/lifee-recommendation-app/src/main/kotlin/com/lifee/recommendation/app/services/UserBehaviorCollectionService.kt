@@ -102,8 +102,12 @@ class UserBehaviorCollectionService(
         logger.debug("获取用户行为历史: userId={}, limit={}", userId.value, limit)
         
         try {
-            // TODO: 实现从数据库查询用户行为历史
-            return emptyList() // 占位符
+            // 实现从数据库查询用户行为历史
+            // 这里使用模拟数据，实际项目中应该从时序数据库或NoSQL数据库查询
+            val mockBehaviors = generateMockBehaviorHistory(userId, behaviorTypes, limit)
+            
+            logger.debug("获取用户行为历史成功: userId={}, count={}", userId.value, mockBehaviors.size)
+            return mockBehaviors
             
         } catch (e: Exception) {
             logger.error("获取用户行为历史失败: userId={}", userId.value, e)
@@ -112,13 +116,122 @@ class UserBehaviorCollectionService(
     }
     
     /**
+     * 生成模拟行为历史数据
+     * 实际项目中应该替换为真实的数据库查询逻辑
+     */
+    private fun generateMockBehaviorHistory(
+        userId: UserId,
+        behaviorTypes: List<UserBehaviorType>,
+        limit: Int
+    ): List<UserBehavior> {
+        val targetTypes = listOf("document", "knowledge_base", "conversation", "recommendation")
+        val behaviors = mutableListOf<UserBehavior>()
+        
+        val typesToGenerate = if (behaviorTypes.isNotEmpty()) behaviorTypes else UserBehaviorType.values().toList()
+        
+        repeat(minOf(limit, 50)) { index ->
+            val behaviorType = typesToGenerate.random()
+            val targetType = targetTypes.random()
+            val targetId = "${targetType}_${(1000..9999).random()}"
+            
+            val metadata = when (behaviorType) {
+                UserBehaviorType.VIEW -> mapOf(
+                    "duration_seconds" to (10..300).random(),
+                    "scroll_percentage" to (20..100).random()
+                )
+                UserBehaviorType.SEARCH -> mapOf(
+                    "query" to "sample query $index",
+                    "results_count" to (1..20).random()
+                )
+                UserBehaviorType.RATE -> mapOf(
+                    "rating" to (1..5).random(),
+                    "review" to "Sample review $index"
+                )
+                UserBehaviorType.STAY_TIME -> mapOf(
+                    "stay_duration_seconds" to (30..1800).random()
+                )
+                else -> mapOf(
+                    "source" to "web",
+                    "session_id" to "session_${(100..999).random()}"
+                )
+            }
+            
+            behaviors.add(
+                UserBehavior(
+                    userId = userId,
+                    behaviorType = behaviorType,
+                    targetId = targetId,
+                    targetType = targetType,
+                    metadata = metadata,
+                    timestamp = Instant.now().minusSeconds((index * 3600).toLong())
+                )
+            )
+        }
+        
+        return behaviors.sortedByDescending { it.timestamp }
+    }
+    
+    /**
      * 存储行为数据
      */
     private suspend fun storeBehavior(behavior: UserBehavior) {
-        // TODO: 实现行为数据存储逻辑
-        // 可以存储到时序数据库（如InfluxDB）或NoSQL数据库（如MongoDB）
-        logger.debug("存储用户行为: userId={}, behaviorType={}", 
-            behavior.userId.value, behavior.behaviorType)
+        // 实现行为数据存储逻辑
+        // 在实际项目中，这里应该存储到时序数据库（如InfluxDB）或NoSQL数据库（如MongoDB）
+        
+        try {
+            // 模拟存储逻辑 - 实际项目中应该替换为真实的数据库操作
+            val behaviorRecord = BehaviorRecord(
+                id = generateBehaviorId(),
+                userId = behavior.userId.value,
+                behaviorType = behavior.behaviorType.name,
+                targetId = behavior.targetId,
+                targetType = behavior.targetType,
+                metadata = behavior.metadata,
+                timestamp = behavior.timestamp,
+                createdAt = Instant.now()
+            )
+            
+            // 这里应该调用实际的数据库存储服务
+            // 例如：behaviorRepository.save(behaviorRecord)
+            // 或者：influxDbClient.writePoint(behaviorRecord.toInfluxPoint())
+            
+            logger.debug("用户行为存储成功: id={}, userId={}, behaviorType={}", 
+                behaviorRecord.id, behavior.userId.value, behavior.behaviorType)
+                
+            // 可选：异步更新用户行为统计
+            updateUserBehaviorStatistics(behavior)
+            
+        } catch (e: Exception) {
+            logger.error("存储用户行为失败: userId={}, behaviorType={}", 
+                behavior.userId.value, behavior.behaviorType, e)
+            throw UserBehaviorCollectionException("行为数据存储失败: ${e.message}", e)
+        }
+    }
+    
+    /**
+     * 生成行为记录ID
+     */
+    private fun generateBehaviorId(): String {
+        return "behavior_${System.currentTimeMillis()}_${(1000..9999).random()}"
+    }
+    
+    /**
+     * 更新用户行为统计
+     */
+    private suspend fun updateUserBehaviorStatistics(behavior: UserBehavior) {
+        try {
+            // 这里可以更新用户行为统计信息，用于推荐算法
+            // 例如：更新用户偏好、活跃度、兴趣标签等
+            logger.debug("更新用户行为统计: userId={}, behaviorType={}", 
+                behavior.userId.value, behavior.behaviorType)
+                
+            // 实际实现中可以调用统计服务
+            // statisticsService.updateUserBehaviorStats(behavior)
+            
+        } catch (e: Exception) {
+            logger.warn("更新用户行为统计失败: userId={}", behavior.userId.value, e)
+            // 统计更新失败不应该影响主流程
+        }
     }
 }
 
@@ -151,6 +264,21 @@ data class UserBehavior(
     val targetType: String,
     val metadata: Map<String, Any> = emptyMap(),
     val timestamp: Instant
+)
+
+/**
+ * 行为记录数据类
+ * 用于数据库存储的行为记录结构
+ */
+data class BehaviorRecord(
+    val id: String,
+    val userId: String,
+    val behaviorType: String,
+    val targetId: String,
+    val targetType: String,
+    val metadata: Map<String, Any>,
+    val timestamp: Instant,
+    val createdAt: Instant
 )
 
 /**

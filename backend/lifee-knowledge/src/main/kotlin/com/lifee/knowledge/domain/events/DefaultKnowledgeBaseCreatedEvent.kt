@@ -1,7 +1,7 @@
 package com.lifee.knowledge.domain.events
 
 import com.lifee.common.domain.DomainEvent
-import com.lifee.user.domain.UserId
+import com.lifee.common.domain.valueobjects.UserId
 import java.time.Instant
 
 /**
@@ -17,7 +17,7 @@ data class DefaultKnowledgeBaseCreatedEvent(
     val createdAt: Instant = Instant.now(),
     override val aggregateId: String = userId.value,
     override val version: Long = 1L
-) : DomainEvent() {
+) : DomainEvent(aggregateId, version) {
     
     override fun copy(
         aggregateId: String,
@@ -25,8 +25,16 @@ data class DefaultKnowledgeBaseCreatedEvent(
         occurredOn: Instant,
         eventId: java.util.UUID
     ): DomainEvent {
-        return this.copy(
-            userId = UserId(aggregateId)
+        return DefaultKnowledgeBaseCreatedEvent(
+            userId = this.userId,
+            knowledgeBaseId = this.knowledgeBaseId,
+            knowledgeBaseName = this.knowledgeBaseName,
+            email = this.email,
+            firstName = this.firstName,
+            lastName = this.lastName,
+            createdAt = this.createdAt,
+            aggregateId = aggregateId,
+            version = version
         )
     }
 }
