@@ -2,7 +2,7 @@ package com.github.phanerozoicc.user.infrastructure.config
 
 import com.github.phanerozoicc.base.command.CommandBus
 import com.github.phanerozoicc.base.command.DefaultCommandBus
-import com.github.phanerozoicc.base.event.DomainEvent
+import com.github.phanerozoicc.base.event.Event
 import com.github.phanerozoicc.base.event.DomainEventPublisher
 import com.github.phanerozoicc.user.application.command.*
 import com.github.phanerozoicc.user.application.query.*
@@ -55,7 +55,7 @@ class UserModuleConfiguration {
     @Bean
     fun domainEventPublisher(applicationEventPublisher: ApplicationEventPublisher): DomainEventPublisher {
         return object : DomainEventPublisher {
-            override fun publish(event: DomainEvent) {
+            override fun publish(event: Event) {
                 applicationEventPublisher.publishEvent(event)
             }
         }

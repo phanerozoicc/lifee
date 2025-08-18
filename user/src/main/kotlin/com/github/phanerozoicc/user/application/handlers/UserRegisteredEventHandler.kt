@@ -1,6 +1,6 @@
 package com.github.phanerozoicc.user.application.handlers
 
-import com.github.phanerozoicc.base.event.DomainEventHandler
+import com.github.phanerozoicc.base.event.EventHandler
 import com.github.phanerozoicc.user.application.service.EmailService
 import com.github.phanerozoicc.user.domain.event.UserRegisteredEvent
 import kotlinx.coroutines.runBlocking
@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component
 @Component
 class UserRegisteredEventHandler(
     private val emailService: EmailService
-): DomainEventHandler<UserRegisteredEvent, Unit> {
+): EventHandler<UserRegisteredEvent, Unit> {
 
     companion object: KLogging()
 

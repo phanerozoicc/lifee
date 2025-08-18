@@ -1,6 +1,6 @@
 package com.github.phanerozoicc.user.domain.event
 
-import com.github.phanerozoicc.base.event.DomainEvent
+import com.github.phanerozoicc.base.event.Event
 import com.github.phanerozoicc.user.domain.model.Email
 import java.time.Instant
 import java.time.LocalDateTime
@@ -20,4 +20,4 @@ data class UserLoginFailed(
     override val eventId: String = UUID.randomUUID().toString(),
     override val occurredOn: Instant = Instant.now(),
     override val eventType: String = "UserLoginFailed"
-) : DomainEvent
+) : Event

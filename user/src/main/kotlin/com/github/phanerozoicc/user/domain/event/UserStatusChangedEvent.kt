@@ -1,6 +1,6 @@
 package com.github.phanerozoicc.user.domain.event
 
-import com.github.phanerozoicc.base.event.DomainEvent
+import com.github.phanerozoicc.base.event.Event
 import com.github.phanerozoicc.user.domain.model.UserId
 import com.github.phanerozoicc.user.domain.model.UserStatus
 
@@ -16,7 +16,7 @@ data class UserStatusChangedEvent(
     val reason: String? = null,
     val changedBy: UserId? = null, // 操作者ID
     val ipAddress: String? = null,
-) : DomainEvent(userId.value, "UserStatusChanged") {
+) : Event(userId.value, "UserStatusChanged") {
 
     /**
      * 检查是否为激活操作

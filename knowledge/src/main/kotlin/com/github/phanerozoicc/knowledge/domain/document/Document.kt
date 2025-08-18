@@ -1,7 +1,7 @@
 package com.github.phanerozoicc.knowledge.domain.document
 
 import com.github.phanerozoicc.base.domain.AggregateRoot
-import com.github.phanerozoicc.base.event.DomainEvent
+import com.github.phanerozoicc.base.event.Event
 import com.github.phanerozoicc.knowledge.domain.knowledgebase.KnowledgeBaseId
 import java.math.BigInteger
 import java.security.MessageDigest
@@ -208,7 +208,7 @@ data class DocumentProcessedEvent(
     override val eventId: String = UUID.randomUUID().toString(),
     override val occurredOn: Instant = Instant.now(),
     override val eventType: String = "DocumentProcessed"
-) : DomainEvent
+) : Event
 
 data class DocumentProcessingFailedEvent(
     val documentId: DocumentId,
@@ -216,7 +216,7 @@ data class DocumentProcessingFailedEvent(
     override val eventId: String = UUID.randomUUID().toString(),
     override val occurredOn: Instant = Instant.now(),
     override val eventType: String = "DocumentProcessingFailed"
-) : DomainEvent
+) : Event
 
 data class DocumentContentChangedEvent(
     val documentId: DocumentId,
@@ -225,7 +225,7 @@ data class DocumentContentChangedEvent(
     override val eventId: String = UUID.randomUUID().toString(),
     override val occurredOn: Instant = Instant.now(),
     override val eventType: String = "DocumentContentChanged"
-) : DomainEvent
+) : Event
 
 data class DocumentStatusChangedEvent(
     val documentId: DocumentId,
@@ -233,4 +233,4 @@ data class DocumentStatusChangedEvent(
     override val eventId: String = UUID.randomUUID().toString(),
     override val occurredOn: Instant = Instant.now(),
     override val eventType: String = "DocumentStatusChanged"
-) : DomainEvent
+) : Event

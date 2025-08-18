@@ -1,6 +1,6 @@
 package com.github.phanerozoicc.user.domain.event
 
-import com.github.phanerozoicc.base.event.DomainEvent
+import com.github.phanerozoicc.base.event.Event
 import com.github.phanerozoicc.user.domain.model.UserId
 import java.time.Instant
 import java.time.LocalDateTime
@@ -20,5 +20,5 @@ data class PasswordChanged(
     override val eventId: String = UUID.randomUUID().toString(),
     override val occurredOn: Instant = Instant.now(),
     override val eventType: String = "PasswordChanged"
-) : DomainEvent
+) : Event
 

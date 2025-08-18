@@ -1,5 +1,5 @@
 package com.github.phanerozoicc.base.event
 
-interface DomainEventHandler<E: DomainEvent, R> {
+interface EventHandler<E: Event, R> {
     fun onDomainEvent(event: E): R
 }

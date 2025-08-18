@@ -1,7 +1,7 @@
 package com.github.phanerozoicc.knowledge.domain.conversation
 
 import com.github.phanerozoicc.base.domain.AggregateRoot
-import com.github.phanerozoicc.base.event.DomainEvent
+import com.github.phanerozoicc.base.event.Event
 import com.github.phanerozoicc.knowledge.domain.knowledgebase.KnowledgeBaseId
 import com.github.phanerozoicc.knowledge.domain.knowledgebase.UserId
 import com.github.phanerozoicc.knowledge.domain.document.DocumentChunk
@@ -248,7 +248,7 @@ data class MessageAddedEvent(
     override val eventId: String = UUID.randomUUID().toString(),
     override val occurredOn: Instant = Instant.now(),
     override val eventType: String = "MessageAdded"
-) : DomainEvent
+) : Event
 
 data class ConversationCreatedEvent(
     val conversationId: ConversationId,
@@ -257,7 +257,7 @@ data class ConversationCreatedEvent(
     override val eventId: String = UUID.randomUUID().toString(),
     override val occurredOn: Instant = Instant.now(),
     override val eventType: String = "ConversationCreated"
-) : DomainEvent
+) : Event
 
 data class ConversationSettingsUpdatedEvent(
     val conversationId: ConversationId,
@@ -265,7 +265,7 @@ data class ConversationSettingsUpdatedEvent(
     override val eventId: String = UUID.randomUUID().toString(),
     override val occurredOn: Instant = Instant.now(),
     override val eventType: String = "ConversationSettingsUpdated"
-) : DomainEvent
+) : Event
 
 data class ConversationKnowledgeBaseChangedEvent(
     val conversationId: ConversationId,
@@ -274,7 +274,7 @@ data class ConversationKnowledgeBaseChangedEvent(
     override val eventId: String = UUID.randomUUID().toString(),
     override val occurredOn: Instant = Instant.now(),
     override val eventType: String = "ConversationKnowledgeBaseChanged"
-) : DomainEvent
+) : Event
 
 data class ConversationTitleUpdatedEvent(
     val conversationId: ConversationId,
@@ -282,4 +282,4 @@ data class ConversationTitleUpdatedEvent(
     override val eventId: String = UUID.randomUUID().toString(),
     override val occurredOn: Instant = Instant.now(),
     override val eventType: String = "ConversationTitleUpdated"
-) : DomainEvent
+) : Event

@@ -1,6 +1,6 @@
 package com.github.phanerozoicc.user.domain.event
 
-import com.github.phanerozoicc.base.event.DomainEvent
+import com.github.phanerozoicc.base.event.Event
 import com.github.phanerozoicc.user.domain.model.UserId
 import com.github.phanerozoicc.user.domain.model.UserProfile
 import java.time.Instant
@@ -19,7 +19,7 @@ data class UserProfileUpdated(
     override val eventId: String = UUID.randomUUID().toString(),
     override val occurredOn: Instant = Instant.now(),
     override val eventType: String = "UserProfileUpdated"
-) : DomainEvent {
+) : Event {
 
     /**
      * 检查特定字段是否发生变更
