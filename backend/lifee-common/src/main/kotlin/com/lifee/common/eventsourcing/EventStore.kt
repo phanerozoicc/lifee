@@ -98,6 +98,21 @@ interface EventStore {
     ): AggregateSnapshot<*>?
     
     /**
+     * 获取所有快照
+     * 
+     * @return 所有快照列表
+     */
+    suspend fun getAllSnapshots(): List<AggregateSnapshot<*>>
+    
+    /**
+     * 删除指定版本的快照
+     * 
+     * @param aggregateId 聚合根ID
+     * @param version 快照版本
+     */
+    suspend fun deleteSnapshot(aggregateId: String, version: Long)
+    
+    /**
      * 获取所有聚合根ID
      * 
      * @param aggregateType 聚合根类型（可选）

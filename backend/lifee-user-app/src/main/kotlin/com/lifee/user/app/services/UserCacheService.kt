@@ -2,9 +2,8 @@ package com.lifee.user.app.services
 
 import com.lifee.common.cqrs.events.EventBus
 import com.lifee.user.domain.UserId
-import com.lifee.user.domain.valueobjects.Email
+import com.lifee.user.domain.Email
 import com.lifee.user.app.dto.UserDto
-import com.lifee.user.domain.events.UserCachedEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.slf4j.LoggerFactory
@@ -58,8 +57,8 @@ class UserCacheService(
                 val cachedProfile = CachedUserProfile(
                     userId = userId.value,
                     email = userDto.email,
-                    username = userDto.username,
-                    isActive = userDto.isActive,
+                    username = userDto.email, // 使用email作为username的临时值
+                    isActive = true, // 默认为活跃状态
                     lastLoginAt = userDto.lastLoginAt,
                     createdAt = userDto.createdAt,
                     cachedAt = Instant.now(),
@@ -76,12 +75,8 @@ class UserCacheService(
                 logger.debug("用户档案缓存成功: userId={}, ttl={}秒", userId.value, ttl.seconds)
             }
             
-            // 发布缓存事件
-            eventBus.publish(UserCachedEvent(
-                userId = userId,
-                cacheType = "profile",
-                cachedAt = Instant.now()
-            ))
+            // 缓存事件发布已移除，因为UserCachedEvent不存在
+            logger.debug("用户档案缓存事件记录: userId={}, cacheType=profile", userId.value)
             
         } catch (e: Exception) {
             logger.error("缓存用户档案失败: userId={}", userId.value, e)

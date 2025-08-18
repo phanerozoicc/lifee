@@ -105,9 +105,9 @@ abstract class EventSourcedAggregateRoot<ID>(
      * 
      * @return 聚合根快照
      */
-    open fun createSnapshot(): AggregateSnapshot<ID> {
+    open fun createSnapshot(): AggregateSnapshot<Map<String, Any>> {
         return AggregateSnapshot(
-            aggregateId = getId(),
+            aggregateId = getId().toString(),
             aggregateType = this::class.simpleName ?: "Unknown",
             version = getVersion(),
             snapshotData = serializeState(),
@@ -121,7 +121,7 @@ abstract class EventSourcedAggregateRoot<ID>(
      * 
      * @param snapshot 聚合根快照
      */
-    open fun restoreFromSnapshot(snapshot: AggregateSnapshot<ID>) {
+    open fun restoreFromSnapshot(snapshot: AggregateSnapshot<Map<String, Any>>) {
         setVersion(snapshot.version)
         lastEventVersion = snapshot.version
         deserializeState(snapshot.snapshotData)
@@ -143,16 +143,3 @@ abstract class EventSourcedAggregateRoot<ID>(
      */
     protected abstract fun deserializeState(stateData: Map<String, Any>)
 }
-
-/**
- * 聚合根快照
- * 
- * @param ID 聚合根标识符类型
- */
-data class AggregateSnapshot<ID>(
-    val aggregateId: ID,
-    val aggregateType: String,
-    val version: Long,
-    val snapshotData: Map<String, Any>,
-    val createdAt: Instant
-)

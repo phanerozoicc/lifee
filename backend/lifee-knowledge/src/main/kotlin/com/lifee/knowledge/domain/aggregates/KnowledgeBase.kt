@@ -230,8 +230,8 @@ class KnowledgeBase private constructor(
             documents.clear()
             
             // 恢复基本信息
-            name = KnowledgeBaseName.of(stateData["name"] as String)
-            description = KnowledgeBaseDescription.of(stateData["description"] as String)
+            name = KnowledgeBaseName(stateData["name"] as String)
+            description = KnowledgeBaseDescription(stateData["description"] as String)
             
             // 恢复时间戳
             val updatedAtStr = stateData["updatedAt"] as? String
@@ -245,14 +245,14 @@ class KnowledgeBase private constructor(
             
             documentsData.forEach { (_, docData) ->
                 try {
-                    val docId = DocumentId.of(docData["id"] as String)
-                    val title = DocumentTitle.of(docData["title"] as String)
-                    val content = DocumentContent.of(docData["content"] as String)
+                    val docId = DocumentId(java.util.UUID.fromString(docData["id"] as String))
+                    val title = DocumentTitle(docData["title"] as String)
+                    val content = DocumentContent(docData["content"] as String)
                     val type = DocumentType.valueOf(docData["type"] as String)
                     val createdAt = Instant.parse(docData["createdAt"] as String)
                     val updatedAt = Instant.parse(docData["updatedAt"] as String)
                     
-                    val document = Document.create(
+                    val document = Document(
                         id = docId,
                         title = title,
                         content = content,

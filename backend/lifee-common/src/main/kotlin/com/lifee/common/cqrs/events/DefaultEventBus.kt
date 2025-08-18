@@ -163,7 +163,6 @@ class DefaultEventBus(
      */
     private fun persistDomainEvents(events: List<DomainEvent>) {
         try {
-            // 按聚合根ID分组事件
             val eventsByAggregate = events.groupBy { it.aggregateId }
             
             CoroutineScope(Dispatchers.IO).launch {

@@ -3,8 +3,6 @@ package com.lifee.common.monitoring
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.slf4j.LoggerFactory
-import org.springframework.boot.actuator.health.Health
-import org.springframework.boot.actuator.health.HealthIndicator
 import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.stereotype.Service
 import java.time.Instant
@@ -18,7 +16,7 @@ import javax.sql.DataSource
 class HealthCheckService(
     private val dataSource: DataSource,
     private val redisTemplate: RedisTemplate<String, Any>
-) : HealthIndicator {
+) {
     
     private val logger = LoggerFactory.getLogger(HealthCheckService::class.java)
     
@@ -31,24 +29,19 @@ class HealthCheckService(
     /**
      * 系统整体健康检查
      */
-    override fun health(): Health {
+    suspend fun getSystemHealth(): SystemHealthStatus {
         return try {
-            val healthStatus = performHealthCheck()
-            
-            if (healthStatus.isHealthy) {
-                Health.up()
-                    .withDetails(healthStatus.details)
-                    .build()
-            } else {
-                Health.down()
-                    .withDetails(healthStatus.details)
-                    .build()
-            }
+            performHealthCheck()
         } catch (e: Exception) {
             logger.error("健康检查执行失败", e)
-            Health.down()
-                .withException(e)
-                .build()
+            SystemHealthStatus(
+                isHealthy = false,
+                overallStatus = HealthStatus.DOWN,
+                checks = emptyMap(),
+                checkDurationMs = 0,
+                timestamp = Instant.now(),
+                error = e.message
+            )
         }
     }
     

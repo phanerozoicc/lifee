@@ -54,7 +54,7 @@ class EventReplayService(
             snapshot?.let { snap ->
                 @Suppress("UNCHECKED_CAST")
                 (aggregate as EventSourcedAggregateRoot<Any>).restoreFromSnapshot(
-                    snap as AggregateSnapshot<Any>
+                    snap as AggregateSnapshot<Map<String, Any>>
                 )
                 logger.debug("Restored aggregate {} from snapshot at version {}", aggregateId, snap.version)
             }

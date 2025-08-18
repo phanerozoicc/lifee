@@ -1,7 +1,7 @@
 package com.lifee.user.app.controllers
 
 import com.lifee.common.exceptions.BusinessRuleException
-import com.lifee.common.exceptions.ConcurrencyException
+import com.lifee.common.eventsourcing.ConcurrencyException
 import com.lifee.common.exceptions.DomainException
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus

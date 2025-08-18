@@ -278,6 +278,36 @@ class PostgreSQLEventStore(
         }
     }
     
+    override suspend fun getAllSnapshots(): List<AggregateSnapshot<*>> = withContext(Dispatchers.IO) {
+        try {
+            jdbcTemplate.query(
+                "SELECT * FROM aggregate_snapshots ORDER BY created_at DESC",
+                SnapshotRowMapper()
+            )
+        } catch (e: Exception) {
+            logger.error("Error retrieving all snapshots", e)
+            throw EventStoreException("Failed to retrieve all snapshots", e)
+        }
+    }
+    
+    @Transactional
+    override suspend fun deleteSnapshot(aggregateId: String, version: Long) = withContext(Dispatchers.IO) {
+        try {
+            val deletedRows = jdbcTemplate.update(
+                "DELETE FROM aggregate_snapshots WHERE aggregate_id = ? AND version = ?",
+                aggregateId,
+                version
+            )
+            
+            logger.debug("Deleted {} snapshot(s) for aggregate {} at version {}", 
+                deletedRows, aggregateId, version)
+                
+        } catch (e: Exception) {
+            logger.error("Error deleting snapshot for aggregate {} at version {}", aggregateId, version, e)
+            throw EventStoreException("Failed to delete snapshot", e)
+        }
+    }
+    
     override suspend fun getAllAggregateIds(
         aggregateType: String?,
         limit: Int,
@@ -340,8 +370,8 @@ class PostgreSQLEventStore(
     /**
      * 快照行映射器
      */
-    private inner class SnapshotRowMapper : RowMapper<AggregateSnapshot<String>> {
-        override fun mapRow(rs: ResultSet, rowNum: Int): AggregateSnapshot<String> {
+    private inner class SnapshotRowMapper : RowMapper<AggregateSnapshot<Map<String, Any>>> {
+        override fun mapRow(rs: ResultSet, rowNum: Int): AggregateSnapshot<Map<String, Any>> {
             val snapshotData = objectMapper.readValue(
                 rs.getString("snapshot_data"),
                 Map::class.java

@@ -1,10 +1,15 @@
 package com.lifee.common.eventsourcing
 
 import com.lifee.common.domain.EventSourcedAggregateRoot
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.time.Instant
+import java.time.Duration
 import java.time.temporal.ChronoUnit
+import kotlin.reflect.KClass
 
 /**
  * 快照服务
@@ -13,7 +18,8 @@ import java.time.temporal.ChronoUnit
 @Service
 class SnapshotService(
     private val eventStore: EventStore,
-    private val snapshotConfig: SnapshotConfig
+    private val snapshotConfig: SnapshotConfig,
+    private val eventReplayService: EventReplayService
 ) {
     
     private val logger = LoggerFactory.getLogger(SnapshotService::class.java)
@@ -49,7 +55,7 @@ class SnapshotService(
         
         try {
             // 获取最新快照
-            val latestSnapshot = eventStore.getLatestSnapshot(aggregateId)
+            val latestSnapshot = runBlocking { eventStore.getLatestSnapshot(aggregateId) }
             val currentVersion = aggregate.getVersion()
             
             // 基于事件数量的策略
@@ -96,13 +102,15 @@ class SnapshotService(
         strategy: SnapshotStrategy = defaultStrategy
     ) = withContext(Dispatchers.IO) {
         try {
-            if (shouldCreateSnapshot(aggregateId, strategy)) {
+            // 重建聚合根以检查是否需要快照
+            val aggregate = eventReplayService.replayAggregate(aggregateId, aggregateClass)
+            if (aggregate != null && shouldCreateSnapshot(aggregate)) {
                 eventReplayService.createSnapshot(aggregateId, aggregateClass)
                 logger.info("Created snapshot for aggregate {} of type {}", 
                     aggregateId, aggregateClass.simpleName)
                 
                 // 清理旧快照
-                cleanupOldSnapshots(aggregateId, strategy)
+                cleanupOldSnapshots()
             }
         } catch (e: Exception) {
             logger.error("Error creating snapshot for aggregate {} of type {}", 
@@ -128,12 +136,14 @@ class SnapshotService(
             
             aggregateIds.forEach { aggregateId ->
                 try {
-                    if (shouldCreateSnapshot(aggregateId, strategy)) {
+                    // 重建聚合根以检查是否需要快照
+                    val aggregate = eventReplayService.replayAggregate(aggregateId, aggregateClass)
+                    if (aggregate != null && shouldCreateSnapshot(aggregate)) {
                         eventReplayService.createSnapshot(aggregateId, aggregateClass)
                         snapshotsCreated++
                         
                         // 清理旧快照
-                        cleanupOldSnapshots(aggregateId, strategy)
+                        cleanupOldSnapshots()
                     }
                 } catch (e: Exception) {
                     logger.error("Error creating snapshot for aggregate {}", aggregateId, e)
@@ -235,7 +245,6 @@ class SnapshotService(
             )
         }
     }
-}
 
     /**
      * 获取快照统计信息
@@ -323,23 +332,3 @@ class SnapshotService(
         }
     }
 }
-
-/**
- * 快照统计数据
- */
-data class SnapshotStats(
-    val totalSnapshots: Int,
-    val aggregatesWithSnapshots: Int,
-    val averageSnapshotsPerAggregate: Double,
-    val oldestSnapshotAge: Long, // 毫秒
-    val newestSnapshotAge: Long, // 毫秒
-    val totalSnapshotSize: Long // 字节
-)
-
-/**
- * 快照异常
- */
-class SnapshotException(
-    message: String,
-    cause: Throwable? = null
-) : RuntimeException(message, cause)

@@ -262,7 +262,7 @@ class User(
     }
     
     override fun toString(): String {
-        return "User(id=$id, email=$email, status=$status, emailVerified=$emailVerified)"
+        return "User(id=${getId()}, email=$email, status=$status, emailVerified=$emailVerified)"
     }
     
     /**
@@ -270,16 +270,16 @@ class User(
      */
     override fun serializeState(): Map<String, Any> {
         return mapOf(
-            "id" to id.toString(),
+            "id" to getId().toString(),
             "email" to email.toString(),
             "password" to password.toString(),
             "profile" to mapOf(
-                "firstName" to profile.getFirstName(),
-                "lastName" to profile.getLastName(),
+                "firstName" to profile.firstName,
+                "lastName" to profile.lastName,
                 "fullName" to profile.getFullName(),
-                "dateOfBirth" to (profile.getDateOfBirth()?.toString() ?: ""),
-                "phoneNumber" to (profile.getPhoneNumber() ?: ""),
-                "avatar" to (profile.getAvatar() ?: "")
+                "dateOfBirth" to (profile.dateOfBirth?.toString() ?: ""),
+                "phoneNumber" to (profile.phoneNumber ?: ""),
+                "avatar" to (profile.avatar ?: "")
             ),
             "status" to status.name,
             "emailVerified" to emailVerified,
@@ -296,8 +296,8 @@ class User(
     override fun deserializeState(stateData: Map<String, Any>) {
         try {
             // 恢复基本信息
-            email = Email.of(stateData["email"] as String)
-            password = Password.of(stateData["password"] as String)
+            email = Email(stateData["email"] as String)
+            password = Password(stateData["password"] as String)
             status = UserStatus.valueOf(stateData["status"] as String)
             emailVerified = stateData["emailVerified"] as Boolean
             
