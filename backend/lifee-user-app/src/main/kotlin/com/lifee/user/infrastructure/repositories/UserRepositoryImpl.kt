@@ -54,7 +54,7 @@ class UserRepositoryImpl(
                 
                 // 检查是否需要创建快照
                 try {
-                    snapshotService.createSnapshotIfNeeded(user.getId().value, User::class)
+                    snapshotService.createSnapshot(user)
                 } catch (e: Exception) {
                     logger.warn("Failed to create snapshot for user {}: {}", 
                         user.getId(), e.message)
@@ -109,9 +109,8 @@ class UserRepositoryImpl(
                 val eventsAfterSnapshot = eventStore.getEvents(
                     id.value
                 ).filter { it.version > snapshot.version }
-                eventsAfterSnapshot.forEach { event ->
-                    // 使用反射或其他方式应用事件，因为applyEvent是protected
-                    // 这里需要根据具体的事件应用机制来实现
+                if (eventsAfterSnapshot.isNotEmpty()) {
+                    user.replayEvents(eventsAfterSnapshot)
                 }
                 
                 logger.debug("User {} restored from snapshot at version {}", 

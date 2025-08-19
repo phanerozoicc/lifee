@@ -11,9 +11,13 @@ import java.util.*
  */
 class UserProfileUpdatedEvent(
     val userId: UserId,
-    val oldProfile: UserProfile,
-    val newProfile: UserProfile
-) : DomainEvent(userId.value) {
+    val updatedFields: Map<String, Any>,
+    val updatedAt: Instant,
+    aggregateId: String = userId.value,
+    version: Long = 0,
+    occurredOn: Instant = Instant.now(),
+    eventId: UUID = UUID.randomUUID()
+) : DomainEvent(aggregateId, version, occurredOn, eventId) {
     
     override fun copy(
         aggregateId: String,
@@ -23,8 +27,11 @@ class UserProfileUpdatedEvent(
     ): DomainEvent {
         return UserProfileUpdatedEvent(
             userId = UserId(aggregateId),
-            oldProfile = this.oldProfile,
-            newProfile = this.newProfile
+            updatedFields = this.updatedFields,
+            updatedAt = this.updatedAt,
+            aggregateId = aggregateId,
+            occurredOn = occurredOn,
+            eventId = eventId
         )
     }
     
@@ -33,19 +40,19 @@ class UserProfileUpdatedEvent(
         if (other !is UserProfileUpdatedEvent) return false
         if (!super.equals(other)) return false
         return userId == other.userId &&
-               oldProfile == other.oldProfile &&
-               newProfile == other.newProfile
+               updatedFields == other.updatedFields &&
+               updatedAt == other.updatedAt
     }
     
     override fun hashCode(): Int {
         var result = super.hashCode()
         result = 31 * result + userId.hashCode()
-        result = 31 * result + oldProfile.hashCode()
-        result = 31 * result + newProfile.hashCode()
+        result = 31 * result + updatedFields.hashCode()
+        result = 31 * result + updatedAt.hashCode()
         return result
     }
     
     override fun toString(): String {
-        return "UserProfileUpdatedEvent(userId=$userId, oldProfile=$oldProfile, newProfile=$newProfile, ${super.toString()})"
+        return "UserProfileUpdatedEvent(userId=$userId, updatedFields=$updatedFields, updatedAt=$updatedAt, ${super.toString()})"
     }
 }

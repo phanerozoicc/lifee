@@ -11,12 +11,13 @@ import java.util.*
  */
 class WelcomeNotificationSentEvent(
     val userId: UserId,
-    val email: Email,
-    val firstName: String?,
-    val lastName: String?,
-    val sentAt: Instant = Instant.now(),
-    val notificationType: String = "welcome_email"
-) : DomainEvent(userId.value) {
+    val notificationChannel: String,
+    val message: String,
+    aggregateId: String = userId.value,
+    version: Long = 0,
+    occurredOn: Instant = Instant.now(),
+    eventId: UUID = UUID.randomUUID()
+) : DomainEvent(aggregateId, version, occurredOn, eventId) {
     
     override fun copy(
         aggregateId: String,
@@ -26,11 +27,11 @@ class WelcomeNotificationSentEvent(
     ): DomainEvent {
         return WelcomeNotificationSentEvent(
             userId = UserId(aggregateId),
-            email = this.email,
-            firstName = this.firstName,
-            lastName = this.lastName,
-            sentAt = this.sentAt,
-            notificationType = this.notificationType
+            notificationChannel = this.notificationChannel,
+            message = this.message,
+            aggregateId = aggregateId,
+            occurredOn = occurredOn,
+            eventId = eventId
         )
     }
     
@@ -39,25 +40,19 @@ class WelcomeNotificationSentEvent(
         if (other !is WelcomeNotificationSentEvent) return false
         if (!super.equals(other)) return false
         return userId == other.userId &&
-               email == other.email &&
-               firstName == other.firstName &&
-               lastName == other.lastName &&
-               sentAt == other.sentAt &&
-               notificationType == other.notificationType
+               notificationChannel == other.notificationChannel &&
+               message == other.message
     }
     
     override fun hashCode(): Int {
         var result = super.hashCode()
         result = 31 * result + userId.hashCode()
-        result = 31 * result + email.hashCode()
-        result = 31 * result + (firstName?.hashCode() ?: 0)
-        result = 31 * result + (lastName?.hashCode() ?: 0)
-        result = 31 * result + sentAt.hashCode()
-        result = 31 * result + notificationType.hashCode()
+        result = 31 * result + notificationChannel.hashCode()
+        result = 31 * result + message.hashCode()
         return result
     }
     
     override fun toString(): String {
-        return "WelcomeNotificationSentEvent(userId=$userId, email=$email, firstName=$firstName, lastName=$lastName, sentAt=$sentAt, notificationType=$notificationType, ${super.toString()})"
+        return "WelcomeNotificationSentEvent(userId=$userId, notificationChannel=$notificationChannel, message=$message, ${super.toString()})"
     }
 }

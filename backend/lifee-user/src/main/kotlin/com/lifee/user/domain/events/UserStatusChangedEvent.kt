@@ -13,8 +13,12 @@ class UserStatusChangedEvent(
     val userId: UserId,
     val oldStatus: UserStatus,
     val newStatus: UserStatus,
-    val reason: String? = null
-) : DomainEvent(userId.value) {
+    val reason: String? = null,
+    aggregateId: String = userId.value,
+    version: Long = 0,
+    occurredOn: Instant = Instant.now(),
+    eventId: UUID = UUID.randomUUID()
+) : DomainEvent(aggregateId, version, occurredOn, eventId) {
     
     override fun copy(
         aggregateId: String,
@@ -26,7 +30,10 @@ class UserStatusChangedEvent(
             userId = UserId(aggregateId),
             oldStatus = this.oldStatus,
             newStatus = this.newStatus,
-            reason = this.reason
+            reason = this.reason,
+            aggregateId = aggregateId,
+            occurredOn = occurredOn,
+            eventId = eventId
         )
     }
     

@@ -28,6 +28,7 @@ class DefaultEventBus(
     
     /**
      * 注册本地事件处理器
+     * 支持Event和DomainEvent类型
      * 
      * @param eventType 事件类型
      * @param handler 事件处理器

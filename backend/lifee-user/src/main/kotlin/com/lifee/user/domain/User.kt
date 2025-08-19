@@ -43,7 +43,7 @@ class User(
             )
             
             // 发布用户注册事件
-            user.addDomainEvent(
+            user.recordEvent(
                 UserRegisteredEvent(
                     userId = id,
                     email = email,
@@ -85,11 +85,14 @@ class User(
         activatedAt = now
         updatedAt = now
         
-        addDomainEvent(
-            UserActivatedEvent(getId())
+        recordEvent(
+            UserActivatedEvent(
+                userId = getId(),
+                activatedAt = now
+            )
         )
         
-        addDomainEvent(
+        recordEvent(
             UserStatusChangedEvent(
                 userId = getId(),
                 oldStatus = oldStatus,
@@ -111,7 +114,7 @@ class User(
         status = UserStatus.SUSPENDED
         updatedAt = Instant.now()
         
-        addDomainEvent(
+        recordEvent(
             UserStatusChangedEvent(
                 userId = getId(),
                 oldStatus = oldStatus,
@@ -134,7 +137,7 @@ class User(
         status = UserStatus.ACTIVE
         updatedAt = Instant.now()
         
-        addDomainEvent(
+        recordEvent(
             UserStatusChangedEvent(
                 userId = getId(),
                 oldStatus = oldStatus,
@@ -156,7 +159,7 @@ class User(
         status = UserStatus.DELETED
         updatedAt = Instant.now()
         
-        addDomainEvent(
+        recordEvent(
             UserStatusChangedEvent(
                 userId = getId(),
                 oldStatus = oldStatus,
@@ -191,11 +194,18 @@ class User(
         )
         updatedAt = Instant.now()
         
-        addDomainEvent(
+        val updatedFields = mutableMapOf<String, Any>()
+        if (firstName != null) updatedFields["firstName"] = firstName
+        if (lastName != null) updatedFields["lastName"] = lastName
+        if (dateOfBirth != null) updatedFields["dateOfBirth"] = dateOfBirth
+        if (phoneNumber != null) updatedFields["phoneNumber"] = phoneNumber
+        if (avatar != null) updatedFields["avatar"] = avatar
+        
+        recordEvent(
             UserProfileUpdatedEvent(
                 userId = getId(),
-                oldProfile = oldProfile,
-                newProfile = profile
+                updatedFields = updatedFields,
+                updatedAt = Instant.now()
             )
         )
     }
@@ -217,8 +227,11 @@ class User(
         password = newPassword
         updatedAt = Instant.now()
         
-        addDomainEvent(
-            UserPasswordChangedEvent(getId())
+        recordEvent(
+            UserPasswordChangedEvent(
+                userId = getId(),
+                changedAt = Instant.now()
+            )
         )
     }
     
@@ -268,7 +281,7 @@ class User(
     /**
      * 序列化聚合根状态
      */
-    override fun serializeState(): Map<String, Any> {
+    protected override fun serializeState(): Map<String, Any> {
         return mapOf(
             "id" to getId().toString(),
             "email" to email.toString(),
@@ -293,7 +306,7 @@ class User(
     /**
      * 反序列化聚合根状态
      */
-    override fun deserializeState(stateData: Map<String, Any>) {
+    protected override fun deserializeState(stateData: Map<String, Any>) {
         try {
             // 恢复基本信息
             email = Email(stateData["email"] as String)
@@ -338,7 +351,7 @@ class User(
     /**
      * 应用领域事件到聚合根
      */
-    override fun applyEvent(event: com.lifee.common.domain.DomainEvent) {
+    protected override fun applyEvent(event: com.lifee.common.domain.DomainEvent) {
         when (event) {
             is UserRegisteredEvent -> {
                 // 用户注册事件已在构造函数中处理

@@ -1,6 +1,7 @@
 package com.lifee.user.domain.events
 
 import com.lifee.common.domain.DomainEvent
+import com.lifee.user.domain.Email
 import com.lifee.user.domain.UserId
 import java.time.Instant
 import java.util.*
@@ -10,12 +11,16 @@ import java.util.*
  */
 class UserLoginFailedEvent(
     val userId: UserId?,
-    val email: String,
-    val ipAddress: String?,
-    val userAgent: String?,
-    val failureReason: String,
-    val loginAt: Instant
-) : DomainEvent(userId?.value ?: email) {
+    val email: Email,
+    val reason: String,
+    val attemptTime: Instant,
+    val ipAddress: String,
+    val userAgent: String? = null,
+    aggregateId: String = userId?.value ?: email.value,
+    version: Long = 0,
+    occurredOn: Instant = Instant.now(),
+    eventId: UUID = UUID.randomUUID()
+) : DomainEvent(aggregateId, version, occurredOn, eventId) {
     
     override fun copy(
         aggregateId: String,
@@ -24,12 +29,15 @@ class UserLoginFailedEvent(
         eventId: UUID
     ): DomainEvent {
         return UserLoginFailedEvent(
-            userId = if (aggregateId.isNotEmpty()) UserId(aggregateId) else null,
+            userId = this.userId,
             email = this.email,
+            reason = this.reason,
+            attemptTime = this.attemptTime,
             ipAddress = this.ipAddress,
             userAgent = this.userAgent,
-            failureReason = this.failureReason,
-            loginAt = this.loginAt
+            aggregateId = aggregateId,
+            occurredOn = occurredOn,
+            eventId = eventId
         )
     }
     
@@ -39,24 +47,24 @@ class UserLoginFailedEvent(
         if (!super.equals(other)) return false
         return userId == other.userId &&
                email == other.email &&
+               reason == other.reason &&
+               attemptTime == other.attemptTime &&
                ipAddress == other.ipAddress &&
-               userAgent == other.userAgent &&
-               failureReason == other.failureReason &&
-               loginAt == other.loginAt
+               userAgent == other.userAgent
     }
     
     override fun hashCode(): Int {
         var result = super.hashCode()
         result = 31 * result + (userId?.hashCode() ?: 0)
         result = 31 * result + email.hashCode()
-        result = 31 * result + (ipAddress?.hashCode() ?: 0)
+        result = 31 * result + reason.hashCode()
+        result = 31 * result + attemptTime.hashCode()
+        result = 31 * result + ipAddress.hashCode()
         result = 31 * result + (userAgent?.hashCode() ?: 0)
-        result = 31 * result + failureReason.hashCode()
-        result = 31 * result + loginAt.hashCode()
         return result
     }
     
     override fun toString(): String {
-        return "UserLoginFailedEvent(userId=$userId, email=$email, ipAddress=$ipAddress, userAgent=$userAgent, failureReason=$failureReason, loginAt=$loginAt, ${super.toString()})"
+        return "UserLoginFailedEvent(userId=$userId, email=$email, reason=$reason, attemptTime=$attemptTime, ipAddress=$ipAddress, userAgent=$userAgent, ${super.toString()})"
     }
 }

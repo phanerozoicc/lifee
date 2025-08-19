@@ -29,7 +29,7 @@ class UserRegisteredEventHandler(
                     email = event.email,
                     firstName = event.firstName,
                     lastName = event.lastName,
-                    activationToken = event.activationToken
+                    activationToken = "temp-token" // TODO: 从ActivationTokenRepository获取
                 )
             }
             

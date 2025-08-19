@@ -9,8 +9,13 @@ import java.util.*
  * 用户密码更改事件
  */
 class UserPasswordChangedEvent(
-    val userId: UserId
-) : DomainEvent(userId.value) {
+    val userId: UserId,
+    val changedAt: Instant,
+    aggregateId: String = userId.value,
+    version: Long = 0,
+    occurredOn: Instant = Instant.now(),
+    eventId: UUID = UUID.randomUUID()
+) : DomainEvent(aggregateId, version, occurredOn, eventId) {
     
     override fun copy(
         aggregateId: String,
@@ -19,7 +24,11 @@ class UserPasswordChangedEvent(
         eventId: UUID
     ): DomainEvent {
         return UserPasswordChangedEvent(
-            userId = UserId(aggregateId)
+            userId = UserId(aggregateId),
+            changedAt = this.changedAt,
+            aggregateId = aggregateId,
+            occurredOn = occurredOn,
+            eventId = eventId
         )
     }
     

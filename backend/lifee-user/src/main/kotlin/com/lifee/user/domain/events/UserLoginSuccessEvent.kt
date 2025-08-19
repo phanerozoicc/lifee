@@ -10,11 +10,14 @@ import java.util.*
  */
 class UserLoginSuccessEvent(
     val userId: UserId,
-    val email: String,
-    val ipAddress: String?,
-    val userAgent: String?,
-    val loginAt: Instant
-) : DomainEvent(userId.value) {
+    val loginTime: Instant,
+    val ipAddress: String,
+    val userAgent: String? = null,
+    aggregateId: String = userId.value,
+    version: Long = 0,
+    occurredOn: Instant = Instant.now(),
+    eventId: UUID = UUID.randomUUID()
+) : DomainEvent(aggregateId, version, occurredOn, eventId) {
     
     override fun copy(
         aggregateId: String,
@@ -24,10 +27,12 @@ class UserLoginSuccessEvent(
     ): DomainEvent {
         return UserLoginSuccessEvent(
             userId = UserId(aggregateId),
-            email = this.email,
+            loginTime = this.loginTime,
             ipAddress = this.ipAddress,
             userAgent = this.userAgent,
-            loginAt = this.loginAt
+            aggregateId = aggregateId,
+            occurredOn = occurredOn,
+            eventId = eventId
         )
     }
     
@@ -36,8 +41,7 @@ class UserLoginSuccessEvent(
         if (other !is UserLoginSuccessEvent) return false
         if (!super.equals(other)) return false
         return userId == other.userId &&
-               email == other.email &&
-               loginAt == other.loginAt &&
+               loginTime == other.loginTime &&
                ipAddress == other.ipAddress &&
                userAgent == other.userAgent
     }
@@ -45,14 +49,13 @@ class UserLoginSuccessEvent(
     override fun hashCode(): Int {
         var result = super.hashCode()
         result = 31 * result + userId.hashCode()
-        result = 31 * result + email.hashCode()
-        result = 31 * result + loginAt.hashCode()
-        result = 31 * result + (ipAddress?.hashCode() ?: 0)
+        result = 31 * result + loginTime.hashCode()
+        result = 31 * result + ipAddress.hashCode()
         result = 31 * result + (userAgent?.hashCode() ?: 0)
         return result
     }
     
     override fun toString(): String {
-        return "UserLoginSuccessEvent(userId=$userId, email=$email, loginAt=$loginAt, ipAddress=$ipAddress, userAgent=$userAgent, ${super.toString()})"
+        return "UserLoginSuccessEvent(userId=$userId, loginTime=$loginTime, ipAddress=$ipAddress, userAgent=$userAgent, ${super.toString()})"
     }
 }

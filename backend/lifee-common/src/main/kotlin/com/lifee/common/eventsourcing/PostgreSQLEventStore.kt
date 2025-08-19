@@ -22,7 +22,8 @@ import java.util.*
 @Repository
 class PostgreSQLEventStore(
     private val jdbcTemplate: JdbcTemplate,
-    private val objectMapper: ObjectMapper
+    private val objectMapper: ObjectMapper,
+    private val eventSerializer: EventSerializer
 ) : EventStore {
     
     private val logger = LoggerFactory.getLogger(PostgreSQLEventStore::class.java)
@@ -123,15 +124,16 @@ class PostgreSQLEventStore(
             
             // 批量插入事件
             events.forEach { event ->
-                val eventData = objectMapper.writeValueAsString(event)
+                val eventData = eventSerializer.serialize(event)
                 val aggregateType = extractAggregateType(event)
+                val eventType = eventSerializer.getEventTypeName(event)
                 
                 jdbcTemplate.update(
                     INSERT_EVENT_SQL,
                     event.eventId.toString(),
                     aggregateId,
                     aggregateType,
-                    event.getEventType(),
+                    eventType,
                     eventData,
                     event.version,
                     Timestamp.from(event.occurredOn),
@@ -389,11 +391,13 @@ class PostgreSQLEventStore(
     
     /**
      * 反序列化事件
-     * 这里需要实现具体的事件反序列化逻辑
      */
     private fun deserializeEvent(eventType: String, eventData: String): DomainEvent {
-        // TODO: 实现事件反序列化逻辑
-        // 可以使用事件注册表来获取事件类，然后反序列化
-        throw NotImplementedError("Event deserialization not implemented yet")
+        return try {
+            eventSerializer.deserialize(eventType, eventData)
+        } catch (e: Exception) {
+            logger.error("Failed to deserialize event of type {}: {}", eventType, e.message, e)
+            throw EventStoreException("Failed to deserialize event", e)
+        }
     }
 }

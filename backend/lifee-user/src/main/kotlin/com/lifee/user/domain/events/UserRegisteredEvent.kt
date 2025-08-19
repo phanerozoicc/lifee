@@ -15,8 +15,11 @@ class UserRegisteredEvent(
     val firstName: String,
     val lastName: String,
     val registeredAt: Instant,
-    val activationToken: String? = null
-) : DomainEvent(userId.value) {
+    aggregateId: String = userId.value,
+    version: Long = 0,
+    occurredOn: Instant = Instant.now(),
+    eventId: UUID = UUID.randomUUID()
+) : DomainEvent(aggregateId, version, occurredOn, eventId) {
     
     override fun copy(
         aggregateId: String,
@@ -30,7 +33,9 @@ class UserRegisteredEvent(
             firstName = this.firstName,
             lastName = this.lastName,
             registeredAt = this.registeredAt,
-            activationToken = this.activationToken
+            aggregateId = aggregateId,
+            occurredOn = occurredOn,
+            eventId = eventId
         )
     }
     
@@ -42,8 +47,7 @@ class UserRegisteredEvent(
                email == other.email &&
                firstName == other.firstName &&
                lastName == other.lastName &&
-               registeredAt == other.registeredAt &&
-               activationToken == other.activationToken
+               registeredAt == other.registeredAt
     }
     
     override fun hashCode(): Int {
@@ -53,11 +57,10 @@ class UserRegisteredEvent(
         result = 31 * result + firstName.hashCode()
         result = 31 * result + lastName.hashCode()
         result = 31 * result + registeredAt.hashCode()
-        result = 31 * result + (activationToken?.hashCode() ?: 0)
         return result
     }
     
     override fun toString(): String {
-        return "UserRegisteredEvent(userId=$userId, email=$email, firstName=$firstName, lastName=$lastName, registeredAt=$registeredAt, activationToken=$activationToken, ${super.toString()})"
+        return "UserRegisteredEvent(userId=$userId, email=$email, firstName=$firstName, lastName=$lastName, registeredAt=$registeredAt, ${super.toString()})"
     }
 }

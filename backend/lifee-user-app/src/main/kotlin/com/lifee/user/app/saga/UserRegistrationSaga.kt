@@ -8,6 +8,7 @@ import com.lifee.config.domain.events.UserConfigurationInitializedEvent
 import com.lifee.knowledge.domain.events.DefaultKnowledgeBaseCreatedEvent
 import com.lifee.user.domain.events.WelcomeNotificationSentEvent
 import org.springframework.stereotype.Component
+import org.slf4j.LoggerFactory
 import kotlin.reflect.KClass
 
 /**
@@ -115,10 +116,8 @@ class SendWelcomeNotificationAction(
             // 创建欢迎通知事件
             val welcomeEvent = WelcomeNotificationSentEvent(
                 userId = userRegisteredEvent.userId,
-                email = userRegisteredEvent.email,
-                firstName = userRegisteredEvent.firstName,
-                lastName = userRegisteredEvent.lastName,
-                sentAt = java.time.Instant.now()
+                notificationChannel = "email",
+                message = "Welcome to Lifee! Your registration is complete and your account is ready to use."
             )
             
             // 发布事件
@@ -140,6 +139,8 @@ class SendWelcomeNotificationAction(
  */
 class CompensateConfigurationAction : AbstractSagaAction() {
     
+    private val logger = LoggerFactory.getLogger(CompensateConfigurationAction::class.java)
+    
     override suspend fun doExecute(data: Map<String, Any>): SagaStepResult {
         return try {
             val userRegisteredEvent = data["lastEvent"] as? UserRegisteredEvent
@@ -148,12 +149,15 @@ class CompensateConfigurationAction : AbstractSagaAction() {
             // TODO: 实现配置清理逻辑
             // 例如：删除已创建的用户配置
             
+            logger.info("Compensated user configuration for user {}", userRegisteredEvent.userId)
+            
             SagaStepResult.success(
                 mapOf("configurationCompensated" to true),
                 "Configuration compensation completed"
             )
             
         } catch (e: Exception) {
+            logger.error("Failed to compensate user configuration: {}", e.message, e)
             SagaStepResult.failed(e)
         }
     }
@@ -164,6 +168,8 @@ class CompensateConfigurationAction : AbstractSagaAction() {
  */
 class CompensateKnowledgeBaseAction : AbstractSagaAction() {
     
+    private val logger = LoggerFactory.getLogger(CompensateKnowledgeBaseAction::class.java)
+    
     override suspend fun doExecute(data: Map<String, Any>): SagaStepResult {
         return try {
             val userRegisteredEvent = data["lastEvent"] as? UserRegisteredEvent
@@ -172,12 +178,15 @@ class CompensateKnowledgeBaseAction : AbstractSagaAction() {
             // TODO: 实现知识库清理逻辑
             // 例如：删除已创建的默认知识库
             
+            logger.info("Compensated knowledge base for user {}", userRegisteredEvent.userId)
+            
             SagaStepResult.success(
                 mapOf("knowledgeBaseCompensated" to true),
                 "Knowledge base compensation completed"
             )
             
         } catch (e: Exception) {
+            logger.error("Failed to compensate knowledge base creation: {}", e.message, e)
             SagaStepResult.failed(e)
         }
     }

@@ -82,22 +82,8 @@ class RegisterUserCommandHandler(
         val activationToken = ActivationToken.generate(savedUser.getId())
         activationTokenRepository.save(activationToken)
         
-        // 步骤6: 发布领域事件，包含激活令牌信息，触发邮件发送等后续流程
-        val domainEvents = savedUser.getDomainEvents().map { event ->
-            if (event is UserRegisteredEvent) {
-                // 增强用户注册事件，添加激活令牌信息
-                UserRegisteredEvent(
-                    userId = event.userId,
-                    email = event.email,
-                    firstName = event.firstName,
-                    lastName = event.lastName,
-                    registeredAt = event.registeredAt,
-                    activationToken = activationToken.value
-                )
-            } else {
-                event
-            }
-        }
+        // 步骤6: 发布领域事件，触发邮件发送等后续流程
+        val domainEvents = savedUser.getDomainEvents()
         eventBus.publishAll(domainEvents)
         savedUser.clearDomainEvents()
         

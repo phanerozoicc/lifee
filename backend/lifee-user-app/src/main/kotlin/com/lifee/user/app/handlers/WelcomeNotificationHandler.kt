@@ -42,9 +42,8 @@ class WelcomeNotificationHandler(
                 // 发布欢迎通知发送完成事件
                 val welcomeNotificationEvent = WelcomeNotificationSentEvent(
                     userId = UserId(event.userId.value),
-                    email = Email.of(event.email),
-                    firstName = event.firstName ?: "",
-                    lastName = event.lastName ?: ""
+                    notificationChannel = "email",
+                    message = "Welcome to Lifee! Your account has been successfully created."
                 )
                 eventBus.publish(welcomeNotificationEvent)
             }
