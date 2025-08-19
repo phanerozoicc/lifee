@@ -1,6 +1,6 @@
 package com.github.phanerozoicc.base.eventsource
 
-import com.github.phanerozoicc.base.event.Event
+import com.github.phanerozoicc.base.event.DomainEvent
 import com.github.phanerozoicc.base.exception.ConcurrencyDomainException
 import com.github.phanerozoicc.base.utils.JsonUtils
 import kotlinx.coroutines.Dispatchers
@@ -35,7 +35,7 @@ class PostgreSQLEventStore(
 
     override suspend fun saveEvents(
         aggregateId: String,
-        events: List<Event>,
+        events: List<DomainEvent>,
         expectedVersion: Long
     )  = withContext(Dispatchers.IO) {
             try {
@@ -67,7 +67,7 @@ class PostgreSQLEventStore(
         }
 
 
-    fun extractAggregateType(event: Event): String {
+    fun extractAggregateType(event: DomainEvent): String {
         return event::class.simpleName?.replace("Event", "")?: "unknown"
     }
 

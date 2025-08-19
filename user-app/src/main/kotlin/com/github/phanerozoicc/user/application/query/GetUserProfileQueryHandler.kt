@@ -1,9 +1,5 @@
-package com.github.phanerozoicc.user.bak.application.query
+package com.github.phanerozoicc.user.application.query
 
-import com.github.phanerozoicc.user.domain.cqrs.GetUserProfileQuery
-import com.github.phanerozoicc.user.domain.cqrs.QueryHandler
-import com.github.phanerozoicc.user.domain.cqrs.QueryResult
-import com.github.phanerozoicc.user.domain.query.UserProfileDTO
 import com.github.phanerozoicc.user.domain.repository.UserRepository
 import org.springframework.stereotype.Service
 

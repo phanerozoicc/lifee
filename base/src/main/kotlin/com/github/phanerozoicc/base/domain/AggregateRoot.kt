@@ -1,18 +1,18 @@
 package com.github.phanerozoicc.base.domain
 
-import com.github.phanerozoicc.base.event.Event
+import com.github.phanerozoicc.base.event.DomainEvent
 
 /**
  * 聚合根基类
  * 提供领域事件管理功能
  */
-abstract class AggregateRoot<T>(
-    val id: T
+abstract class AggregateRoot<ID>(
+    val id: ID
 ) {
 
-    private val domainEvents = mutableListOf<Event>()
+    private val domainEvents = mutableListOf<DomainEvent>()
 
-    fun addDomainEvent(event: Event) {
+    fun addDomainEvent(event: DomainEvent) {
         domainEvents.add(event)
     }
 

@@ -1,4 +1,4 @@
-package com.github.phanerozoicc.base.query
+package com.github.phanerozoicc.base.queries
 
 import java.time.LocalDateTime
 import java.util.*

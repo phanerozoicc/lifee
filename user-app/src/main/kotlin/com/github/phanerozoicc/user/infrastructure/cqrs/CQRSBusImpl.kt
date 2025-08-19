@@ -1,5 +1,9 @@
 package com.github.phanerozoicc.user.infrastructure.cqrs
 
+import com.github.phanerozoicc.base.queries.QueryBus
+import com.github.phanerozoicc.base.queries.QueryHandler
+import com.github.phanerozoicc.base.queries.QueryResult
+import com.github.phanerozoicc.user.bak.domain.cqrs.UserQuery
 import org.springframework.context.ApplicationContext
 import org.springframework.stereotype.Component
 import kotlin.reflect.KClass

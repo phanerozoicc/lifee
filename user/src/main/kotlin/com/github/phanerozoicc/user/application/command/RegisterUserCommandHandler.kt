@@ -2,7 +2,7 @@ package com.github.phanerozoicc.user.application.command
 
 import com.github.phanerozoicc.base.command.Command
 import com.github.phanerozoicc.base.command.CommandHandler
-import com.github.phanerozoicc.base.event.DomainEventPublisher
+import com.github.phanerozoicc.base.event.EventBus
 import com.github.phanerozoicc.user.domain.event.UserRegisteredEvent
 import com.github.phanerozoicc.user.domain.factory.UserFactory
 import com.github.phanerozoicc.user.domain.model.*
@@ -36,7 +36,7 @@ class RegisterUserCommandHandler(
     private val userRepository: UserRepository,
     private val activationTokenRepository: ActivationTokenRepository,
     private val userDomainService: UserDomainService,
-    private val domainEventPublisher: DomainEventPublisher
+    eventBus: EventBus
 ) : CommandHandler<RegisterUserCommand, Unit> {
 
 

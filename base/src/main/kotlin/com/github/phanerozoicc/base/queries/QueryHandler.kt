@@ -1,4 +1,4 @@
-package com.github.phanerozoicc.base.query
+package com.github.phanerozoicc.base.queries
 
 interface QueryHandler<T: Query, R> {
     fun handle(query: T): R

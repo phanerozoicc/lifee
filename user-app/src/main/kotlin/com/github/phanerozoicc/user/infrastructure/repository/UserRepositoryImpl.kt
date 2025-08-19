@@ -1,5 +1,7 @@
 package com.github.phanerozoicc.user.infrastructure.repository
 
+import com.github.phanerozoicc.base.eventsource.EventStore
+import com.github.phanerozoicc.user.application.service.EmailService
 import com.github.phanerozoicc.user.domain.model.*
 import com.github.phanerozoicc.user.domain.repository.UserRepository
 import com.github.phanerozoicc.user.domain.repository.UserSearchCriteria
@@ -16,9 +18,9 @@ import jakarta.persistence.*
 @Repository
 class UserRepositoryImpl(
     private val jpaUserRepository: JpaUserRepository,
-    @PersistenceContext
-    private val entityManager: EntityManager
-) : UserRepository {
+    private val eventStore: EventStore,
+    private val snapshotService: SnapshotService
+    ) : UserRepository {
     
     override fun save(user: User): User {
         val entity = user.toEntity()

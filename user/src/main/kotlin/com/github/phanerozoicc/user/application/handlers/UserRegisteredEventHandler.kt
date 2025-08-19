@@ -14,7 +14,7 @@ class UserRegisteredEventHandler(
 
     companion object: KLogging()
 
-    override fun onDomainEvent(event: UserRegisteredEvent) {
+    override fun onEvent(event: UserRegisteredEvent) {
         logger.info("处理用户注册事件: userId={}, email={}", event.userId, event.email)
         try {
             runBlocking {

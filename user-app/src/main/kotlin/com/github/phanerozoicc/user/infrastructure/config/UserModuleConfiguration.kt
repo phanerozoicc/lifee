@@ -2,8 +2,7 @@ package com.github.phanerozoicc.user.infrastructure.config
 
 import com.github.phanerozoicc.base.command.CommandBus
 import com.github.phanerozoicc.base.command.DefaultCommandBus
-import com.github.phanerozoicc.base.event.Event
-import com.github.phanerozoicc.base.event.DomainEventPublisher
+import com.github.phanerozoicc.base.queries.QueryBus
 import com.github.phanerozoicc.user.application.command.*
 import com.github.phanerozoicc.user.application.query.*
 import com.github.phanerozoicc.user.application.service.UserApplicationService
@@ -11,7 +10,7 @@ import com.github.phanerozoicc.user.bak.application.query.ExportUserDataQueryHan
 import com.github.phanerozoicc.user.bak.application.query.GetUserActivityQueryHandler
 import com.github.phanerozoicc.user.bak.application.query.GetUserPermissionsQueryHandler
 import com.github.phanerozoicc.user.bak.application.query.GetUserPreferencesQueryHandler
-import com.github.phanerozoicc.user.bak.application.query.GetUserProfileQueryHandler
+import com.github.phanerozoicc.user.application.query.GetUserProfileQueryHandler
 import com.github.phanerozoicc.user.bak.application.query.GetUserSecurityReportQueryHandler
 import com.github.phanerozoicc.user.bak.application.query.GetUserStatisticsQueryHandler
 import com.github.phanerozoicc.user.bak.application.query.GetUsersNeedingAttentionQueryHandler
@@ -22,7 +21,6 @@ import com.github.phanerozoicc.user.domain.service.UserDomainService
 import com.github.phanerozoicc.user.infrastructure.cqrs.QueryBusImpl
 import org.springframework.boot.autoconfigure.domain.EntityScan
 import org.springframework.context.ApplicationContext
-import org.springframework.context.ApplicationEventPublisher
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories
@@ -47,19 +45,17 @@ class UserModuleConfiguration {
         return DefaultCommandBus()
     }
     
+//    // 暂时使用spring事件总线
+//    @Bean
+//    fun domainEventPublisher(applicationEventPublisher: ApplicationEventPublisher): DomainEventPublisher {
+//        return object : DomainEventPublisher {
+//            override fun publish(event: DomainEvent) {
+//                applicationEventPublisher.publishEvent(event)
+//            }
+//        }
+//    }
 
-    /**
-     * 领域事件发布器
-     */
-    // 暂时使用spring事件总线
-    @Bean
-    fun domainEventPublisher(applicationEventPublisher: ApplicationEventPublisher): DomainEventPublisher {
-        return object : DomainEventPublisher {
-            override fun publish(event: Event) {
-                applicationEventPublisher.publishEvent(event)
-            }
-        }
-    }
+
     
     /**
      * 用户域服务
@@ -242,14 +238,4 @@ class UserModuleConfiguration {
         return ExportUserDataQueryHandler(userRepository)
     }
     
-    /**
-     * 用户应用服务
-     */
-    @Bean
-    fun userApplicationService(
-        commandBus: CommandBus,
-        queryBus: QueryBus
-    ): UserApplicationService {
-        return UserApplicationService(commandBus, queryBus)
-    }
 }

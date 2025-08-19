@@ -1,6 +1,6 @@
 package com.github.phanerozoicc.user.domain.event
 
-import com.github.phanerozoicc.base.event.Event
+import com.github.phanerozoicc.base.event.DomainEvent
 import com.github.phanerozoicc.user.domain.model.Email
 import com.github.phanerozoicc.user.domain.model.UserId
 import java.time.LocalDateTime
@@ -17,5 +17,5 @@ data class UserRegisteredEvent(
     val ipAddress: String? = null,
     val userAgent: String? = null,
     val activationToken: String? = null,
-) : Event(userId.value, "UserRegistered")
+) : DomainEvent(userId.value, "UserRegistered")
 
