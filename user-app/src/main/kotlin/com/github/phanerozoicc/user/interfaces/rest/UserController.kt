@@ -8,7 +8,6 @@ import com.github.phanerozoicc.user.application.command.ChangePasswordCommand
 import com.github.phanerozoicc.user.application.command.LoginUserCommand
 import com.github.phanerozoicc.user.application.command.RegisterUserCommand
 import com.github.phanerozoicc.user.application.command.UpdateUserProfileCommand
-import com.github.phanerozoicc.user.application.service.UserApplicationService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -70,7 +69,7 @@ class UserController(
 
         return try {
             // 事件都用同步处理(一般)
-            commandBus.sendAndWait<RegisterUserCommand>(registerCommand)
+            commandBus.sendAndWait<RegisterUserCommand, Unit>(registerCommand)
             ResponseEntity.ok(ApiResponse.success("用户注册成功，请检查邮箱进行激活"))
         } catch (e: Exception) {
             ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

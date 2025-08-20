@@ -1,7 +1,7 @@
 package com.github.phanerozoicc.user.infrastructure.repository
 
 import com.github.phanerozoicc.base.eventsource.EventStore
-import com.github.phanerozoicc.user.application.service.EmailService
+import com.github.phanerozoicc.base.eventsource.SnapshotService
 import com.github.phanerozoicc.user.domain.model.*
 import com.github.phanerozoicc.user.domain.repository.UserRepository
 import com.github.phanerozoicc.user.domain.repository.UserSearchCriteria
@@ -11,6 +11,10 @@ import com.github.phanerozoicc.user.infrastructure.persistence.repository.JpaUse
 import org.springframework.stereotype.Repository
 import java.time.LocalDateTime
 import jakarta.persistence.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import mu.KLogging
+import org.springframework.transaction.annotation.Transactional
 
 /**
  * 用户仓储实现
@@ -18,18 +22,41 @@ import jakarta.persistence.*
 @Repository
 class UserRepositoryImpl(
     private val jpaUserRepository: JpaUserRepository,
-    private val eventStore: EventStore,
+    private val eventStore: EventStore?,
     private val snapshotService: SnapshotService
     ) : UserRepository {
-    
-    override fun save(user: User): User {
-        val entity = user.toEntity()
-        val savedEntity = jpaUserRepository.save(entity)
-        return savedEntity.toDomain()
+
+    companion object: KLogging()
+
+    @Transactional
+    override suspend fun save(user: User): User = withContext(Dispatchers.IO) {
+        return@withContext saveWithRetry(user, 0)
     }
-    
-    override fun findById(id: UserId): User? {
-        return jpaUserRepository.findById(id.getValue())
+
+    private suspend fun saveWithRetry(user: User, attemptCount: Int): User {
+        try {
+            // 保存聚合的状态
+            val entity = user.toEntity()
+            jpaUserRepository.save(entity)
+
+            // 保存事件到事件存储
+            if (user.hasUnCommittedEvents()) {
+                val unCommittedEvents = user.getUnCommittedEvents()
+                eventStore?.saveEvents(user.id.value, unCommittedEvents,
+                    user.getVersion() - unCommittedEvents.size)
+                user.markEventsAsCommitted()
+
+                // 检查是否创建快照
+
+            }
+        } catch (e: Exception) {
+            logger.error("unexpected error saving user id:{}, email:{}", user.id, user.getEmail(), e)
+            throw e
+        }
+    }
+
+    override fun findById(userId: UserId): User? {
+        return jpaUserRepository.findById(userId.value)
             .map { it.toDomain() }
             .orElse(null)
     }

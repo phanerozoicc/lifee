@@ -8,8 +8,8 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KClass
 
 interface CommandBus {
-    suspend fun <R> send(command: Command): R
-    suspend fun <R> sendAndWait(command: Command): R
+    suspend fun <T: Command, R> send(command: T): R
+    suspend fun <T: Command, R> sendAndWait(command: T): R
 }
 
 
@@ -63,7 +63,7 @@ class DefaultCommandBus(
         asyncHandlers[commandType] = handler
     }
 
-    override suspend fun <R> send(command: Command): R {
+    override suspend fun <T : Command, R> send(command: T): R {
         logger.debug("sending command: {}", command::class.simpleName)
         // 首先处理异步
         val asyncHandler = asyncHandlers[command::class] as? AsyncCommandHandler<Command, R>
@@ -100,7 +100,7 @@ class DefaultCommandBus(
         throw IllegalArgumentException("No handler found for command ${command.commandType}")
     }
 
-    override suspend fun <R> sendAndWait(command: Command): R {
+    override suspend fun <T : Command, R> sendAndWait(command: T): R {
         return send(command)
     }
 

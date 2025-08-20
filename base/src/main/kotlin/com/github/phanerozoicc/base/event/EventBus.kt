@@ -28,7 +28,7 @@ interface EventBus {
 // TODO 临时直接注入
 @Component
 class DefaultEventBus(
-    val eventStore: EventStore,
+    val eventStore: EventStore?,
     val kafkaTemplate: KafkaTemplate<String, Any>
 ): EventBus {
 
@@ -83,8 +83,8 @@ class DefaultEventBus(
     private fun persistDomainEvent(event: DomainEvent) {
         try {
             CoroutineScope(Dispatchers.IO).launch {
-                val currentVersion = eventStore.getCurrentVersion(event.aggregateId)?:0
-                eventStore.saveEvents(event.aggregateId, listOf<DomainEvent>(event), currentVersion)
+                val currentVersion = eventStore?.getCurrentVersion(event.aggregateId)?:0
+                eventStore?.saveEvents(event.aggregateId, listOf<DomainEvent>(event), currentVersion)
                 logger.debug("Domain event {} persisted to event store", event::class.simpleName)
             }
         }catch (e: Exception) {
@@ -112,9 +112,9 @@ class DefaultEventBus(
             CoroutineScope(Dispatchers.IO).launch {
                 eventByAggregate.forEach { (aggregateId, aggregateEvents) ->
                     // 获取当前版本
-                    val currentVersion = eventStore.getCurrentVersion(aggregateId)?:0
+                    val currentVersion = eventStore?.getCurrentVersion(aggregateId)?:0
                     // 保存事件
-                    eventStore.saveEvents(aggregateId, aggregateEvents, currentVersion)
+                    eventStore?.saveEvents(aggregateId, aggregateEvents, currentVersion)
                 }
             }
         } catch (e: Exception) {

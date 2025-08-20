@@ -12,6 +12,12 @@ abstract class AggregateRoot<ID>(
 
     private val domainEvents = mutableListOf<DomainEvent>()
 
+    /**
+     * 聚合版本
+     * 用于并发控制和幂等处理
+     */
+    private var version: Long = 0
+
     fun addDomainEvent(event: DomainEvent) {
         domainEvents.add(event)
     }
@@ -20,6 +26,16 @@ abstract class AggregateRoot<ID>(
 
     fun clearDomainEvents() {
         domainEvents.clear()
+    }
+
+    fun getVersion() = version
+
+    fun setVersion(version: Long) {
+        this.version = version
+    }
+
+    protected fun incrementVersion() {
+        version++
     }
 
     override fun equals(other: Any?): Boolean {
@@ -35,4 +51,7 @@ abstract class AggregateRoot<ID>(
     override fun toString(): String {
         return "${this::class.simpleName}(id=$id)"
     }
+
+
+
 }

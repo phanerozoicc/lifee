@@ -36,7 +36,7 @@ class RegisterUserCommandHandler(
     private val userRepository: UserRepository,
     private val activationTokenRepository: ActivationTokenRepository,
     private val userDomainService: UserDomainService,
-    eventBus: EventBus
+    private val eventBus: EventBus
 ) : CommandHandler<RegisterUserCommand, Unit> {
 
 

@@ -17,7 +17,7 @@ interface UserRepository {
      * @param user 用户聚合根
      * @return 保存后的用户
      */
-    fun save(user: User): User
+    suspend fun save(user: User): User
 
     /**
      * 根据ID查找用户

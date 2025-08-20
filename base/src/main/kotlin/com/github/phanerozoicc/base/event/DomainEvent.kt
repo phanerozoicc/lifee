@@ -28,6 +28,8 @@ abstract class DomainEvent(
     override fun hashCode(): Int {
         return aggregateId.hashCode()
     }
+
+    abstract fun copy(aggregateId: String, version: Long, occurredOn: Instant): DomainEvent
 }
 
 
