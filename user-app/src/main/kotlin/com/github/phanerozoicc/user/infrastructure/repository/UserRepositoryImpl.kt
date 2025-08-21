@@ -2,6 +2,7 @@ package com.github.phanerozoicc.user.infrastructure.repository
 
 import com.github.phanerozoicc.base.eventsource.EventStore
 import com.github.phanerozoicc.base.eventsource.SnapshotService
+import com.github.phanerozoicc.base.exception.ConcurrencyDomainException
 import com.github.phanerozoicc.user.domain.model.*
 import com.github.phanerozoicc.user.domain.repository.UserRepository
 import com.github.phanerozoicc.user.domain.repository.UserSearchCriteria
@@ -12,8 +13,10 @@ import org.springframework.stereotype.Repository
 import java.time.LocalDateTime
 import jakarta.persistence.*
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import mu.KLogging
+import org.apache.commons.lang3.concurrent.ConcurrentException
 import org.springframework.transaction.annotation.Transactional
 
 /**
@@ -37,7 +40,7 @@ class UserRepositoryImpl(
         try {
             // 保存聚合的状态
             val entity = user.toEntity()
-            jpaUserRepository.save(entity)
+            val savedUser = jpaUserRepository.save(entity)
 
             // 保存事件到事件存储
             if (user.hasUnCommittedEvents()) {
@@ -47,8 +50,32 @@ class UserRepositoryImpl(
                 user.markEventsAsCommitted()
 
                 // 检查是否创建快照
-
+                try {
+                    snapshotService.createSnapshot(user)
+                } catch (e: Exception) {
+                    logger.warn("failed to create snapshot for user {}: {}", user.id, e.message, e)
+                    // 忽略
+                }
             }
+            return savedUser.toDomain()
+        } catch (e: ConcurrencyDomainException) {
+            logger.warn("user save conflict(attempt {}): aggregateId={}, expectedVersion={}, actualVersion={}",
+              attemptCount+1, e.aggregateId, e.expectedVersion, e.actualVersion)
+            if (attemptCount >= 2) {
+                logger.error("failed to save user id:{}, email:{}", user.id, user.getEmail())
+                throw e
+            }
+
+            // 重新获取最新的聚合
+            val latestUser = findById(user.id)
+                ?: throw IllegalStateException("user not found during retry:${user.id}")
+            logger.info("retrying user save(attempt:{}): {}", attemptCount+1, user.id)
+
+            // 延时重试
+            delay((attemptCount+1)*100L)
+
+            // 递归重试
+            return saveWithRetry(latestUser, attemptCount+1)
         } catch (e: Exception) {
             logger.error("unexpected error saving user id:{}, email:{}", user.id, user.getEmail(), e)
             throw e

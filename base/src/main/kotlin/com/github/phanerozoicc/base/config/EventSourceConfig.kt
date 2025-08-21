@@ -1,5 +1,6 @@
 package com.github.phanerozoicc.base.config
 
+import com.github.phanerozoicc.base.eventsource.DefaultSnapshotService
 import com.github.phanerozoicc.base.eventsource.EventReplayService
 import com.github.phanerozoicc.base.eventsource.EventStore
 import com.github.phanerozoicc.base.eventsource.PostgreSQLEventStore
@@ -32,7 +33,7 @@ class EventSourceConfig {
     @Bean
     fun snapshotService(eventStore: EventStore, snapshotProperties: SnapshotProperties,
                         eventReplayService: EventReplayService): SnapshotService {
-        return SnapshotService(eventStore, snapshotProperties, eventReplayService)
+        return DefaultSnapshotService(eventStore, snapshotProperties, eventReplayService)
     }
 
 

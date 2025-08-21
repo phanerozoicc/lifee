@@ -1,28 +1,33 @@
 package com.github.phanerozoicc.base.eventsource
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import mu.KLogging
+import com.github.phanerozoicc.base.domain.EventSourcedAggregateRoot
 
-class SnapshotService(
-    private val eventStore: EventStore,
-    private val snapshotProperties: SnapshotProperties,
-    private val eventReplayService: EventReplayService
-) {
+interface SnapshotService {
 
-    companion object: KLogging()
+    /**
+     * 判断是否需要创建快照
+     */
+    suspend fun shouldCreateSnapshot(aggregate: EventSourcedAggregateRoot<*>): Boolean
 
-    // 协程作用域对象
-    private val coroutineScope = CoroutineScope(Dispatchers.IO)
+    /**
+     * 为聚合根创建快照
+     */
+    suspend fun createSnapshot(aggregateRoot: EventSourcedAggregateRoot<*>)
 
-    // 使用前校验配置
-    init {
-        snapshotProperties.validate()
-        logger.info("snapshotService initialized with config enabled={}, eventCountThreshold={}, timeThreshold={}",
-            snapshotProperties.enabled, snapshotProperties.eventCountThreshold, snapshotProperties.timeThreshold)
-    }
+    /**
+     * 为聚合根创建快照，如果聚合根不需要创建快照则不执行任何操作
+     */
+    suspend fun createSnapshotIfNeeded(aggregateRoot: EventSourcedAggregateRoot<*>)
 
-    fun shouldCreateSnapshot(aggregateId: String): Boolean {
-    }
+    /**
+     * 获取最新的快照
+     * @param aggregateId 聚合根ID
+     * @param maxVersion 最大版本号
+     */
+    suspend fun getLastSnapshot(aggregateId: String, maxVersion: Long?): AggregateSnapshot<*>?
 
+    /**
+     * 清理旧的快照
+     */
+    suspend fun cleanupOldSnapshots(aggregateId: String)
 }

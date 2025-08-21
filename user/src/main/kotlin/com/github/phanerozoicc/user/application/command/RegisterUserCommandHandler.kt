@@ -9,6 +9,7 @@ import com.github.phanerozoicc.user.domain.model.*
 import com.github.phanerozoicc.user.domain.repository.ActivationTokenRepository
 import com.github.phanerozoicc.user.domain.repository.UserRepository
 import com.github.phanerozoicc.user.domain.service.UserDomainService
+import kotlinx.coroutines.runBlocking
 import org.springframework.stereotype.Service
 
 /**
@@ -72,25 +73,30 @@ class RegisterUserCommandHandler(
         }
 
         // 保存用户
-        val savedUser = userRepository.save(user)
+        runBlocking {
+            val savedUser = userRepository.save(user)
 
-        // 生成激活令牌
-        val activationToken = ActivationToken.generate(user.id)
-        activationTokenRepository.save(activationToken)
+            // 生成激活令牌
+            val activationToken = ActivationToken.generate(user.id)
+            activationTokenRepository.save(activationToken)
 
-        // 发布领域事件
-        savedUser.getDomainEvents().forEach { event ->
-            domainEventPublisher.publish(
-                if(event is UserRegisteredEvent) {
-                    event.copy(
-                        activationToken = activationToken.value
-                    )
-                } else {
-                    event
-                }
-            )
+            // 之后可以通过saga管理器模式处理后续的业务流程
+            // 这里为了简化直接依赖事件机制触发后续步骤并行处理
+            // 发布领域事件
+            savedUser.getDomainEvents().forEach { event ->
+                eventBus.publish(
+                    if(event is UserRegisteredEvent) {
+                        event.copy(
+                            activationToken = activationToken.value
+                        )
+                    } else {
+                        event
+                    }
+                )
+            }
+            savedUser.clearDomainEvents()
         }
-        savedUser.clearDomainEvents()
+
     }
 
     private fun validate(command: RegisterUserCommand) {

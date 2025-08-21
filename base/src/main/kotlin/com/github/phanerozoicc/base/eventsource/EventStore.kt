@@ -17,5 +17,26 @@ interface EventStore {
      */
     suspend fun saveEvents(aggregateId: String, events: List<DomainEvent>, expectedVersion: Long)
 
+    /**
+     * 获取聚合根快照
+     */
+    suspend fun getLastSnapshot(aggregateId: String, maxVersion: Long?): AggregateSnapshot<*>?
+
+    /**
+     * 保存聚合根快照
+     */
+    suspend fun saveSnapshot(snapshot: AggregateSnapshot<Map<String, Any>>)
+
+    /**
+     * 获取聚合根快照列表
+     */
+    suspend fun getAllSnapshots(aggregateId: String): List<AggregateSnapshot<*>>
+
+    /**
+     * 删除聚合根快照
+     */
+    suspend fun deleteSnapshot(aggregateId: String, version: Long)
+
+
 }
 

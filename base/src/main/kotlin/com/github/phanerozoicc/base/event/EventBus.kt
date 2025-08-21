@@ -1,7 +1,7 @@
 package com.github.phanerozoicc.base.event
 
 import com.github.phanerozoicc.base.eventsource.EventStore
-import com.github.phanerozoicc.base.utils.JsonUtils
+import com.github.phanerozoicc.base.utils.JsonUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -53,7 +53,7 @@ class DefaultEventBus(
 
     private fun publish2Kafka(event: Event) {
         val topic = "event-${event::class.simpleName?.lowercase()}"
-        val eventJson = JsonUtils.writeValueAsString(event)
+        val eventJson = JsonUtil.writeValueAsString(event)
 
         kafkaTemplate.send(topic, eventJson).whenComplete { result, ex ->
                 if (ex == null) {

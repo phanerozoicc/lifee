@@ -49,7 +49,7 @@ class UserFactory(
         )
 
         // 发布用户注册事件
-        user.addDomainEvent(
+        user.recordEvent(
             UserRegisteredEvent(
                 userId = userId,
                 email = email,

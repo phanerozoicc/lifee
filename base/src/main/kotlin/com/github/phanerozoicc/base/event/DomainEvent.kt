@@ -8,13 +8,16 @@ abstract class DomainEvent(
     open val aggregateId: String,
     // 事件版本号
     open val version: Long = 0,
-    // 事件类型
-    open val eventType: String,
+//    // 事件类型
+//    open val eventType: String,
     // 事件id
     open val eventId: String = UUID.randomUUID().toString(),
     // 事件发生时间
     open val occurredOn: Instant = Instant.now(),
 ): Event {
+
+    open val eventType: String = this::class.simpleName ?: ""
+
     override fun toString(): String {
         return "DomainEvent(aggregateId='$aggregateId', version=$version, eventType='$eventType', eventId='$eventId', occurredOn=$occurredOn)"
     }

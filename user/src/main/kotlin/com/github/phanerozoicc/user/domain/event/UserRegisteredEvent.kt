@@ -3,13 +3,15 @@ package com.github.phanerozoicc.user.domain.event
 import com.github.phanerozoicc.base.event.DomainEvent
 import com.github.phanerozoicc.user.domain.model.Email
 import com.github.phanerozoicc.user.domain.model.UserId
+import java.time.Instant
 import java.time.LocalDateTime
+import java.util.*
 
 /**
  * 用户注册事件
  * 当新用户成功注册时发布
  */
-data class UserRegisteredEvent(
+class UserRegisteredEvent(
     val userId: UserId,
     val email: Email,
     val nickname: String,
@@ -17,5 +19,30 @@ data class UserRegisteredEvent(
     val ipAddress: String? = null,
     val userAgent: String? = null,
     val activationToken: String? = null,
-) : DomainEvent(userId.value, "UserRegistered")
+    aggregateId: String = userId.value,
+    version: Long = 0,
+    occurredOn: Instant = Instant.now(),
+    eventId: String = UUID.randomUUID().toString()
+    ) : DomainEvent(aggregateId, version) {
+    override fun copy(
+        aggregateId: String,
+        version: Long,
+        occurredOn: Instant
+    ): DomainEvent {
+        return UserRegisteredEvent(
+            userId,
+            email,
+            nickname,
+            registrationTime,
+            ipAddress,
+            userAgent,
+            activationToken,
+            aggregateId,
+            version,
+            occurredOn,
+            eventId
+        )
+    }
+
+}
 
