@@ -2,6 +2,9 @@ import { APP_DOMAIN } from "@/lib/config"
 import type { UserProfile } from "@/lib/user/types"
 import { SupabaseClient } from "@supabase/supabase-js"
 import { fetchClient } from "./fetch"
+
+// Re-export fetchClient for other modules
+export { fetchClient }
 import { API_ROUTE_CREATE_GUEST, API_ROUTE_UPDATE_CHAT_MODEL } from "./routes"
 import { createClient } from "./supabase/client"
 

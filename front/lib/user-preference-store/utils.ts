@@ -19,7 +19,7 @@ export const defaultPreferences: UserPreferences = {
 }
 
 // Helper functions to convert between API format (snake_case) and frontend format (camelCase)
-export function convertFromApiFormat(apiData: any): UserPreferences {
+export function convertFromApiFormat(apiData: Record<string, unknown>): UserPreferences {
   return {
     layout: apiData.layout || "fullscreen",
     promptSuggestions: apiData.prompt_suggestions ?? true,
@@ -31,7 +31,7 @@ export function convertFromApiFormat(apiData: any): UserPreferences {
 }
 
 export function convertToApiFormat(preferences: Partial<UserPreferences>) {
-  const apiData: any = {}
+  const apiData: Record<string, unknown> = {}
   if (preferences.layout !== undefined) apiData.layout = preferences.layout
   if (preferences.promptSuggestions !== undefined)
     apiData.prompt_suggestions = preferences.promptSuggestions
@@ -44,4 +44,27 @@ export function convertToApiFormat(preferences: Partial<UserPreferences>) {
   if (preferences.hiddenModels !== undefined)
     apiData.hidden_models = preferences.hiddenModels
   return apiData
+}
+
+export function mergePreferences(current: UserPreferences, updates: Partial<UserPreferences>): UserPreferences {
+  const merged = { ...current }
+  
+  for (const [key, value] of Object.entries(updates)) {
+    if (value !== undefined) {
+      ;(merged as Record<string, unknown>)[key] = value
+    }
+  }
+  
+  return merged
+}
+
+export function validatePreferences(preferences: Record<string, unknown>): UserPreferences {
+  return {
+    layout: preferences.layout as LayoutType || "sidebar",
+    promptSuggestions: preferences.promptSuggestions as boolean ?? true,
+    showToolInvocations: preferences.showToolInvocations as boolean ?? true,
+    showConversationPreviews: preferences.showConversationPreviews as boolean ?? true,
+    multiModelEnabled: preferences.multiModelEnabled as boolean ?? false,
+    hiddenModels: preferences.hiddenModels as string[] || [],
+  }
 }

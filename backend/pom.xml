@@ -45,6 +45,7 @@
         <module>lifee-recommendation-app</module>
         <module>lifee-config</module>
         <module>lifee-config-app</module>
+        <module>lifee-time</module>
     </modules>
 
     <dependencyManagement>

@@ -1,0 +1,160 @@
+spring:
+  application:
+    name: lifee-time-test
+  
+  # 数据库配置 - 使用H2内存数据库进行测试
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: 
+  
+  # JPA配置
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        format_sql: true
+    defer-datasource-initialization: true
+  
+  # Flyway配置 - 测试环境禁用
+  flyway:
+    enabled: false
+  
+  # H2控制台配置
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  
+  # Redis配置 - 测试环境使用嵌入式Redis
+  redis:
+    host: localhost
+    port: 6379
+    database: 1
+    timeout: 2000ms
+    lettuce:
+      pool:
+        max-active: 8
+        max-idle: 8
+        min-idle: 0
+        max-wait: -1ms
+  
+  # 缓存配置
+  cache:
+    type: simple
+    cache-names:
+      - timeEntries
+      - projects
+      - teams
+      - tasks
+      - statistics
+  
+  # 测试配置
+  test:
+    database:
+      replace: none
+
+# 日志配置
+logging:
+  level:
+    com.lifee.time: DEBUG
+    org.springframework.web: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# 时间追踪业务配置
+lifee:
+  time:
+    # 时间条目配置
+    time-entry:
+      max-duration-hours: 24
+      auto-stop-hours: 8
+      min-duration-minutes: 1
+      description-max-length: 500
+    
+    # 项目配置
+    project:
+      name-max-length: 100
+      description-max-length: 1000
+      max-members: 100
+      color-pattern: "^#[0-9A-Fa-f]{6}$"
+    
+    # 任务配置
+    task:
+      name-max-length: 200
+      description-max-length: 2000
+      max-assignees: 10
+      max-tags: 20
+    
+    # 团队配置
+    team:
+      name-max-length: 100
+      description-max-length: 1000
+      max-members: 500
+    
+    # 报告配置
+    report:
+      max-date-range-days: 365
+      export-timeout-seconds: 300
+      max-export-records: 10000
+    
+    # 统计配置
+    statistics:
+      cache-duration-minutes: 30
+      calculation-timeout-seconds: 60
+    
+    # 通知配置
+    notification:
+      enabled: false
+      reminder-hours: [1, 4, 8]
+      daily-summary-hour: 18
+
+# 管理端点配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+# 服务器配置
+server:
+  port: 0  # 随机端口用于测试
+  servlet:
+    context-path: /api
+
+# 安全配置
+security:
+  jwt:
+    secret: test-secret-key-for-testing-only
+    expiration: 3600000  # 1小时
+    refresh-expiration: 604800000  # 7天
+
+# 异步配置
+async:
+  core-pool-size: 2
+  max-pool-size: 4
+  queue-capacity: 100
+  thread-name-prefix: "lifee-time-test-"
+
+# 国际化配置
+internationalization:
+  default-locale: zh_CN
+  supported-locales:
+    - zh_CN
+    - en_US
+
+# API文档配置
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false

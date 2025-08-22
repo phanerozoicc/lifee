@@ -1,0 +1,161 @@
+# 时间追踪模块配置
+spring:
+  application:
+    name: lifee-time-tracking
+  
+  # 数据库配置
+  datasource:
+    url: jdbc:mysql://localhost:3306/lifee_time?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:password}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    
+  # JPA配置
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        format_sql: true
+        use_sql_comments: true
+        jdbc:
+          batch_size: 20
+        order_inserts: true
+        order_updates: true
+        
+  # Flyway数据库迁移配置
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    validate-on-migrate: true
+    
+  # Redis配置(用于缓存)
+  redis:
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+    password: ${REDIS_PASSWORD:}
+    database: 1
+    timeout: 2000ms
+    lettuce:
+      pool:
+        max-active: 8
+        max-idle: 8
+        min-idle: 0
+        max-wait: -1ms
+        
+# 时间追踪业务配置
+lifee:
+  time-tracking:
+    # 时间条目配置
+    time-entry:
+      max-running-entries-per-user: 1  # 每个用户最大同时运行的时间条目数
+      auto-stop-after-hours: 24       # 自动停止运行超过指定小时的时间条目
+      min-duration-seconds: 60        # 最小记录时长(秒)
+      max-duration-hours: 24          # 最大单次记录时长(小时)
+      
+    # 项目配置
+    project:
+      max-projects-per-user: 100      # 每个用户最大项目数
+      max-members-per-project: 50     # 每个项目最大成员数
+      default-hourly-rate: 50.00     # 默认小时费率
+      
+    # 任务配置
+    task:
+      max-tasks-per-project: 1000     # 每个项目最大任务数
+      auto-complete-overdue-days: 30  # 自动完成超期天数
+      
+    # 团队配置
+    team:
+      max-teams-per-user: 10          # 每个用户最大团队数
+      max-members-per-team: 100       # 每个团队最大成员数
+      
+    # 报告配置
+    report:
+      max-export-records: 10000       # 最大导出记录数
+      cache-duration-minutes: 30      # 报告缓存时长(分钟)
+      
+    # 统计配置
+    statistics:
+      cache-duration-minutes: 15      # 统计缓存时长(分钟)
+      real-time-update: true          # 是否实时更新统计
+      
+    # 通知配置
+    notification:
+      enabled: true                   # 是否启用通知
+      email-enabled: true            # 是否启用邮件通知
+      webhook-enabled: false         # 是否启用Webhook通知
+      
+# 日志配置
+logging:
+  level:
+    com.lifee.time: DEBUG
+    org.springframework.data.jpa: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/lifee-time.log
+    max-size: 100MB
+    max-history: 30
+    
+# 管理端点配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+        
+# 服务器配置
+server:
+  port: ${SERVER_PORT:8081}
+  servlet:
+    context-path: /api/time
+    
+# 安全配置
+security:
+  jwt:
+    secret: ${JWT_SECRET:lifee-time-tracking-secret-key}
+    expiration: ${JWT_EXPIRATION:86400} # 24小时
+    
+# 缓存配置
+cache:
+  type: redis
+  redis:
+    time-to-live: 600000 # 10分钟
+    key-prefix: "lifee:time:"
+    
+# 异步配置
+async:
+  core-pool-size: 5
+  max-pool-size: 20
+  queue-capacity: 100
+  thread-name-prefix: "lifee-time-async-"
+  
+# 国际化配置
+i18n:
+  default-locale: zh_CN
+  supported-locales:
+    - zh_CN
+    - en_US
+    
+# API文档配置
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+  packages-to-scan: com.lifee.time.web

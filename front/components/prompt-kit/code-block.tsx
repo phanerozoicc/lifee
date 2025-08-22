@@ -35,23 +35,22 @@ export type CodeBlockCodeProps = {
 function CodeBlockCode({
   code,
   language = "tsx",
-  theme = "github-light",
   className,
   ...props
 }: CodeBlockCodeProps) {
-  const { resolvedTheme: appTheme } = useTheme()
+  const { resolvedTheme } = useTheme()
   const [highlightedHtml, setHighlightedHtml] = useState<string | null>(null)
 
   useEffect(() => {
     async function highlight() {
       const html = await codeToHtml(code, {
         lang: language,
-        theme: appTheme === "dark" ? "github-dark" : "github-light",
+        theme: resolvedTheme === "dark" ? "github-dark" : "github-light",
       })
       setHighlightedHtml(html)
     }
     highlight()
-  }, [code, language, appTheme])
+  }, [code, language, resolvedTheme])
 
   const classNames = cn(
     "w-full overflow-x-auto text-[13px] [&>pre]:px-4 [&>pre]:py-4 [&>pre]:!bg-background",

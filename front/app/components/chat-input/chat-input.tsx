@@ -10,7 +10,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { getModelInfo } from "@/lib/models"
 import { ArrowUpIcon, StopIcon } from "@phosphor-icons/react"
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef } from "react"
 import { PromptSystem } from "../suggestions/prompt-system"
 import { ButtonFileUpload } from "./button-file-upload"
 import { ButtonKnowledgeBase } from "./button-knowledge-base"

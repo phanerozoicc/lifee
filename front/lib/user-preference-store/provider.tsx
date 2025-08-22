@@ -126,17 +126,16 @@ export function UserPreferencesProvider({
 
         try {
           return await fetchUserPreferences()
-        } catch (error) {
+        } catch {
           console.error(
-            "Failed to fetch user preferences, falling back to localStorage:",
-            error
+            "Failed to fetch user preferences, falling back to localStorage"
           )
           return getLocalStoragePreferences()
         }
       },
       enabled: typeof window !== "undefined",
       staleTime: 1000 * 60 * 5, // 5 minutes
-      retry: (failureCount, error) => {
+      retry: (failureCount) => {
         // Only retry for authenticated users and network errors
         return isAuthenticated && failureCount < 2
       },
@@ -157,11 +156,8 @@ export function UserPreferencesProvider({
 
       try {
         return await updateUserPreferences(update)
-      } catch (error) {
-        console.error(
-          "Failed to update user preferences in database, falling back to localStorage:",
-          error
-        )
+      } catch {
+        console.error('Failed to save preferences')
         saveToLocalStorage(updated)
         return updated
       }

@@ -20,7 +20,7 @@ import {
   Settings,
   MessageSquare
 } from "lucide-react"
-import { useRouter, usePathname } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { SidebarProject } from "./sidebar-project"
 
 
@@ -28,7 +28,6 @@ export function AppSidebar() {
   const isMobile = useBreakpoint(768)
   const { setOpenMobile } = useSidebar()
   const router = useRouter()
-  const pathname = usePathname()
   
 
 

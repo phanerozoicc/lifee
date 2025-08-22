@@ -1,13 +1,11 @@
 "use client"
 
 import { groupChatsByDate } from "@/app/components/history/utils"
-import { useBreakpoint } from "@/app/hooks/use-breakpoint"
-import { ScrollArea } from "@/components/ui/scroll-area"
+
 import { Button } from "@/components/ui/button"
 import { useChats } from "@/lib/chat-store/chats/provider"
 import {
   ChatTeardropText,
-  MagnifyingGlass,
   Plus,
 } from "@phosphor-icons/react"
 import { useParams, useRouter } from "next/navigation"
@@ -15,7 +13,6 @@ import { useMemo } from "react"
 import { ChatHistoryItem } from "./chat-history-item"
 
 export function ChatHistorySection() {
-  const isMobile = useBreakpoint(768)
   const { chats, isLoading } = useChats()
   const params = useParams<{ chatId: string }>()
   const currentChatId = params.chatId

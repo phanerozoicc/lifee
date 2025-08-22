@@ -24,6 +24,19 @@ import {
 import { useState } from "react"
 import { cn } from "@/lib/utils"
 
+type ModelConfig = {
+  id: string
+  name: string
+  provider: string
+  apiUrl: string
+  token: string
+  modelId: string
+  maxTokens?: number
+  dimensions?: number
+  maxDocuments?: number
+  enabled: boolean
+}
+
 export default function SettingsPage() {
   const [activeSection, setActiveSection] = useState("chat-models")
   
@@ -141,7 +154,7 @@ export default function SettingsPage() {
     }
   ])
 
-  const renderModelConfigForm = (model: any, models: any[], setModels: any) => (
+  const renderModelConfigForm = (model: ModelConfig, models: ModelConfig[], setModels: (models: ModelConfig[]) => void) => (
     <Card key={model.id}>
       <CardHeader>
         <div className="flex items-center justify-between">

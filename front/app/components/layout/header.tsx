@@ -4,7 +4,7 @@ import { HistoryTrigger } from "@/app/components/history/history-trigger"
 import { AppInfoTrigger } from "@/app/components/layout/app-info/app-info-trigger"
 import { ButtonNewChat } from "@/app/components/layout/button-new-chat"
 import { UserMenu } from "@/app/components/layout/user-menu"
-import { useBreakpoint } from "@/app/hooks/use-breakpoint"
+
 import { ZolaIcon } from "@/components/icons/zola"
 import { Button } from "@/components/ui/button"
 import { APP_NAME } from "@/lib/config"
@@ -16,7 +16,6 @@ import { DialogPublish } from "./dialog-publish"
 import { HeaderSidebarTrigger } from "./header-sidebar-trigger"
 
 export function Header({ hasSidebar }: { hasSidebar: boolean }) {
-  const isMobile = useBreakpoint(768)
   const { user } = useUser()
   const { preferences } = useUserPreferences()
   const isMultiModelEnabled = preferences.multiModelEnabled
