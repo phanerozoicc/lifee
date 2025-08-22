@@ -44,5 +44,21 @@ class UserRegisteredEvent(
         )
     }
 
+    fun copy(activationToken: String): UserRegisteredEvent {
+        return UserRegisteredEvent(
+            userId,
+            email,
+            nickname,
+            registrationTime,
+            ipAddress,
+            userAgent,
+            activationToken,
+            aggregateId,
+            version,
+            occurredOn,
+            eventId
+        )
+    }
+
 }
 

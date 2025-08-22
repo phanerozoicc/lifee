@@ -2,8 +2,11 @@ package com.github.phanerozoicc.user.application.command
 
 import com.github.phanerozoicc.base.command.Command
 import com.github.phanerozoicc.base.command.CommandHandler
+import com.github.phanerozoicc.base.event.EventBus
 import com.github.phanerozoicc.user.domain.repository.ActivationTokenRepository
 import com.github.phanerozoicc.user.domain.repository.UserRepository
+import kotlinx.coroutines.runBlocking
+import mu.KLogging
 import org.springframework.stereotype.Component
 
 class ActivationByTokenCommand(
@@ -17,6 +20,9 @@ class ActivationByTokenCommandHandler(
     private val activationTokenRepository: ActivationTokenRepository,
     private val eventBus: EventBus
 ): CommandHandler<ActivationByTokenCommand, Unit> {
+
+    companion object: KLogging()
+
     override fun handle(command: ActivationByTokenCommand) {
         // 根据token查询用户
         val activationToken = activationTokenRepository.findByToken(command.token)
@@ -30,14 +36,17 @@ class ActivationByTokenCommandHandler(
         // 激活用户
         val user = userRepository.findById(activationToken.userId)?:
         throw IllegalStateException("User not found: ${activationToken.userId}")
+
         user.activate(user.id)
-        userRepository.save(user)
-        // 删除已使用的 token
-        activationTokenRepository.delete(activationToken)
+        runBlocking {
+            userRepository.save(user)
+            // 删除已使用的 token
+            activationTokenRepository.delete(activationToken)
+        }
         // 发布事件
         eventBus.publishAll(user.getDomainEvents())
         user.clearDomainEvents()
-        TODO("Not yet implemented")
+        logger.debug("user activated: {}",  user.id)
     }
 
 }

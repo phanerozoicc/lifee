@@ -85,7 +85,7 @@ class UserController(
     ) {
         val activationByTokenCommand = ActivationByTokenCommand(token)
         try {
-            commandBus.sendAndWait<ActivationByTokenCommand>(activationByTokenCommand)
+            commandBus.sendAndWait<ActivationByTokenCommand, Unit>(activationByTokenCommand)
             ResponseEntity.ok(ApiResponse.success("用户注册成功，请检查邮箱进行激活"))
         } catch (e: Exception) {
             ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
