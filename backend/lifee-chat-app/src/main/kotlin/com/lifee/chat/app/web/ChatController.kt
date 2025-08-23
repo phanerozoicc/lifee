@@ -4,9 +4,18 @@ import com.lifee.chat.app.application.commands.*
 import com.lifee.chat.app.application.queries.*
 import com.lifee.chat.app.application.dtos.*
 import com.lifee.chat.app.application.handlers.*
+import com.lifee.chat.domain.valueobjects.ConversationId
 import com.lifee.chat.domain.valueobjects.ConversationTitle
+import com.lifee.chat.domain.valueobjects.MessageContent
+import com.lifee.chat.domain.valueobjects.MessageId
 import com.lifee.chat.domain.valueobjects.MessageType
-import com.lifee.common.valueobjects.UserId
+import com.lifee.chat.domain.valueobjects.UserId
+import com.lifee.chat.app.web.CreateConversationRequest
+import com.lifee.chat.app.web.AddMessageRequest
+import com.lifee.chat.app.web.UpdateConversationTitleRequest
+import com.lifee.chat.app.application.commands.DeleteConversationCommand
+import com.lifee.chat.app.application.commands.DeleteMessageCommand
+import com.lifee.chat.app.application.commands.UpdateConversationTitleCommand
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.responses.ApiResponse
@@ -24,7 +33,7 @@ import java.util.*
  * 提供对话和消息的管理功能
  */
 @RestController
-@RequestMapping("/api/v1/chat")
+@RequestMapping("/chat")
 @Tag(name = "对话管理", description = "对话和消息的创建、查询、更新、删除功能")
 class ChatController(
     private val createConversationCommandHandler: CreateConversationCommandHandler,
@@ -96,8 +105,8 @@ class ChatController(
         @RequestHeader("X-User-Id") @NotBlank userId: String
     ): ResponseEntity<MessageDto> {
         val command = AddMessageCommand(
-            conversationId = UUID.fromString(conversationId),
-            content = request.content,
+            conversationId = ConversationId(UUID.fromString(conversationId)),
+            content = MessageContent(request.content),
             type = MessageType.valueOf(request.type),
             userId = UserId(UUID.fromString(userId))
         )
@@ -211,7 +220,7 @@ class ChatController(
         @RequestHeader("X-User-Id") @NotBlank userId: String
     ): ResponseEntity<ConversationDetailDto> {
         val query = GetConversationQuery(
-            conversationId = UUID.fromString(conversationId),
+            conversationId = ConversationId(UUID.fromString(conversationId)),
             userId = UserId(UUID.fromString(userId))
         )
         val result = getConversationQueryHandler.handle(query)
@@ -342,7 +351,7 @@ class ChatController(
         @RequestHeader("X-User-Id") @NotBlank userId: String
     ): ResponseEntity<List<MessageDto>> {
         val query = GetConversationMessagesQuery(
-            conversationId = UUID.fromString(conversationId),
+            conversationId = ConversationId(UUID.fromString(conversationId)),
             userId = UserId(UUID.fromString(userId))
         )
         val result = getConversationMessagesQueryHandler.handle(query)
@@ -356,25 +365,11 @@ class ChatController(
         @RequestHeader("X-User-Id") userId: String
     ): ResponseEntity<MessageDto> {
         val query = GetMessageQuery(
-            conversationId = UUID.fromString(conversationId),
-            messageId = UUID.fromString(messageId),
+            conversationId = ConversationId(UUID.fromString(conversationId)),
+            messageId = MessageId(UUID.fromString(messageId)),
             userId = UserId(UUID.fromString(userId))
         )
         val result = getMessageQueryHandler.handle(query)
         return ResponseEntity.ok(result)
     }
 }
-
-// Request DTOs
-data class CreateConversationRequest(
-    val title: String?
-)
-
-data class AddMessageRequest(
-    val content: String,
-    val type: String
-)
-
-data class UpdateConversationTitleRequest(
-    val title: String
-)

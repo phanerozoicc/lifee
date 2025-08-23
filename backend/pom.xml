@@ -31,6 +31,7 @@
         <r2dbc.postgresql.version>1.0.4.RELEASE</r2dbc.postgresql.version>
         <r2dbc.pool.version>1.0.1.RELEASE</r2dbc.pool.version>
         <seata.version>1.8.0</seata.version>
+        <springdoc.version>2.3.0</springdoc.version>
     </properties>
 
     <modules>
@@ -46,6 +47,7 @@
         <module>lifee-config</module>
         <module>lifee-config-app</module>
         <module>lifee-time</module>
+        <module>lifee-time-app</module>
     </modules>
 
     <dependencyManagement>
@@ -159,6 +161,13 @@
                 <artifactId>seata-all</artifactId>
                 <version>${seata.version}</version>
             </dependency>
+            
+            <!-- Swagger/OpenAPI -->
+            <dependency>
+                <groupId>org.springdoc</groupId>
+                <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+                <version>${springdoc.version}</version>
+            </dependency>
 
             <!-- Testing -->
             <dependency>
@@ -188,6 +197,12 @@
             <dependency>
                 <groupId>io.kotest</groupId>
                 <artifactId>kotest-framework-engine</artifactId>
+                <version>${kotest.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.kotest</groupId>
+                <artifactId>kotest-framework-datatest</artifactId>
                 <version>${kotest.version}</version>
                 <scope>test</scope>
             </dependency>

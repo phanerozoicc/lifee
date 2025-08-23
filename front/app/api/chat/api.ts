@@ -1,4 +1,8 @@
-import { saveFinalAssistantMessage } from "@/app/api/chat/db"
+import {
+  incrementMessageCount as incrementMessageCountBackend,
+  logUserMessage as logUserMessageBackend,
+  storeAssistantMessage as storeAssistantMessageBackend
+} from "@/lib/chat-api"
 import type {
   ChatApiParams,
   LogUserMessageParams,
@@ -60,10 +64,8 @@ export async function incrementMessageCount({
   supabase: SupabaseClientType
   userId: string
 }): Promise<void> {
-  if (!supabase) return
-
   try {
-    await incrementUsage(supabase, userId)
+    await incrementMessageCountBackend({ userId })
   } catch (err) {
     console.error("Failed to increment message count:", err)
     // Don't throw error as this shouldn't block the chat
@@ -80,18 +82,17 @@ export async function logUserMessage({
   isAuthenticated,
   message_group_id,
 }: LogUserMessageParams): Promise<void> {
-  if (!supabase) return
-
-  const { error } = await supabase.from("messages").insert({
-    chat_id: chatId,
-    role: "user",
-    content: sanitizeUserInput(content),
-    experimental_attachments: attachments,
-    user_id: userId,
-    message_group_id,
-  })
-
-  if (error) {
+  try {
+    await logUserMessageBackend({
+      userId,
+      chatId,
+      content: sanitizeUserInput(content),
+      attachments,
+      model,
+      isAuthenticated,
+      message_group_id
+    })
+  } catch (error) {
     console.error("Error saving user message:", error)
   }
 }
@@ -103,15 +104,13 @@ export async function storeAssistantMessage({
   message_group_id,
   model,
 }: StoreAssistantMessageParams): Promise<void> {
-  if (!supabase) return
   try {
-    await saveFinalAssistantMessage(
-      supabase,
+    await storeAssistantMessageBackend({
       chatId,
       messages,
       message_group_id,
       model
-    )
+    })
   } catch (err) {
     console.error("Failed to save assistant messages:", err)
   }

@@ -1,7 +1,8 @@
 package com.lifee.knowledge.application.commands.handlers
 
-import com.lifee.common.cqrs.commands.CommandHandler
+import com.lifee.common.cqrs.commands.AsyncCommandHandler
 import com.lifee.common.cqrs.events.EventBus
+import com.lifee.common.domain.valueobjects.UserId
 import com.lifee.knowledge.application.commands.AddDocumentCommand
 import com.lifee.knowledge.domain.events.DocumentAddedEvent
 import com.lifee.knowledge.domain.exceptions.*
@@ -20,7 +21,7 @@ class AddDocumentCommandHandler(
     private val knowledgeBaseRepository: KnowledgeBaseRepository,
     private val documentValidationService: DocumentValidationService,
     private val eventBus: EventBus
-) : CommandHandler<AddDocumentCommand> {
+) : AsyncCommandHandler<AddDocumentCommand, Unit> {
     
     private val logger = LoggerFactory.getLogger(AddDocumentCommandHandler::class.java)
     
@@ -35,7 +36,7 @@ class AddDocumentCommandHandler(
         val title = DocumentTitle(command.title)
         val content = DocumentContent(command.content)
         val type = DocumentType.fromString(command.type)
-        val userId = UserId.fromString(command.userId)
+        val userId = UserId(command.userId)
         
         // 2. 验证文档
         documentValidationService.validateDocument(title, content, type)
@@ -74,9 +75,9 @@ class AddDocumentCommandHandler(
             knowledgeBaseId = knowledgeBaseId,
             documentId = documentId,
             userId = userId,
-            title = command.title,
-            content = finalContent.value,
-            type = command.type,
+            title = title,
+            content = finalContent,
+            type = type,
             contentLength = finalContent.getLength()
         )
         eventBus.publish(documentAddedEvent)

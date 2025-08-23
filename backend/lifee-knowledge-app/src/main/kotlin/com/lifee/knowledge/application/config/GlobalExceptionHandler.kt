@@ -26,7 +26,7 @@ class GlobalExceptionHandler {
      * 协程异常处理器
      */
     val coroutineExceptionHandler = CoroutineExceptionHandler { context: CoroutineContext, exception: Throwable ->
-        logger.error("Uncaught exception in coroutine: ${context[CoroutineContext.Key]}", exception)
+        logger.error("Uncaught exception in coroutine: $context", exception)
         
         when (exception) {
             is DomainException -> {

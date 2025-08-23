@@ -2,7 +2,7 @@ package com.lifee.chat.application.commands
 
 import com.lifee.common.cqrs.commands.Command
 import com.lifee.chat.domain.valueobjects.*
-import com.lifee.user.domain.UserId
+import com.lifee.common.domain.valueobjects.UserId
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size

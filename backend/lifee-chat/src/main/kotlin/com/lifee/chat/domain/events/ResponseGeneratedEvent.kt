@@ -2,7 +2,7 @@ package com.lifee.chat.domain.events
 
 import com.lifee.common.domain.DomainEvent
 import com.lifee.chat.domain.valueobjects.ConversationId
-import com.lifee.user.domain.UserId
+import com.lifee.common.domain.valueobjects.UserId
 import java.time.Instant
 import java.util.*
 
@@ -17,9 +17,11 @@ data class ResponseGeneratedEvent(
     val retrievedDocumentCount: Int,
     val tokensUsed: Int,
     val processingTimeMs: Long,
-    override val aggregateId: String = conversationId.value,
-    override val version: Long = 1L
-) : DomainEvent() {
+    override val aggregateId: String = conversationId.value.toString(),
+    override val version: Long = 1L,
+    override val occurredOn: Instant = Instant.now(),
+    override val eventId: UUID = UUID.randomUUID()
+) : DomainEvent(aggregateId, version, occurredOn, eventId) {
     
     override fun copy(
         aggregateId: String,
@@ -27,16 +29,11 @@ data class ResponseGeneratedEvent(
         occurredOn: Instant,
         eventId: UUID
     ): DomainEvent {
-        return ResponseGeneratedEvent(
-            conversationId = ConversationId(aggregateId),
-            userId = this.userId,
-            userMessage = this.userMessage,
-            assistantResponse = this.assistantResponse,
-            retrievedDocumentCount = this.retrievedDocumentCount,
-            tokensUsed = this.tokensUsed,
-            processingTimeMs = this.processingTimeMs,
+        return copy(
             aggregateId = aggregateId,
-            version = version
+            version = version,
+            occurredOn = occurredOn,
+            eventId = eventId
         )
     }
 }

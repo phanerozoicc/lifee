@@ -11,7 +11,9 @@ data class KnowledgeBaseDto(
     val description: String,
     val ownerId: String,
     val documentCount: Int,
-    val totalSize: Int,
+    val totalSize: Long,
+    val embeddingModel: String = "text-embedding-ada-002",
+    val rerankModel: String = "bge-reranker-large",
     val createdAt: Instant,
     val updatedAt: Instant,
     val documents: List<DocumentSummaryDto> = emptyList()

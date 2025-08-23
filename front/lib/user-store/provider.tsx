@@ -126,7 +126,11 @@ export function UserProvider({
   // 更新用户权限
   const updateUserPermissions = async (userId: string, permissions: UserPermission[]): Promise<boolean> => {
     try {
-      const success = await UserTimeAPI.updateUserPermissions(userId, permissions)
+      const permissionsObj = permissions.reduce((acc, permission) => {
+        acc[permission] = true
+        return acc
+      }, {} as Record<string, unknown>)
+      const success = await UserTimeAPI.updateUserPermissions(userId, permissionsObj)
       if (success && userId === user?.id) {
         setUser(prev => prev ? { ...prev, permissions } : null)
         await refreshPermissions()

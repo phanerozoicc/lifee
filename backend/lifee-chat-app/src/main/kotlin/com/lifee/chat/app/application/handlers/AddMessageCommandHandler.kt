@@ -9,6 +9,7 @@ import com.lifee.chat.domain.repositories.ConversationRepository
 import com.lifee.chat.domain.services.MessageValidationService
 import com.lifee.chat.domain.valueobjects.*
 import com.lifee.common.cqrs.commands.AsyncCommandHandler
+import com.lifee.common.domain.valueobjects.UserId as CommonUserId
 import com.lifee.knowledge.domain.valueobjects.KnowledgeBaseId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -38,14 +39,15 @@ class AddMessageCommandHandler(
         val finalContent = MessageContent(cleanedContent)
         
         // 3. 查找对话
-        val conversation = conversationRepository.findByIdAndUserId(command.conversationId, command.userId)
-            ?: throw ConversationNotFoundException(command.conversationId)
+        val commonUserId = CommonUserId(command.userId.value.toString())
+        val conversation = conversationRepository.findByIdAndUserId(command.conversationId, commonUserId)
+            ?: throw ConversationNotFoundException(command.conversationId.value.toString())
         
         // 4. 创建消息
         val message = Message.create(
             content = finalContent,
             type = command.type,
-            userId = command.userId
+            userId = commonUserId
         )
         
         // 5. 添加消息到对话
@@ -53,15 +55,15 @@ class AddMessageCommandHandler(
         conversationRepository.save(conversation)
         
         logger.info("消息添加成功: messageId={}, conversationId={}, contentLength={}", 
-            message.id.value, command.conversationId.value, finalContent.getLength())
+            message.id.value, command.conversationId.value, finalContent.value.length)
         
         // 6. 如果是用户消息，生成AI响应
-        if (command.type == "USER") {
+        if (command.type == MessageType.USER) {
             try {
                 val response = conversationResponseService.generateResponse(
                     conversationId = command.conversationId,
-                    userMessage = command.content,
-                    userId = command.userId,
+                    userMessage = command.content.value,
+                    userId = commonUserId,
                     knowledgeBaseIds = command.knowledgeBaseIds ?: emptyList(),
                     useRAG = command.useRAG ?: true
                 )
@@ -69,8 +71,8 @@ class AddMessageCommandHandler(
                 // 添加AI响应消息
                 val assistantMessage = Message.create(
                     content = MessageContent(response.content),
-                    type = command.type,
-                    userId = command.userId
+                    type = MessageType.ASSISTANT,
+                    userId = commonUserId
                 )
                 
                 conversation.addMessage(assistantMessage)

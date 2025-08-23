@@ -32,9 +32,9 @@ class DocumentAddedEventHandler(
                     knowledgeBaseId = event.knowledgeBaseId,
                     documentId = event.documentId,
                     userId = event.userId,
-                    title = event.title,
-                    content = event.content,
-                    type = event.type
+                    title = event.title.value,
+                    content = event.content.value,
+                    type = event.type.value
                 )
             }
             

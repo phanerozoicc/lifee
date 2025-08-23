@@ -24,7 +24,7 @@
             <version>${project.version}</version>
         </dependency>
 
-        <!-- User Module for User References -->
+        <!-- User Module -->
         <dependency>
             <groupId>com.lifee</groupId>
             <artifactId>lifee-user</artifactId>

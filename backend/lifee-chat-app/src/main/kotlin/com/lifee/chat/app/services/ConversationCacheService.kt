@@ -5,8 +5,8 @@ import com.lifee.chat.domain.valueobjects.ConversationId
 import com.lifee.chat.domain.valueobjects.MessageId
 import com.lifee.chat.app.application.dtos.ConversationDto
 import com.lifee.chat.app.application.dtos.MessageDto
-import com.lifee.chat.domain.events.ConversationCachedEvent
-import com.lifee.user.domain.UserId
+// import com.lifee.chat.domain.events.ConversationCachedEvent
+import com.lifee.common.domain.valueobjects.UserId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.slf4j.LoggerFactory
@@ -62,12 +62,12 @@ class ConversationCacheService(
                 val cacheKey = "${CONVERSATION_PREFIX}${conversationId.value}"
                 
                 val cachedConversation = CachedConversation(
-                    conversationId = conversationId.value,
+                    conversationId = conversationId.value.toString(),
                     title = conversationDto.title,
-                    userId = conversationDto.userId,
-                    knowledgeBaseId = conversationDto.knowledgeBaseId,
-                    modelName = conversationDto.modelName,
-                    modelConfig = conversationDto.modelConfig,
+                    userId = conversationDto.userId.toString(),
+                    knowledgeBaseId = null,
+                    modelName = "gpt-3.5-turbo",
+                    modelConfig = emptyMap(),
                     messageCount = conversationDto.messageCount,
                     createdAt = conversationDto.createdAt,
                     updatedAt = conversationDto.updatedAt,
@@ -86,11 +86,11 @@ class ConversationCacheService(
             }
             
             // 发布缓存事件
-            eventBus.publish(ConversationCachedEvent(
-                conversationId = conversationId,
-                cacheType = "conversation",
-                cachedAt = Instant.now()
-            ))
+            // eventBus.publish(ConversationCachedEvent(
+            //     conversationId = conversationId,
+            //     cacheType = "conversation",
+            //     cachedAt = Instant.now()
+            // ))
             
         } catch (e: Exception) {
             logger.error("缓存对话信息失败: conversationId={}", conversationId.value, e)
@@ -129,15 +129,15 @@ class ConversationCacheService(
                 val cacheKey = "${CONVERSATION_HISTORY_PREFIX}${conversationId.value}"
                 
                 val cachedHistory = CachedConversationHistory(
-                    conversationId = conversationId.value,
+                    conversationId = conversationId.value.toString(),
                     messages = messages.map { msg ->
                         CachedMessage(
-                            messageId = msg.messageId,
+                            messageId = msg.id.toString(),
                             content = msg.content,
-                            role = msg.role,
+                            role = msg.type,
                             type = msg.type,
-                            userId = msg.userId,
-                            metadata = msg.metadata,
+                            userId = msg.userId.toString(),
+                            metadata = emptyMap(),
                             createdAt = msg.createdAt
                         )
                     },
@@ -184,7 +184,7 @@ class ConversationCacheService(
         message: MessageDto
     ) {
         logger.debug("添加消息到对话历史缓存: conversationId={}, messageId={}", 
-            conversationId.value, message.messageId)
+            conversationId.value, message.id)
         
         try {
             withContext(Dispatchers.IO) {
@@ -193,12 +193,12 @@ class ConversationCacheService(
                 
                 if (cached != null) {
                     val newMessage = CachedMessage(
-                        messageId = message.messageId,
+                        messageId = message.id.toString(),
                         content = message.content,
-                        role = message.role,
+                        role = message.type,
                         type = message.type,
-                        userId = message.userId,
-                        metadata = message.metadata,
+                        userId = message.userId.toString(),
+                        metadata = emptyMap(),
                         createdAt = message.createdAt
                     )
                     
@@ -244,7 +244,7 @@ class ConversationCacheService(
                 val cacheKey = "${CONVERSATION_CONTEXT_PREFIX}${conversationId.value}"
                 
                 val cachedContext = CachedConversationContext(
-                    conversationId = conversationId.value,
+                    conversationId = conversationId.value.toString(),
                     context = context,
                     cachedAt = Instant.now(),
                     expiresAt = Instant.now().plus(ttl)
@@ -298,7 +298,7 @@ class ConversationCacheService(
                     userId = userId.value,
                     conversations = conversations.map { conv ->
                         CachedConversationSummary(
-                            conversationId = conv.conversationId,
+                            conversationId = conv.id.toString(),
                             title = conv.title,
                             messageCount = conv.messageCount,
                             lastMessageAt = conv.updatedAt,
@@ -357,12 +357,12 @@ class ConversationCacheService(
                     userId = userId.value,
                     messages = messages.map { msg ->
                         CachedMessage(
-                            messageId = msg.messageId,
+                            messageId = msg.id.toString(),
                             content = msg.content,
-                            role = msg.role,
+                            role = msg.type,
                             type = msg.type,
-                            userId = msg.userId,
-                            metadata = msg.metadata,
+                            userId = msg.userId.toString(),
+                            metadata = emptyMap(),
                             createdAt = msg.createdAt
                         )
                     },

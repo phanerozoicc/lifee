@@ -1,10 +1,11 @@
 package com.lifee.knowledge.application.commands.handlers
 
-import com.lifee.common.cqrs.commands.CommandHandler
+import com.lifee.common.cqrs.commands.AsyncCommandHandler
 import com.lifee.knowledge.application.commands.RemoveDocumentCommand
 import com.lifee.knowledge.domain.exceptions.*
 import com.lifee.knowledge.domain.repositories.KnowledgeBaseRepository
 import com.lifee.knowledge.domain.valueobjects.*
+import com.lifee.common.domain.valueobjects.UserId
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
@@ -15,7 +16,7 @@ import org.springframework.transaction.annotation.Transactional
 @Component
 class RemoveDocumentCommandHandler(
     private val knowledgeBaseRepository: KnowledgeBaseRepository
-) : CommandHandler<RemoveDocumentCommand> {
+) : AsyncCommandHandler<RemoveDocumentCommand, Unit> {
     
     private val logger = LoggerFactory.getLogger(RemoveDocumentCommandHandler::class.java)
     
@@ -25,7 +26,7 @@ class RemoveDocumentCommandHandler(
         
         val knowledgeBaseId = KnowledgeBaseId.fromString(command.knowledgeBaseId)
         val documentId = DocumentId.fromString(command.documentId)
-        val userId = UserId.fromString(command.userId)
+        val userId = UserId(command.userId)
         
         // 查找知识库
         val knowledgeBase = knowledgeBaseRepository.findById(knowledgeBaseId)

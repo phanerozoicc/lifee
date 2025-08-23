@@ -18,6 +18,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.util.*
+import org.slf4j.LoggerFactory
 
 /**
  * 知识库REST控制器
@@ -30,6 +31,8 @@ class KnowledgeBaseController(
     private val commandBus: CommandBus,
     private val queryBus: QueryBus
 ) {
+    
+    private val logger = LoggerFactory.getLogger(KnowledgeBaseController::class.java)
     
     /**
      * 创建知识库
@@ -179,10 +182,32 @@ class KnowledgeBaseController(
         )
         @RequestParam(required = false) status: String?
     ): ResponseEntity<KnowledgeBasePageResponse> {
-        val query = GetUserKnowledgeBasesQuery(userId, offset, limit)
-        val result = queryBus.send<GetUserKnowledgeBasesQuery, List<KnowledgeBaseDto>>(query)
+        logger.info("getUserKnowledgeBases called with userId: $userId, offset: $offset, limit: $limit")
         
-        return ResponseEntity.ok(result)
+        try {
+            val query = GetUserKnowledgeBasesQuery(userId, offset, limit)
+            logger.info("Created query: $query")
+            
+            val result = queryBus.send<GetUserKnowledgeBasesQuery, List<KnowledgeBaseDto>>(query)
+            logger.info("Query result size: ${result.size}")
+        
+            val response = KnowledgeBasePageResponse(
+                content = result,
+                totalElements = result.size.toLong(),
+                totalPages = if (limit > 0) (result.size + limit - 1) / limit else 1,
+                size = limit,
+                number = offset / limit,
+                numberOfElements = result.size,
+                first = offset == 0,
+                last = result.size < limit
+            )
+            
+            logger.info("Returning response with ${response.content.size} items")
+            return ResponseEntity.ok(response)
+        } catch (e: Exception) {
+            logger.error("Error in getUserKnowledgeBases", e)
+            throw e
+        }
     }
     
     /**
@@ -228,4 +253,18 @@ data class CreateKnowledgeBaseRequest(
  */
 data class CreateKnowledgeBaseResponse(
     val knowledgeBaseId: String
+)
+
+/**
+ * 知识库分页响应
+ */
+data class KnowledgeBasePageResponse(
+    val content: List<KnowledgeBaseDto>,
+    val totalElements: Long,
+    val totalPages: Int,
+    val size: Int,
+    val number: Int,
+    val numberOfElements: Int,
+    val first: Boolean,
+    val last: Boolean
 )

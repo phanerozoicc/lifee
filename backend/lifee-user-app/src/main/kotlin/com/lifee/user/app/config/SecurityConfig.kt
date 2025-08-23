@@ -46,12 +46,12 @@ class SecurityConfig(
                 authz
                     // 公开端点
                     .requestMatchers(
-                        "/api/v1/users/register",
-                        "/api/v1/users/activate/**",
-                        "/api/v1/users/forgot-password",
-                        "/api/v1/users/reset-password",
-                        "/api/v1/auth/login",
-                        "/api/v1/auth/refresh",
+                        "/users/register",
+                        "/users/activate/**",
+                        "/users/forgot-password",
+                        "/users/reset-password",
+                        "/auth/login",
+                        "/auth/refresh",
                         "/actuator/**",
                         "/swagger-ui/**",
                         "/v3/api-docs/**",

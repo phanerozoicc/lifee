@@ -3,7 +3,9 @@ package com.lifee.chat.app.application.handlers
 import com.lifee.chat.app.application.commands.DeleteConversationCommand
 import com.lifee.chat.domain.exceptions.ConversationNotFoundException
 import com.lifee.chat.domain.repositories.ConversationRepository
-import com.lifee.common.cqrs.CommandHandler
+import com.lifee.chat.domain.valueobjects.ConversationId
+import com.lifee.common.cqrs.commands.AsyncCommandHandler
+import com.lifee.common.domain.valueobjects.UserId as CommonUserId
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
@@ -11,7 +13,7 @@ import org.springframework.transaction.annotation.Transactional
 @Component
 class DeleteConversationCommandHandler(
     private val conversationRepository: ConversationRepository
-) : CommandHandler<DeleteConversationCommand, Unit> {
+) : AsyncCommandHandler<DeleteConversationCommand, Unit> {
     
     companion object {
         private val logger = LoggerFactory.getLogger(DeleteConversationCommandHandler::class.java)
@@ -20,19 +22,21 @@ class DeleteConversationCommandHandler(
     @Transactional
     override suspend fun handle(command: DeleteConversationCommand) {
         logger.info("处理删除对话命令: conversationId={}, userId={}", 
-                   command.conversationId.value, command.userId.value)
+                   command.conversationId, command.userId.value)
         
         try {
-            val conversation = conversationRepository.findByIdAndUserId(command.conversationId, command.userId)
-                ?: throw ConversationNotFoundException(command.conversationId)
+            val conversationId = ConversationId(command.conversationId.toString())
+            val commonUserId = CommonUserId(command.userId.value.toString())
+            val conversation = conversationRepository.findByIdAndUserId(conversationId, commonUserId)
+                ?: throw ConversationNotFoundException(command.conversationId.toString())
             
             conversationRepository.delete(conversation)
             
             logger.info("成功删除对话: conversationId={}, userId={}", 
-                       command.conversationId.value, command.userId.value)
+                       command.conversationId, command.userId.value)
         } catch (e: Exception) {
             logger.error("删除对话失败: conversationId={}, userId={}, error={}", 
-                        command.conversationId.value, command.userId.value, e.message, e)
+                        command.conversationId, command.userId.value, e.message, e)
             throw e
         }
     }

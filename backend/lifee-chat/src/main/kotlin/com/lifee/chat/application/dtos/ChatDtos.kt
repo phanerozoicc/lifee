@@ -21,13 +21,13 @@ data class ConversationDto(
     companion object {
         fun fromDomain(conversation: Conversation): ConversationDto {
             return ConversationDto(
-                id = conversation.id.value,
-                title = conversation.title.value,
-                userId = conversation.userId.value,
+                id = conversation.getConversationId().value,
+                title = conversation.getTitle().value,
+                userId = conversation.getUserId().value,
                 messageCount = conversation.getMessageCount(),
-                lastMessage = conversation.getLastMessage()?.let { MessageDto.fromDomain(it) },
-                createdAt = conversation.createdAt,
-                updatedAt = conversation.updatedAt
+                lastMessage = conversation.getLastMessage()?.let { MessageDto.fromDomain(it, conversation.getConversationId().value) },
+                createdAt = conversation.getCreatedAt(),
+                updatedAt = conversation.getUpdatedAt() ?: conversation.getCreatedAt()
             )
         }
     }
@@ -43,15 +43,15 @@ data class MessageDto(
     val conversationId: UUID,
     val userId: String,
     val createdAt: Instant,
-    val updatedAt: Instant
+    val updatedAt: Instant?
 ) {
     companion object {
-        fun fromDomain(message: Message): MessageDto {
+        fun fromDomain(message: Message, conversationId: UUID): MessageDto {
             return MessageDto(
                 id = message.id.value,
                 content = message.content.value,
                 type = message.type,
-                conversationId = message.conversationId.value,
+                conversationId = conversationId,
                 userId = message.userId.value,
                 createdAt = message.createdAt,
                 updatedAt = message.updatedAt
@@ -74,12 +74,12 @@ data class ConversationDetailDto(
     companion object {
         fun fromDomain(conversation: Conversation): ConversationDetailDto {
             return ConversationDetailDto(
-                id = conversation.id.value,
-                title = conversation.title.value,
-                userId = conversation.userId.value,
-                messages = conversation.messages.map { MessageDto.fromDomain(it) },
-                createdAt = conversation.createdAt,
-                updatedAt = conversation.updatedAt
+                id = conversation.getConversationId().value,
+                title = conversation.getTitle().value,
+                userId = conversation.getUserId().value,
+                messages = conversation.getMessages().map { MessageDto.fromDomain(it, conversation.getConversationId().value) },
+                createdAt = conversation.getCreatedAt(),
+                updatedAt = conversation.getUpdatedAt() ?: conversation.getCreatedAt()
             )
         }
     }
@@ -89,4 +89,9 @@ data class ConversationDetailDto(
  * 分页对话列表DTO
  */
 data class ConversationPageDto(
-    val
+    val conversations: List<ConversationDto>,
+    val totalElements: Long,
+    val totalPages: Int,
+    val currentPage: Int,
+    val pageSize: Int
+)

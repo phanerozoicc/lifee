@@ -1,7 +1,7 @@
 package com.lifee.chat.app.services
 
 import com.lifee.knowledge.domain.valueobjects.KnowledgeBaseId
-import com.lifee.user.domain.UserId
+import com.lifee.common.domain.valueobjects.UserId
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 

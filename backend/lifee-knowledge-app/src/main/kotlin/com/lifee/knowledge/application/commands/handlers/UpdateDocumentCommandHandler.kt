@@ -1,11 +1,12 @@
 package com.lifee.knowledge.application.commands.handlers
 
-import com.lifee.common.cqrs.commands.CommandHandler
+import com.lifee.common.cqrs.commands.AsyncCommandHandler
 import com.lifee.knowledge.application.commands.UpdateDocumentCommand
 import com.lifee.knowledge.domain.exceptions.*
 import com.lifee.knowledge.domain.repositories.KnowledgeBaseRepository
 import com.lifee.knowledge.domain.services.DocumentValidationService
 import com.lifee.knowledge.domain.valueobjects.*
+import com.lifee.common.domain.valueobjects.UserId
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
@@ -17,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional
 class UpdateDocumentCommandHandler(
     private val knowledgeBaseRepository: KnowledgeBaseRepository,
     private val documentValidationService: DocumentValidationService
-) : CommandHandler<UpdateDocumentCommand> {
+) : AsyncCommandHandler<UpdateDocumentCommand, Unit> {
     
     private val logger = LoggerFactory.getLogger(UpdateDocumentCommandHandler::class.java)
     
@@ -31,7 +32,7 @@ class UpdateDocumentCommandHandler(
         val documentId = DocumentId.fromString(command.documentId)
         val newTitle = DocumentTitle(command.newTitle)
         val newContent = DocumentContent(command.newContent)
-        val userId = UserId.fromString(command.userId)
+        val userId = UserId(command.userId)
         
         // 2. 查找知识库
         val knowledgeBase = knowledgeBaseRepository.findById(knowledgeBaseId)
@@ -49,7 +50,7 @@ class UpdateDocumentCommandHandler(
         
         val existingDocument = knowledgeBase.getDocument(documentId)
             ?: throw DocumentNotFoundException(command.documentId)
-        val documentType = existingDocument.type
+        val documentType = existingDocument.getType()
         
         // 5. 验证新的文档内容
         documentValidationService.validateDocument(newTitle, newContent, documentType)

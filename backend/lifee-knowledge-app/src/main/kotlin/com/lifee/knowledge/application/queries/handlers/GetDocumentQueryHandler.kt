@@ -1,6 +1,6 @@
 package com.lifee.knowledge.application.queries.handlers
 
-import com.lifee.common.cqrs.queries.QueryHandler
+import com.lifee.common.cqrs.queries.AsyncQueryHandler
 import com.lifee.knowledge.application.dto.DocumentDto
 import com.lifee.knowledge.application.queries.GetDocumentQuery
 import com.lifee.knowledge.domain.exceptions.DocumentNotFoundException
@@ -9,7 +9,7 @@ import com.lifee.knowledge.domain.exceptions.UnauthorizedAccessException
 import com.lifee.knowledge.domain.repositories.KnowledgeBaseRepository
 import com.lifee.knowledge.domain.valueobjects.DocumentId
 import com.lifee.knowledge.domain.valueobjects.KnowledgeBaseId
-import com.lifee.knowledge.domain.valueobjects.UserId
+import com.lifee.common.domain.valueobjects.UserId
 import org.springframework.stereotype.Component
 
 /**
@@ -18,12 +18,12 @@ import org.springframework.stereotype.Component
 @Component
 class GetDocumentQueryHandler(
     private val knowledgeBaseRepository: KnowledgeBaseRepository
-) : QueryHandler<GetDocumentQuery, DocumentDto?> {
+) : AsyncQueryHandler<GetDocumentQuery, DocumentDto?> {
     
     override suspend fun handle(query: GetDocumentQuery): DocumentDto? {
         val knowledgeBaseId = KnowledgeBaseId.fromString(query.knowledgeBaseId)
         val documentId = DocumentId.fromString(query.documentId)
-        val userId = UserId.fromString(query.userId)
+        val userId = UserId(query.userId)
         
         val knowledgeBase = knowledgeBaseRepository.findById(knowledgeBaseId)
             ?: throw KnowledgeBaseNotFoundException(query.knowledgeBaseId)

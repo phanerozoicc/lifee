@@ -5,22 +5,26 @@ import com.lifee.chat.app.application.dtos.MessageDto
 import com.lifee.chat.domain.exceptions.ConversationNotFoundException
 import com.lifee.chat.domain.exceptions.MessageNotFoundException
 import com.lifee.chat.domain.repositories.ConversationRepository
-import com.lifee.common.cqrs.QueryHandler
+import com.lifee.chat.domain.valueobjects.ConversationId
+import com.lifee.common.cqrs.queries.AsyncQueryHandler
+import com.lifee.common.domain.valueobjects.UserId as CommonUserId
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 
 @Component
 class GetMessageQueryHandler(
     private val conversationRepository: ConversationRepository
-) : QueryHandler<GetMessageQuery, MessageDto> {
+) : AsyncQueryHandler<GetMessageQuery, MessageDto> {
 
     @Transactional(readOnly = true)
     override suspend fun handle(query: GetMessageQuery): MessageDto {
-        val conversation = conversationRepository.findByIdAndUserId(query.conversationId, query.userId)
-            ?: throw ConversationNotFoundException(query.conversationId)
+        val conversationId = ConversationId(query.conversationId.value.toString())
+        val commonUserId = CommonUserId(query.userId.value.toString())
+        val conversation = conversationRepository.findByIdAndUserId(conversationId, commonUserId)
+            ?: throw ConversationNotFoundException(query.conversationId.value.toString())
         
-        val message = conversation.messages.find { it.id == query.messageId }
-            ?: throw MessageNotFoundException(query.messageId)
+        val message = conversation.getMessages().find { it.id.value.toString() == query.messageId.value.toString() }
+            ?: throw MessageNotFoundException(query.messageId.value.toString())
         
         return MessageDto.fromDomain(message)
     }

@@ -5,7 +5,7 @@ import com.lifee.chat.domain.entities.Message
 import com.lifee.chat.domain.events.*
 import com.lifee.chat.domain.valueobjects.*
 import com.lifee.common.domain.valueobjects.UserId
-import com.lifee.knowledge.domain.valueobjects.KnowledgeBaseId
+// import com.lifee.knowledge.domain.valueobjects.KnowledgeBaseId
 import java.time.Instant
 
 /**
@@ -16,7 +16,7 @@ class ConversationAggregate private constructor(
     private val id: ConversationId,
     private val userId: UserId,
     private var title: ConversationTitle,
-    private var knowledgeBaseId: KnowledgeBaseId?,
+    // private var knowledgeBaseId: KnowledgeBaseId?,
     private var modelConfig: ModelConfiguration,
     private var status: ConversationStatus,
     private val createdAt: Instant,
@@ -32,7 +32,7 @@ class ConversationAggregate private constructor(
             id: ConversationId,
             userId: UserId,
             title: ConversationTitle,
-            knowledgeBaseId: KnowledgeBaseId? = null,
+            // knowledgeBaseId: KnowledgeBaseId? = null,
             modelConfig: ModelConfiguration
         ): ConversationAggregate {
             val now = Instant.now()
@@ -41,7 +41,7 @@ class ConversationAggregate private constructor(
                 id = id,
                 userId = userId,
                 title = title,
-                knowledgeBaseId = knowledgeBaseId,
+                // knowledgeBaseId = knowledgeBaseId,
                 modelConfig = modelConfig,
                 status = ConversationStatus.ACTIVE,
                 createdAt = now,
@@ -52,10 +52,8 @@ class ConversationAggregate private constructor(
             conversation.recordEvent(
                 ConversationCreatedEvent(
                     conversationId = id,
-                    userId = userId,
                     title = title,
-                    knowledgeBaseId = knowledgeBaseId,
-                    modelConfig = modelConfig,
+                    userId = userId,
                     createdAt = now
                 )
             )
@@ -68,7 +66,7 @@ class ConversationAggregate private constructor(
     fun getConversationId(): ConversationId = id
     fun getUserId(): UserId = userId
     fun getTitle(): ConversationTitle = title
-    fun getKnowledgeBaseId(): KnowledgeBaseId? = knowledgeBaseId
+    // fun getKnowledgeBaseId(): KnowledgeBaseId? = knowledgeBaseId
     fun getModelConfig(): ModelConfiguration = modelConfig
     fun getStatus(): ConversationStatus = status
     fun getCreatedAt(): Instant = createdAt
@@ -88,12 +86,7 @@ class ConversationAggregate private constructor(
             "只有活跃状态的对话才能添加消息"
         }
         
-        val message = Message.createUserMessage(
-            id = messageId,
-            conversationId = id,
-            content = content,
-            attachments = attachments
-        )
+        val message = Message.createUserMessage(content, userId)
         
         messages.add(message)
         updatedAt = Instant.now()
@@ -101,9 +94,8 @@ class ConversationAggregate private constructor(
         recordEvent(
             MessageAddedEvent(
                 conversationId = id,
-                messageId = messageId,
+                messageId = message.id,
                 messageType = MessageType.USER,
-                content = content,
                 userId = userId,
                 addedAt = updatedAt
             )
@@ -123,13 +115,7 @@ class ConversationAggregate private constructor(
             "只有活跃状态的对话才能添加消息"
         }
         
-        val message = Message.createAssistantMessage(
-            id = messageId,
-            conversationId = id,
-            content = content,
-            ragContext = ragContext,
-            modelUsage = modelUsage
-        )
+        val message = Message.createAssistantMessage(content, userId)
         
         messages.add(message)
         updatedAt = Instant.now()
@@ -137,13 +123,10 @@ class ConversationAggregate private constructor(
         recordEvent(
             MessageAddedEvent(
                 conversationId = id,
-                messageId = messageId,
+                messageId = message.id,
                 messageType = MessageType.ASSISTANT,
-                content = content,
                 userId = userId,
-                addedAt = updatedAt,
-                ragContext = ragContext,
-                modelUsage = modelUsage
+                addedAt = updatedAt
             )
         )
     }
@@ -165,6 +148,7 @@ class ConversationAggregate private constructor(
                 conversationId = id,
                 oldTitle = oldTitle,
                 newTitle = newTitle,
+                userId = userId,
                 updatedAt = updatedAt
             )
         )
@@ -185,8 +169,9 @@ class ConversationAggregate private constructor(
         recordEvent(
             ConversationModelConfigUpdatedEvent(
                 conversationId = id,
-                oldModelConfig = oldModelConfig,
-                newModelConfig = newModelConfig,
+                oldConfig = oldModelConfig,
+                newConfig = newModelConfig,
+                userId = userId,
                 updatedAt = updatedAt
             )
         )
@@ -209,6 +194,7 @@ class ConversationAggregate private constructor(
                 conversationId = id,
                 oldStatus = oldStatus,
                 newStatus = status,
+                userId = userId,
                 changedAt = updatedAt
             )
         )
@@ -231,6 +217,7 @@ class ConversationAggregate private constructor(
                 conversationId = id,
                 oldStatus = oldStatus,
                 newStatus = status,
+                userId = userId,
                 changedAt = updatedAt
             )
         )
@@ -266,12 +253,12 @@ class ConversationAggregate private constructor(
     /**
      * 获取用户消息数量
      */
-    fun getUserMessageCount(): Int = messages.count { it.getType() == MessageType.USER }
+    fun getUserMessageCount(): Int = messages.count { it.type == MessageType.USER }
     
     /**
      * 获取助手消息数量
      */
-    fun getAssistantMessageCount(): Int = messages.count { it.getType() == MessageType.ASSISTANT }
+    fun getAssistantMessageCount(): Int = messages.count { it.type == MessageType.ASSISTANT }
     
     /**
      * 检查对话是否为空
@@ -281,7 +268,7 @@ class ConversationAggregate private constructor(
     /**
      * 获取对话总字符数
      */
-    fun getTotalCharacterCount(): Int = messages.sumOf { it.getContent().length }
+    fun getTotalCharacterCount(): Int = messages.sumOf { it.content.length }
     
     /**
      * 序列化聚合根状态
@@ -291,7 +278,7 @@ class ConversationAggregate private constructor(
             "id" to id.toString(),
             "userId" to userId.toString(),
             "title" to title.value,
-            "knowledgeBaseId" to (knowledgeBaseId?.toString() ?: ""),
+            // "knowledgeBaseId" to (knowledgeBaseId?.toString() ?: ""),
             "modelConfig" to mapOf(
                 "modelName" to modelConfig.modelName,
                 "temperature" to modelConfig.temperature,
@@ -303,10 +290,10 @@ class ConversationAggregate private constructor(
             "updatedAt" to updatedAt.toString(),
             "messages" to messages.map { message ->
                 mapOf(
-                    "id" to message.getId().toString(),
-                    "type" to message.getType().name,
-                    "content" to message.getContent().value,
-                    "createdAt" to message.getCreatedAt().toString()
+                    "id" to message.id.toString(),
+                    "type" to message.type.name,
+                    "content" to message.content.value,
+                    "createdAt" to message.createdAt.toString()
                 )
             }
         )
@@ -322,8 +309,8 @@ class ConversationAggregate private constructor(
             
             // 恢复基本信息
             title = ConversationTitle(stateData["title"] as String)
-            val kbId = stateData["knowledgeBaseId"] as String
-            knowledgeBaseId = if (kbId.isNotEmpty()) KnowledgeBaseId.fromString(kbId) else null
+            // val kbId = stateData["knowledgeBaseId"] as String
+            // knowledgeBaseId = if (kbId.isNotEmpty()) KnowledgeBaseId.fromString(kbId) else null
             
             // 恢复模型配置
             @Suppress("UNCHECKED_CAST")
@@ -348,8 +335,9 @@ class ConversationAggregate private constructor(
                 val createdAt = Instant.parse(messageData["createdAt"] as String)
                 
                 val message = when (messageType) {
-                    MessageType.USER -> Message.createUserMessage(messageId, id, content)
-                    MessageType.ASSISTANT -> Message.createAssistantMessage(messageId, id, content)
+                    MessageType.USER -> Message.createUserMessage(content, userId)
+                    MessageType.ASSISTANT -> Message.createAssistantMessage(content, userId)
+                    MessageType.SYSTEM -> Message.createSystemMessage(content, userId)
                 }
                 
                 messages.add(message)

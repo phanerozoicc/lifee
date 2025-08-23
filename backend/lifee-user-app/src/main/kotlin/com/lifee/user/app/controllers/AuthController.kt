@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.*
  * 认证控制器
  */
 @RestController
-@RequestMapping("/api/v1/auth")
+@RequestMapping("/auth")
 @Validated
 @Tag(name = "用户认证", description = "用户登录、令牌刷新等认证功能")
 class AuthController(

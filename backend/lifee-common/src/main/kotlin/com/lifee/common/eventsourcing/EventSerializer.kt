@@ -3,6 +3,7 @@ package com.lifee.common.eventsourcing
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.lifee.common.domain.DomainEvent
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Component
 import kotlin.reflect.KClass
 import kotlin.reflect.full.primaryConstructor
@@ -14,7 +15,7 @@ import kotlin.reflect.full.primaryConstructor
 @Component
 class EventSerializer(
     private val objectMapper: ObjectMapper,
-    private val eventRegistry: EventRegistry
+    // @Qualifier("eventSourcingEventRegistry") private val eventRegistry: EventSourcingEventRegistry
 ) {
     
     /**
@@ -28,14 +29,15 @@ class EventSerializer(
      * 反序列化事件
      */
     fun deserialize(eventType: String, eventData: String): DomainEvent {
-        val eventClass = eventRegistry.getEventType(eventType)
-            ?: throw IllegalArgumentException("Unknown event type: $eventType")
+        // val eventClass = eventRegistry.getEventType(eventType)
+        //     ?: throw IllegalArgumentException("Unknown event type: $eventType")
         
-        return try {
-            objectMapper.readValue(eventData, eventClass.java)
-        } catch (e: Exception) {
-            throw EventDeserializationException("Failed to deserialize event of type $eventType", e)
-        }
+        // return try {
+        //     objectMapper.readValue(eventData, eventClass.java)
+        // } catch (e: Exception) {
+        //     throw EventDeserializationException("Failed to deserialize event of type $eventType", e)
+        // }
+        throw UnsupportedOperationException("EventSerializer is temporarily disabled")
     }
     
     /**

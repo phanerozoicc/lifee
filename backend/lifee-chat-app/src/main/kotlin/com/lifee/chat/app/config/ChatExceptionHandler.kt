@@ -15,11 +15,11 @@ class ChatExceptionHandler {
     @ExceptionHandler(ConversationNotFoundException::class)
     fun handleConversationNotFound(ex: ConversationNotFoundException): ResponseEntity<ErrorResponse> {
         val errorResponse = ErrorResponse(
-            timestamp = LocalDateTime.now(),
-            status = HttpStatus.NOT_FOUND.value(),
-            error = "Conversation Not Found",
+            code = "CONVERSATION_NOT_FOUND",
             message = ex.message ?: "Conversation not found",
-            path = "/api/v1/chat"
+            timestamp = LocalDateTime.now(),
+            path = "/api/v1/chat",
+            status = HttpStatus.NOT_FOUND.value()
         )
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse)
     }
@@ -27,11 +27,11 @@ class ChatExceptionHandler {
     @ExceptionHandler(MessageNotFoundException::class)
     fun handleMessageNotFound(ex: MessageNotFoundException): ResponseEntity<ErrorResponse> {
         val errorResponse = ErrorResponse(
-            timestamp = LocalDateTime.now(),
-            status = HttpStatus.NOT_FOUND.value(),
-            error = "Message Not Found",
+            code = "MESSAGE_NOT_FOUND",
             message = ex.message ?: "Message not found",
-            path = "/api/v1/chat"
+            timestamp = LocalDateTime.now(),
+            path = "/api/v1/chat",
+            status = HttpStatus.NOT_FOUND.value()
         )
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse)
     }
@@ -39,11 +39,11 @@ class ChatExceptionHandler {
     @ExceptionHandler(UnauthorizedConversationAccessException::class)
     fun handleUnauthorizedAccess(ex: UnauthorizedConversationAccessException): ResponseEntity<ErrorResponse> {
         val errorResponse = ErrorResponse(
-            timestamp = LocalDateTime.now(),
-            status = HttpStatus.FORBIDDEN.value(),
-            error = "Unauthorized Access",
+            code = "UNAUTHORIZED_ACCESS",
             message = ex.message ?: "Unauthorized access to conversation",
-            path = "/api/v1/chat"
+            timestamp = LocalDateTime.now(),
+            path = "/api/v1/chat",
+            status = HttpStatus.FORBIDDEN.value()
         )
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse)
     }
@@ -51,11 +51,11 @@ class ChatExceptionHandler {
     @ExceptionHandler(ConversationCapacityExceededException::class)
     fun handleConversationCapacityExceeded(ex: ConversationCapacityExceededException): ResponseEntity<ErrorResponse> {
         val errorResponse = ErrorResponse(
-            timestamp = LocalDateTime.now(),
-            status = HttpStatus.BAD_REQUEST.value(),
-            error = "Conversation Capacity Exceeded",
+            code = "CONVERSATION_CAPACITY_EXCEEDED",
             message = ex.message ?: "Conversation capacity exceeded",
-            path = "/api/v1/chat"
+            timestamp = LocalDateTime.now(),
+            path = "/api/v1/chat",
+            status = HttpStatus.BAD_REQUEST.value()
         )
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse)
     }
@@ -63,11 +63,11 @@ class ChatExceptionHandler {
     @ExceptionHandler(InvalidMessageContentException::class)
     fun handleInvalidMessageContent(ex: InvalidMessageContentException): ResponseEntity<ErrorResponse> {
         val errorResponse = ErrorResponse(
-            timestamp = LocalDateTime.now(),
-            status = HttpStatus.BAD_REQUEST.value(),
-            error = "Invalid Message Content",
+            code = "INVALID_MESSAGE_CONTENT",
             message = ex.message ?: "Invalid message content",
-            path = "/api/v1/chat"
+            timestamp = LocalDateTime.now(),
+            path = "/api/v1/chat",
+            status = HttpStatus.BAD_REQUEST.value()
         )
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse)
     }
@@ -75,11 +75,11 @@ class ChatExceptionHandler {
     @ExceptionHandler(UnsupportedMessageTypeException::class)
     fun handleUnsupportedMessageType(ex: UnsupportedMessageTypeException): ResponseEntity<ErrorResponse> {
         val errorResponse = ErrorResponse(
-            timestamp = LocalDateTime.now(),
-            status = HttpStatus.BAD_REQUEST.value(),
-            error = "Unsupported Message Type",
+            code = "UNSUPPORTED_MESSAGE_TYPE",
             message = ex.message ?: "Unsupported message type",
-            path = "/api/v1/chat"
+            timestamp = LocalDateTime.now(),
+            path = "/api/v1/chat",
+            status = HttpStatus.BAD_REQUEST.value()
         )
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse)
     }
@@ -87,11 +87,11 @@ class ChatExceptionHandler {
     @ExceptionHandler(InvalidConversationTitleException::class)
     fun handleInvalidConversationTitle(ex: InvalidConversationTitleException): ResponseEntity<ErrorResponse> {
         val errorResponse = ErrorResponse(
-            timestamp = LocalDateTime.now(),
-            status = HttpStatus.BAD_REQUEST.value(),
-            error = "Invalid Conversation Title",
+            code = "INVALID_CONVERSATION_TITLE",
             message = ex.message ?: "Invalid conversation title",
-            path = "/api/v1/chat"
+            timestamp = LocalDateTime.now(),
+            path = "/api/v1/chat",
+            status = HttpStatus.BAD_REQUEST.value()
         )
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse)
     }
@@ -100,11 +100,11 @@ class ChatExceptionHandler {
     fun handleValidationErrors(ex: MethodArgumentNotValidException): ResponseEntity<ErrorResponse> {
         val errors = ex.bindingResult.fieldErrors.map { "${it.field}: ${it.defaultMessage}" }
         val errorResponse = ErrorResponse(
-            timestamp = LocalDateTime.now(),
-            status = HttpStatus.BAD_REQUEST.value(),
-            error = "Validation Failed",
+            code = "VALIDATION_FAILED",
             message = errors.joinToString(", "),
-            path = "/api/v1/chat"
+            timestamp = LocalDateTime.now(),
+            path = "/api/v1/chat",
+            status = HttpStatus.BAD_REQUEST.value()
         )
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse)
     }
@@ -112,11 +112,11 @@ class ChatExceptionHandler {
     @ExceptionHandler(Exception::class)
     fun handleGenericException(ex: Exception): ResponseEntity<ErrorResponse> {
         val errorResponse = ErrorResponse(
-            timestamp = LocalDateTime.now(),
-            status = HttpStatus.INTERNAL_SERVER_ERROR.value(),
-            error = "Internal Server Error",
+            code = "INTERNAL_SERVER_ERROR",
             message = "An unexpected error occurred",
-            path = "/api/v1/chat"
+            timestamp = LocalDateTime.now(),
+            path = "/api/v1/chat",
+            status = HttpStatus.INTERNAL_SERVER_ERROR.value()
         )
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse)
     }

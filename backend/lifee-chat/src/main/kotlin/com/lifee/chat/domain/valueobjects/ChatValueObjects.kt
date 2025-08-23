@@ -18,6 +18,8 @@ data class ConversationId(
         }
     }
     
+    override fun getEqualityComponents(): List<Any?> = listOf(value)
+    
     override fun toString(): String = value.toString()
 }
 
@@ -35,6 +37,8 @@ data class MessageId(
             return MessageId(UUID.fromString(value))
         }
     }
+    
+    override fun getEqualityComponents(): List<Any?> = listOf(value)
     
     override fun toString(): String = value.toString()
 }
@@ -62,7 +66,22 @@ data class ConversationTitle(
             }
             return ConversationTitle(title)
         }
+        
+        fun fromContent(content: String): ConversationTitle {
+            val title = if (content.length > 50) {
+                content.take(47) + "..."
+            } else {
+                content
+            }
+            return ConversationTitle(title)
+        }
+        
+        fun of(title: String): ConversationTitle {
+            return ConversationTitle(title)
+        }
     }
+    
+    override fun getEqualityComponents(): List<Any?> = listOf(value)
 }
 
 /**
@@ -86,6 +105,16 @@ data class MessageContent(
             MessageContent(value.take(maxLength - 3) + "...")
         }
     }
+    
+    fun getSummary(): String {
+        return if (value.length <= 100) {
+            value
+        } else {
+            value.take(97) + "..."
+        }
+    }
+    
+    override fun getEqualityComponents(): List<Any?> = listOf(value)
 }
 
 /**
@@ -93,7 +122,8 @@ data class MessageContent(
  */
 enum class MessageType {
     USER,      // 用户消息
-    ASSISTANT  // 助手消息
+    ASSISTANT, // 助手消息
+    SYSTEM     // 系统消息
 }
 
 /**
@@ -154,6 +184,10 @@ data class ModelConfiguration(
             )
         }
     }
+    
+    override fun getEqualityComponents(): List<Any?> = listOf(
+        modelName, temperature, maxTokens, topP, frequencyPenalty, presencePenalty
+    )
 }
 
 /**
@@ -175,6 +209,10 @@ data class RAGContext(
     fun getTopDocuments(count: Int): List<RetrievedDocument> {
         return retrievedDocuments.sortedByDescending { it.relevanceScore }.take(count)
     }
+    
+    override fun getEqualityComponents(): List<Any?> = listOf(
+        retrievedDocuments, searchQuery, relevanceThreshold
+    )
 }
 
 /**
@@ -195,6 +233,10 @@ data class RetrievedDocument(
         require(relevanceScore in 0.0..1.0) { "相关性分数必须在0.0到1.0之间" }
         require(chunkIndex >= 0) { "块索引必须大于等于0" }
     }
+    
+    override fun getEqualityComponents(): List<Any?> = listOf(
+        documentId, title, content, relevanceScore, chunkIndex
+    )
 }
 
 /**
@@ -213,6 +255,10 @@ data class ModelUsage(
         require(totalTokens >= promptTokens + completionTokens) { "总令牌数必须大于等于提示令牌数和完成令牌数之和" }
         require(cost >= 0.0) { "成本不能为负数" }
     }
+    
+    override fun getEqualityComponents(): List<Any?> = listOf(
+        promptTokens, completionTokens, totalTokens, cost
+    )
 }
 
 /**
@@ -232,6 +278,10 @@ data class MessageAttachment(
         require(size > 0) { "附件大小必须大于0" }
         require(url.isNotBlank()) { "附件URL不能为空" }
     }
+    
+    override fun getEqualityComponents(): List<Any?> = listOf(
+        id, name, type, size, url
+    )
 }
 
 /**

@@ -3,7 +3,7 @@ package com.lifee.chat.application.queries
 import com.lifee.common.cqrs.queries.Query
 import com.lifee.chat.domain.valueobjects.ConversationId
 import com.lifee.chat.domain.valueobjects.MessageId
-import com.lifee.user.domain.UserId
+import com.lifee.common.domain.valueobjects.UserId
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Min
 

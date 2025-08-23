@@ -1,7 +1,7 @@
 import { decryptKey } from "./encryption"
 import { env } from "./openproviders/env"
 import { Provider } from "./openproviders/types"
-import { createClient } from "./supabase/server"
+import { createClient } from "./supabase/client"
 
 export type { Provider } from "./openproviders/types"
 export type ProviderWithoutOllama = Exclude<Provider, "ollama">
@@ -11,7 +11,7 @@ export async function getUserKey(
   provider: Provider
 ): Promise<string | null> {
   try {
-    const supabase = await createClient()
+    const supabase = createClient()
     if (!supabase) return null
 
     const { data, error } = await supabase

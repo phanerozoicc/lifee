@@ -17,13 +17,13 @@ import javax.crypto.SecretKey
  */
 @Service
 class JwtServiceImpl(
-    @Value("\${spring.security.jwt.secret}")
+    @Value("\${lifee.security.jwt.secret}")
     private val jwtSecret: String,
     
-    @Value("\${spring.security.jwt.expiration}")
+    @Value("\${lifee.security.jwt.expiration}")
     private val jwtExpiration: Long,
     
-    @Value("\${spring.security.jwt.refresh-expiration:604800}")
+    @Value("\${lifee.security.jwt.refresh-expiration:604800}")
     private val refreshTokenExpiration: Long = 604800 // 7天
 ) : JwtService {
     

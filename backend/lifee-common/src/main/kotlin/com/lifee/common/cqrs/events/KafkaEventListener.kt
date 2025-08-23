@@ -2,6 +2,7 @@ package com.lifee.common.cqrs.events
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.kafka.annotation.KafkaListener
 import org.springframework.kafka.support.KafkaHeaders
 import org.springframework.messaging.handler.annotation.Header
@@ -17,7 +18,7 @@ import kotlin.reflect.KClass
 class KafkaEventListener(
     private val eventBus: DefaultEventBus,
     private val objectMapper: ObjectMapper,
-    private val eventRegistry: EventRegistry,
+    @Qualifier("cqrsEventRegistry") private val eventRegistry: EventRegistry,
     private val eventRetryHandler: EventRetryHandler
 ) {
     

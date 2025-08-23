@@ -44,7 +44,7 @@ class MessageValidationService {
      * 验证消息长度
      */
     private fun validateLength(content: MessageContent, type: MessageType) {
-        val length = content.getLength()
+        val length = content.length
         
         if (length < MIN_MESSAGE_LENGTH) {
             throw InvalidMessageContentException("消息内容不能为空")

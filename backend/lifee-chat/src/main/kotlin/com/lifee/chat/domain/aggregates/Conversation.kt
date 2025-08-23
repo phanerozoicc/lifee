@@ -4,8 +4,9 @@ import com.lifee.common.domain.EventSourcedAggregateRoot
 import com.lifee.chat.domain.entities.Message
 import com.lifee.chat.domain.events.*
 import com.lifee.chat.domain.valueobjects.*
-import com.lifee.user.domain.UserId
+import com.lifee.common.domain.valueobjects.UserId
 import java.time.Instant
+import java.util.UUID
 
 /**
  * 对话聚合根
@@ -86,10 +87,10 @@ class Conversation(
         // 发布消息添加事件
         addDomainEvent(
             MessageAddedEvent.create(
-                conversationId = id,
+                conversationId = getId(),
                 messageId = message.id,
                 messageType = message.type,
-                userId = userId
+                userId = this.userId
             )
         )
     }
@@ -110,9 +111,9 @@ class Conversation(
         // 发布消息更新事件
         addDomainEvent(
             MessageUpdatedEvent.create(
-                conversationId = id,
+                conversationId = getId(),
                 messageId = messageId,
-                userId = userId
+                userId = this.userId
             )
         )
     }
@@ -131,9 +132,9 @@ class Conversation(
         // 发布消息删除事件
         addDomainEvent(
             MessageDeletedEvent.create(
-                conversationId = id,
+                conversationId = getId(),
                 messageId = messageId,
-                userId = userId
+                userId = this.userId
             )
         )
     }
@@ -150,10 +151,10 @@ class Conversation(
             // 发布标题更新事件
             addDomainEvent(
                 ConversationTitleUpdatedEvent.create(
-                    conversationId = id,
+                    conversationId = getId(),
                     oldTitle = oldTitle,
                     newTitle = newTitle,
-                    userId = userId
+                    userId = this.userId
                 )
             )
         }
@@ -190,7 +191,7 @@ class Conversation(
      * 检查用户是否有权限访问
      */
     fun checkOwnership(requestUserId: UserId) {
-        if (userId != requestUserId) {
+        if (this.userId != requestUserId) {
             throw IllegalArgumentException("用户无权限访问此对话")
         }
     }
@@ -198,8 +199,9 @@ class Conversation(
     /**
      * 获取对话信息
      */
+    fun getConversationId(): ConversationId = getId()
     fun getTitle(): ConversationTitle = title
-    fun getUserId(): UserId = userId
+    fun getUserId(): UserId = this.userId
     fun getCreatedAt(): Instant = createdAt
     fun getUpdatedAt(): Instant? = updatedAt
     
@@ -215,9 +217,9 @@ class Conversation(
      */
     override fun serializeState(): Map<String, Any> {
         return mapOf(
-            "id" to id.toString(),
+            "id" to getId().toString(),
             "title" to title.toString(),
-            "userId" to userId.toString(),
+            "userId" to this.userId.toString(),
             "createdAt" to createdAt.toString(),
             "updatedAt" to (updatedAt?.toString() ?: ""),
             "messages" to messages.map { message ->
@@ -242,7 +244,7 @@ class Conversation(
             messages.clear()
             
             // 恢复基本信息
-            title = ConversationTitle.of(stateData["title"] as String)
+            title = ConversationTitle(stateData["title"] as String)
             
             // 恢复时间戳
             val updatedAtStr = stateData["updatedAt"] as? String
@@ -256,10 +258,10 @@ class Conversation(
             
             messagesData.forEach { msgData ->
                 try {
-                    val msgId = MessageId.of(msgData["id"] as String)
-                    val content = MessageContent.of(msgData["content"] as String)
+                    val msgId = MessageId(UUID.fromString(msgData["id"] as String))
+                    val content = MessageContent(msgData["content"] as String)
                     val type = MessageType.valueOf(msgData["type"] as String)
-                    val msgUserId = UserId.of(msgData["userId"] as String)
+                    val msgUserId = UserId(msgData["userId"] as String)
                     val createdAt = Instant.parse(msgData["createdAt"] as String)
                     val updatedAtStr = msgData["updatedAt"] as? String
                     val updatedAt = if (!updatedAtStr.isNullOrEmpty()) {
@@ -267,12 +269,9 @@ class Conversation(
                     } else null
                     
                     val message = Message.create(
-                        id = msgId,
                         content = content,
                         type = type,
-                        userId = msgUserId,
-                        createdAt = createdAt,
-                        updatedAt = updatedAt
+                        userId = msgUserId
                     )
                     
                     messages.add(message)

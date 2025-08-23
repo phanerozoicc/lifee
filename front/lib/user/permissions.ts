@@ -1,5 +1,8 @@
 import { UserRole, UserPermission, type UserProfile, type PermissionChecker } from './types'
 
+// Re-export PermissionChecker type
+export type { PermissionChecker }
+
 // 角色权限映射
 const ROLE_PERMISSIONS: Record<UserRole, UserPermission[]> = {
   [UserRole.ADMIN]: [

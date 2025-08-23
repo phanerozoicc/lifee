@@ -2,6 +2,7 @@ package com.lifee.common.transaction
 
 import io.seata.spring.annotation.GlobalTransactionScanner
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
@@ -9,6 +10,7 @@ import org.springframework.context.annotation.Configuration
  * Seata分布式事务配置
  */
 @Configuration
+@ConditionalOnProperty(name = ["seata.enabled"], havingValue = "true", matchIfMissing = false)
 class SeataConfiguration {
 
     @Value("\${seata.application-id:lifee-backend}")

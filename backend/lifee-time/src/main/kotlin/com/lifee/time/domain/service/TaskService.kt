@@ -51,7 +51,7 @@ class TaskService(
             assigneeId = assigneeId,
             priority = priority,
             tags = tags,
-            dueDate = dueDate,
+            dueDate = dueDate?.atZone(java.time.ZoneId.systemDefault())?.toLocalDate(),
             estimatedDuration = estimatedDuration
         )
         
@@ -83,7 +83,7 @@ class TaskService(
             name = name ?: task.name,
             description = description ?: task.description,
             priority = priority ?: task.priority,
-            dueDate = dueDate ?: task.dueDate,
+            dueDate = dueDate?.atZone(java.time.ZoneId.systemDefault())?.toLocalDate() ?: task.dueDate,
             estimatedDuration = estimatedDuration ?: task.estimatedDuration
         )
         
@@ -108,7 +108,7 @@ class TaskService(
         }
         
         // 验证被分配人权限
-        val project = projectRepository.findById(task.projectId)
+        val project = projectRepository.findById(task.projectId!!)
             ?: throw IllegalArgumentException("项目不存在: ${task.projectId}")
         
         if (!project.canAccess(assigneeId)) {
@@ -255,10 +255,10 @@ class TaskService(
         projectId: ProjectId? = null
     ): List<Task> {
         return when {
-            status != null && projectId != null -> taskRepository.findByAssigneeIdAndStatusAndProjectId(userId, status, projectId)
-            status != null -> taskRepository.findByAssigneeIdAndStatus(userId, status)
-            priority != null -> taskRepository.findByAssigneeIdAndPriority(userId, priority)
-            projectId != null -> taskRepository.findByProjectIdAndAssigneeId(projectId, userId)
+            status != null && projectId != null -> taskRepository.findByStatus(status, userId, projectId)
+            status != null -> taskRepository.findByStatus(status, userId)
+            priority != null -> taskRepository.findByPriority(priority, userId, projectId)
+            projectId != null -> taskRepository.findByProjectId(projectId).filter { it.assigneeId == userId }
             else -> taskRepository.findByAssigneeId(userId)
         }
     }
@@ -281,9 +281,9 @@ class TaskService(
         }
         
         return when {
-            status != null && assigneeId != null -> taskRepository.findByProjectIdAndStatusAndAssigneeId(projectId, status, assigneeId)
-            status != null -> taskRepository.findByProjectIdAndStatus(projectId, status)
-            assigneeId != null -> taskRepository.findByProjectIdAndAssigneeId(projectId, assigneeId)
+            status != null && assigneeId != null -> taskRepository.findByStatus(status, assigneeId, projectId)
+            status != null -> taskRepository.findByStatus(status, null, projectId)
+            assigneeId != null -> taskRepository.findByProjectId(projectId).filter { it.assigneeId == assigneeId }
             else -> taskRepository.findByProjectId(projectId)
         }
     }
@@ -292,7 +292,7 @@ class TaskService(
      * 获取逾期任务
      */
     suspend fun getOverdueTasks(userId: UserId): List<Task> {
-        return taskRepository.findOverdueByUserId(userId)
+        return taskRepository.findOverdueTasks(userId)
     }
     
     /**
@@ -303,7 +303,7 @@ class TaskService(
         daysAhead: Long = 3
     ): List<Task> {
         val deadline = Instant.now().plus(daysAhead, ChronoUnit.DAYS)
-        return taskRepository.findDueSoonByUserId(userId, deadline)
+        return taskRepository.findTasksDueSoon(daysAhead.toInt(), userId)
     }
     
     /**
@@ -320,7 +320,7 @@ class TaskService(
             // 获取用户可访问的所有任务
             val accessibleProjects = projectRepository.findAccessibleByUserId(userId)
             accessibleProjects.flatMap { project ->
-                taskRepository.findByProjectId(project.projectId)
+                taskRepository.findByProjectId(project.id)
             }.filter { task -> task.canAccess(userId) }
         }
         
@@ -337,7 +337,7 @@ class TaskService(
     suspend fun getTaskStatistics(
         userId: UserId,
         projectId: ProjectId? = null
-    ): TaskStatistics {
+    ): SimpleTaskStatistics {
         val tasks = if (projectId != null) {
             getProjectTasks(projectId, userId)
         } else {
@@ -350,7 +350,9 @@ class TaskService(
         val overdueCount = tasks.count { it.isOverdue() }
         val highPriorityCount = tasks.count { it.priority.isHighPriority() }
         
-        return TaskStatistics(
+        // 注意：这里返回的是简化的统计信息，不是StatisticsService中的TaskStatistics
+        // 如果需要详细的任务统计，应该使用StatisticsService
+        return SimpleTaskStatistics(
             totalCount = totalCount,
             completedCount = completedCount,
             inProgressCount = inProgressCount,
@@ -373,7 +375,7 @@ class TaskService(
         // 验证权限
         tasks.forEach { task ->
             if (!task.canEdit(userId)) {
-                throw IllegalArgumentException("用户无权编辑任务: ${task.taskId}")
+                throw IllegalArgumentException("用户无权编辑任务: ${task.id}")
             }
         }
         
@@ -394,9 +396,9 @@ class TaskService(
 }
 
 /**
- * 任务统计信息
+ * 简化的任务统计信息
  */
-data class TaskStatistics(
+data class SimpleTaskStatistics(
     val totalCount: Int,
     val completedCount: Int,
     val inProgressCount: Int,

@@ -1,6 +1,6 @@
 package com.lifee.knowledge.application.infrastructure.exceptions
 
-import com.lifee.common.exceptions.ConcurrencyException
+import com.lifee.common.eventsourcing.ConcurrencyException
 import com.lifee.common.exceptions.ErrorResponse
 import com.lifee.knowledge.domain.exceptions.*
 import org.slf4j.LoggerFactory

@@ -1,7 +1,7 @@
 package com.lifee.chat.domain.entities
 
 import com.lifee.chat.domain.valueobjects.*
-import com.lifee.user.domain.UserId
+import com.lifee.common.domain.valueobjects.UserId
 import java.time.Instant
 
 /**

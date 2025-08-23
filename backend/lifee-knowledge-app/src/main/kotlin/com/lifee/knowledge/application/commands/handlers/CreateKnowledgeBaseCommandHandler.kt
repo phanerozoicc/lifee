@@ -1,11 +1,12 @@
 package com.lifee.knowledge.application.commands.handlers
 
-import com.lifee.common.cqrs.commands.CommandHandler
+import com.lifee.common.cqrs.commands.AsyncCommandHandler
 import com.lifee.knowledge.application.commands.CreateKnowledgeBaseCommand
 import com.lifee.knowledge.domain.aggregates.KnowledgeBase
 import com.lifee.knowledge.domain.exceptions.DuplicateKnowledgeBaseNameException
 import com.lifee.knowledge.domain.repositories.KnowledgeBaseRepository
 import com.lifee.knowledge.domain.valueobjects.*
+import com.lifee.common.domain.valueobjects.UserId
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
@@ -23,7 +24,7 @@ import org.springframework.transaction.annotation.Transactional
 @Component
 class CreateKnowledgeBaseCommandHandler(
     private val knowledgeBaseRepository: KnowledgeBaseRepository
-) : CommandHandler<CreateKnowledgeBaseCommand> {
+) : AsyncCommandHandler<CreateKnowledgeBaseCommand, Unit> {
     
     private val logger = LoggerFactory.getLogger(CreateKnowledgeBaseCommandHandler::class.java)
     
@@ -48,7 +49,7 @@ class CreateKnowledgeBaseCommandHandler(
         val knowledgeBaseId = KnowledgeBaseId.fromString(command.knowledgeBaseId)
         val name = KnowledgeBaseName(command.name)
         val description = KnowledgeBaseDescription(command.description)
-        val ownerId = UserId.fromString(command.ownerId)
+        val ownerId = UserId(command.ownerId)
         
         // 步骤2: 检查用户是否已存在同名知识库，确保名称唯一性
         if (knowledgeBaseRepository.existsByOwnerIdAndName(ownerId, command.name)) {

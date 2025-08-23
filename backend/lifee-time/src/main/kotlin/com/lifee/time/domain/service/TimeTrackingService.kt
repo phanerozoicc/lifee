@@ -3,8 +3,10 @@ package com.lifee.time.domain.service
 import com.lifee.time.domain.*
 import com.lifee.time.domain.repository.TimeEntryRepository
 import com.lifee.time.domain.repository.ProjectRepository
+import com.lifee.time.domain.exception.TimeEntryNotFoundException
 import com.lifee.user.domain.UserId
 import java.time.Instant
+
 import java.math.BigDecimal
 
 /**
@@ -30,7 +32,7 @@ class TimeTrackingService(
         // 检查是否有正在运行的时间条目
         val runningEntry = timeEntryRepository.findRunningByUserId(userId)
         if (runningEntry != null) {
-            throw IllegalStateException("用户已有正在运行的时间条目: ${runningEntry.timeEntryId}")
+            throw IllegalStateException("用户已有正在运行的时间条目: ${runningEntry.id}")
         }
         
         // 验证项目访问权限
@@ -48,10 +50,10 @@ class TimeTrackingService(
             userId = userId,
             description = description,
             projectId = projectId,
-            taskId = taskId,
+            taskId = taskId?.value,
             tags = tags,
             billable = billable,
-            hourlyRate = hourlyRate
+            hourlyRate = hourlyRate?.toDouble()
         )
         
         // 开始时间追踪
@@ -119,12 +121,12 @@ class TimeTrackingService(
     suspend fun resumeTimeTracking(userId: UserId, timeEntryId: TimeEntryId): TimeEntry {
         // 检查是否有其他正在运行的时间条目
         val runningEntry = timeEntryRepository.findRunningByUserId(userId)
-        if (runningEntry != null && runningEntry.timeEntryId != timeEntryId) {
-            throw IllegalStateException("用户已有正在运行的时间条目: ${runningEntry.timeEntryId}")
+        if (runningEntry != null && runningEntry.id != timeEntryId) {
+            throw IllegalStateException("用户已有正在运行的时间条目: ${runningEntry.id}")
         }
         
         val timeEntry = timeEntryRepository.findById(timeEntryId)
-            ?: throw IllegalArgumentException("时间条目不存在: $timeEntryId")
+            ?: throw TimeEntryNotFoundException("TimeEntry not found: $timeEntryId")
         
         if (timeEntry.userId != userId) {
             throw IllegalArgumentException("用户无权操作此时间条目")
@@ -225,7 +227,7 @@ class TimeTrackingService(
             throw IllegalArgumentException("用户无权操作此时间条目")
         }
         
-        timeEntry.updateBillableStatus(billable, hourlyRate)
+        timeEntry.updateBillable(billable, hourlyRate?.toDouble())
         timeEntryRepository.save(timeEntry)
         
         return timeEntry
@@ -259,12 +261,13 @@ class TimeTrackingService(
     suspend fun calculateTotalDuration(
         userId: UserId,
         timeRange: TimeRange
-    ): Duration {
+    ): java.time.Duration {
         val timeEntries = timeEntryRepository.findByUserIdAndTimeRange(userId, timeRange)
         return timeEntries
             .filter { it.status == TimeEntryStatus.STOPPED }
-            .map { it.getTotalDuration() }
-            .fold(Duration.ZERO) { acc, duration -> acc.plus(duration) }
+            .mapNotNull { it.getTotalDuration() }
+            .map { it.toJavaDuration() }
+            .fold(java.time.Duration.ZERO) { acc, duration -> acc.plus(duration) }
     }
     
     /**
@@ -273,7 +276,7 @@ class TimeTrackingService(
     suspend fun calculateProjectTotalDuration(
         projectId: ProjectId,
         timeRange: TimeRange? = null
-    ): Duration {
+    ): java.time.Duration {
         val timeEntries = if (timeRange != null) {
             timeEntryRepository.findByProjectIdAndTimeRange(projectId, timeRange)
         } else {
@@ -282,7 +285,8 @@ class TimeTrackingService(
         
         return timeEntries
             .filter { it.status == TimeEntryStatus.STOPPED }
-            .map { it.getTotalDuration() }
-            .fold(Duration.ZERO) { acc, duration -> acc.plus(duration) }
+            .mapNotNull { it.getTotalDuration() }
+            .map { it.toJavaDuration() }
+            .fold(java.time.Duration.ZERO) { acc, duration -> acc.plus(duration) }
     }
 }

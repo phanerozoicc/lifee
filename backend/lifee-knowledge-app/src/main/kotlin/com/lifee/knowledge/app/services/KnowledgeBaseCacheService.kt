@@ -5,8 +5,8 @@ import com.lifee.knowledge.domain.valueobjects.KnowledgeBaseId
 import com.lifee.knowledge.domain.valueobjects.DocumentId
 import com.lifee.knowledge.application.dto.KnowledgeBaseDto
 import com.lifee.knowledge.application.dto.DocumentDto
-import com.lifee.knowledge.domain.events.KnowledgeBaseCachedEvent
-import com.lifee.user.domain.UserId
+import com.lifee.knowledge.app.events.KnowledgeBaseCachedEvent
+import com.lifee.common.domain.valueobjects.UserId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.slf4j.LoggerFactory
@@ -55,14 +55,14 @@ class KnowledgeBaseCacheService(
         kbDto: KnowledgeBaseDto,
         ttl: Duration = METADATA_TTL
     ) {
-        logger.debug("缓存知识库元数据: kbId={}", kbId.value)
+        logger.debug("缓存知识库元数据: kbId={}", kbId.value.toString())
         
         try {
             withContext(Dispatchers.IO) {
                 val cacheKey = "${KB_METADATA_PREFIX}${kbId.value}"
                 
                 val cachedMetadata = CachedKnowledgeBaseMetadata(
-                    kbId = kbId.value,
+                    kbId = kbId.value.toString(),
                     name = kbDto.name,
                     description = kbDto.description,
                     ownerId = kbDto.ownerId,
@@ -83,18 +83,18 @@ class KnowledgeBaseCacheService(
                     TimeUnit.MILLISECONDS
                 )
                 
-                logger.debug("知识库元数据缓存成功: kbId={}, ttl={}秒", kbId.value, ttl.seconds)
+                logger.debug("知识库元数据缓存成功: kbId={}, ttl={}秒", kbId.value.toString(), ttl.seconds)
             }
             
             // 发布缓存事件
             eventBus.publish(KnowledgeBaseCachedEvent(
-                kbId = kbId,
+                kbId = kbId.value.toString(),
                 cacheType = "metadata",
                 cachedAt = Instant.now()
             ))
             
         } catch (e: Exception) {
-            logger.error("缓存知识库元数据失败: kbId={}", kbId.value, e)
+            logger.error("缓存知识库元数据失败: kbId={}", kbId.value.toString(), e)
         }
     }
     
@@ -102,7 +102,7 @@ class KnowledgeBaseCacheService(
      * 获取知识库元数据缓存
      */
     suspend fun getKnowledgeBaseMetadata(kbId: KnowledgeBaseId): CachedKnowledgeBaseMetadata? {
-        logger.debug("获取知识库元数据缓存: kbId={}", kbId.value)
+        logger.debug("获取知识库元数据缓存: kbId={}", kbId.value.toString())
         
         return try {
             withContext(Dispatchers.IO) {
@@ -110,7 +110,7 @@ class KnowledgeBaseCacheService(
                 redisTemplate.opsForValue().get(cacheKey) as? CachedKnowledgeBaseMetadata
             }
         } catch (e: Exception) {
-            logger.error("获取知识库元数据缓存失败: kbId={}", kbId.value, e)
+            logger.error("获取知识库元数据缓存失败: kbId={}", kbId.value.toString(), e)
             null
         }
     }
@@ -123,23 +123,23 @@ class KnowledgeBaseCacheService(
         documents: List<DocumentDto>,
         ttl: Duration = DOCUMENTS_TTL
     ) {
-        logger.debug("缓存知识库文档列表: kbId={}, count={}", kbId.value, documents.size)
+        logger.debug("缓存知识库文档列表: kbId={}, count={}", kbId.value.toString(), documents.size)
         
         try {
             withContext(Dispatchers.IO) {
                 val cacheKey = "${KB_DOCUMENTS_PREFIX}${kbId.value}"
                 
                 val cachedDocuments = CachedKnowledgeBaseDocuments(
-                    kbId = kbId.value,
+                    kbId = kbId.value.toString(),
                     documents = documents.map { doc ->
                         CachedDocumentSummary(
-                            documentId = doc.documentId,
-                            title = doc.title,
-                            type = doc.type,
-                            size = doc.size,
-                            uploadedAt = doc.uploadedAt,
-                            updatedAt = doc.updatedAt
-                        )
+                        documentId = doc.id,
+                        title = doc.title,
+                        type = doc.type,
+                        size = doc.size.toLong(),
+                        uploadedAt = doc.createdAt,
+                        updatedAt = doc.updatedAt
+                    )
                     },
                     cachedAt = Instant.now(),
                     expiresAt = Instant.now().plus(ttl)
@@ -153,7 +153,7 @@ class KnowledgeBaseCacheService(
                 )
             }
         } catch (e: Exception) {
-            logger.error("缓存知识库文档列表失败: kbId={}", kbId.value, e)
+            logger.error("缓存知识库文档列表失败: kbId={}", kbId.value.toString(), e)
         }
     }
     
@@ -161,7 +161,7 @@ class KnowledgeBaseCacheService(
      * 获取知识库文档列表缓存
      */
     suspend fun getKnowledgeBaseDocuments(kbId: KnowledgeBaseId): List<CachedDocumentSummary>? {
-        logger.debug("获取知识库文档列表缓存: kbId={}", kbId.value)
+        logger.debug("获取知识库文档列表缓存: kbId={}", kbId.value.toString())
         
         return try {
             withContext(Dispatchers.IO) {
@@ -170,7 +170,7 @@ class KnowledgeBaseCacheService(
                 cached?.documents
             }
         } catch (e: Exception) {
-            logger.error("获取知识库文档列表缓存失败: kbId={}", kbId.value, e)
+            logger.error("获取知识库文档列表缓存失败: kbId={}", kbId.value.toString(), e)
             null
         }
     }
@@ -184,7 +184,7 @@ class KnowledgeBaseCacheService(
         results: List<SearchResult>,
         ttl: Duration = SEARCH_RESULTS_TTL
     ) {
-        logger.debug("缓存搜索结果: kbId={}, query={}, count={}", kbId.value, query, results.size)
+        logger.debug("缓存搜索结果: kbId={}, query={}, count={}", kbId.value.toString(), query, results.size)
         
         try {
             withContext(Dispatchers.IO) {
@@ -192,7 +192,7 @@ class KnowledgeBaseCacheService(
                 val cacheKey = "${KB_SEARCH_PREFIX}${kbId.value}:$queryHash"
                 
                 val cachedResults = CachedSearchResults(
-                    kbId = kbId.value,
+                    kbId = kbId.value.toString(),
                     query = query,
                     queryHash = queryHash,
                     results = results,
@@ -208,7 +208,7 @@ class KnowledgeBaseCacheService(
                 )
             }
         } catch (e: Exception) {
-            logger.error("缓存搜索结果失败: kbId={}, query={}", kbId.value, query, e)
+            logger.error("缓存搜索结果失败: kbId={}, query={}", kbId.value.toString(), query, e)
         }
     }
     
@@ -216,7 +216,7 @@ class KnowledgeBaseCacheService(
      * 获取搜索结果缓存
      */
     suspend fun getSearchResults(kbId: KnowledgeBaseId, query: String): List<SearchResult>? {
-        logger.debug("获取搜索结果缓存: kbId={}, query={}", kbId.value, query)
+        logger.debug("获取搜索结果缓存: kbId={}, query={}", kbId.value.toString(), query)
         
         return try {
             withContext(Dispatchers.IO) {
@@ -226,7 +226,7 @@ class KnowledgeBaseCacheService(
                 cached?.results
             }
         } catch (e: Exception) {
-            logger.error("获取搜索结果缓存失败: kbId={}, query={}", kbId.value, query, e)
+            logger.error("获取搜索结果缓存失败: kbId={}, query={}", kbId.value.toString(), query, e)
             null
         }
     }
@@ -246,7 +246,7 @@ class KnowledgeBaseCacheService(
                 val cacheKey = "${DOCUMENT_CONTENT_PREFIX}${documentId.value}"
                 
                 val cachedContent = CachedDocumentContent(
-                    documentId = documentId.value,
+                    documentId = documentId.value.toString(),
                     content = content,
                     contentSize = content.length,
                     cachedAt = Instant.now(),
@@ -301,7 +301,7 @@ class KnowledgeBaseCacheService(
                     userId = userId.value,
                     knowledgeBases = knowledgeBases.map { kb ->
                         CachedKnowledgeBaseSummary(
-                            kbId = kb.kbId,
+                            kbId = kb.id,
                             name = kb.name,
                             description = kb.description,
                             documentCount = kb.documentCount,
@@ -348,14 +348,14 @@ class KnowledgeBaseCacheService(
      * 失效知识库相关缓存
      */
     suspend fun invalidateKnowledgeBaseCache(kbId: KnowledgeBaseId) {
-        logger.debug("失效知识库缓存: kbId={}", kbId.value)
+        logger.debug("失效知识库缓存: kbId={}", kbId.value.toString())
         
         try {
             withContext(Dispatchers.IO) {
                 val patterns = listOf(
                     "${KB_METADATA_PREFIX}${kbId.value}",
-                    "${KB_DOCUMENTS_PREFIX}${kbId.value}",
-                    "${KB_STATS_PREFIX}${kbId.value}"
+                "${KB_DOCUMENTS_PREFIX}${kbId.value}",
+                "${KB_STATS_PREFIX}${kbId.value}"
                 )
                 
                 patterns.forEach { pattern ->
@@ -369,10 +369,10 @@ class KnowledgeBaseCacheService(
                     redisTemplate.delete(searchKeys)
                 }
                 
-                logger.debug("知识库缓存失效完成: kbId={}", kbId.value)
+                logger.debug("知识库缓存失效完成: kbId={}", kbId.value.toString())
             }
         } catch (e: Exception) {
-            logger.error("失效知识库缓存失败: kbId={}", kbId.value, e)
+            logger.error("失效知识库缓存失败: kbId={}", kbId.value.toString(), e)
         }
     }
     

@@ -7,7 +7,8 @@ import com.lifee.common.cqrs.events.EventBus
 import com.lifee.chat.domain.events.MessageAddedEvent
 import com.lifee.chat.domain.events.ResponseGeneratedEvent
 import com.lifee.knowledge.domain.valueobjects.KnowledgeBaseId
-import com.lifee.user.domain.UserId
+import com.lifee.common.domain.valueobjects.UserId
+import com.lifee.chat.domain.valueobjects.MessageType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.slf4j.LoggerFactory
@@ -41,6 +42,7 @@ class ConversationResponseService(
         logger.info("开始生成对话响应: conversationId={}, userId={}, useRAG={}", 
             conversationId.value, userId.value, useRAG)
         
+        var response: ConversationResponse? = null
         val totalTime = measureTimeMillis {
             try {
                 // 1. 获取对话历史
@@ -78,7 +80,7 @@ class ConversationResponseService(
                 logger.debug("LLM响应生成完成: responseLength={}", llmResponse.content.length)
                 
                 // 4. 构建响应对象
-                val response = ConversationResponse(
+                response = ConversationResponse(
                     conversationId = conversationId,
                     content = llmResponse.content,
                     retrievedDocuments = retrievedDocuments,
@@ -99,8 +101,6 @@ class ConversationResponseService(
                 )
                 eventBus.publish(responseGeneratedEvent)
                 
-                return@measureTimeMillis response
-                
             } catch (e: Exception) {
                 logger.error("对话响应生成失败: conversationId={}", conversationId.value, e)
                 throw ConversationResponseException("响应生成失败: ${e.message}", e)
@@ -110,15 +110,9 @@ class ConversationResponseService(
         logger.info("对话响应生成完成: conversationId={}, totalTime={}ms", 
             conversationId.value, totalTime)
         
-        // 更新处理时间
-        return ConversationResponse(
-            conversationId = conversationId,
-            content = "", // 这里需要从上面的结果中获取
-            retrievedDocuments = emptyList(),
-            tokensUsed = 0,
-            model = "",
-            processingTimeMs = totalTime
-        )
+        // 更新处理时间并返回
+        return response?.copy(processingTimeMs = totalTime) 
+            ?: throw ConversationResponseException("响应生成失败")
     }
     
     /**
@@ -173,12 +167,12 @@ class ConversationResponseService(
     private fun buildConversationHistory(conversation: com.lifee.chat.domain.aggregates.Conversation): List<ChatMessage> {
         return conversation.getMessages().takeLast(10).map { message ->
             ChatMessage(
-                role = when (message.getType()) {
-                    "USER" -> "user"
-                    "ASSISTANT" -> "assistant"
+                role = when (message.type) {
+                    MessageType.USER -> "user"
+                    MessageType.ASSISTANT -> "assistant"
                     else -> "user"
                 },
-                content = message.getContent().value
+                content = message.content.value
             )
         }
     }

@@ -29,6 +29,15 @@
             <version>${project.version}</version>
         </dependency>
         
+        <!-- 用户模块依赖 - 用于处理用户事件 -->
+        <dependency>
+            <groupId>com.lifee</groupId>
+            <artifactId>lifee-user</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        
+        <!-- 移除外部应用依赖，改为事件驱动架构 -->
+        
         <!-- Spring Boot Starter -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -76,6 +85,12 @@
             <artifactId>jackson-module-kotlin</artifactId>
         </dependency>
         
+        <!-- Swagger/OpenAPI -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+        </dependency>
+        
         <!-- Kotlin标准库 -->
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
@@ -96,19 +111,7 @@
             <artifactId>kotlinx-coroutines-reactor</artifactId>
         </dependency>
         
-        <!-- R2DBC -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-r2dbc</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.postgresql</groupId>
-            <artifactId>r2dbc-postgresql</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.r2dbc</groupId>
-            <artifactId>r2dbc-pool</artifactId>
-        </dependency>
+        <!-- R2DBC dependencies removed to avoid conflict with JPA -->
         
         <!-- 测试依赖 -->
         <dependency>
@@ -161,11 +164,30 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <mainClass>com.lifee.knowledge.KnowledgeApplication</mainClass>
+                </configuration>
             </plugin>
             
             <plugin>
                 <groupId>org.jetbrains.kotlin</groupId>
                 <artifactId>kotlin-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>compile</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>test-compile</id>
+                        <phase>test-compile</phase>
+                        <goals>
+                            <goal>test-compile</goal>
+                        </goals>
+                    </execution>
+                </executions>
                 <configuration>
                     <args>
                         <arg>-Xjsr305=strict</arg>

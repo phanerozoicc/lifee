@@ -13,14 +13,13 @@ data class TeamId(val value: String) : ValueObject {
     }
     
     companion object {
-        private val TEAM_ID_PATTERN = Regex("^TM[0-9]{8}$")
+        private val TEAM_ID_PATTERN = Regex("^[a-zA-Z0-9]{8,32}$")
         
         /**
          * 生成新的团队ID
          */
         fun generate(): TeamId {
-            val randomNumber = Random().nextInt(100000000).toString().padStart(8, '0')
-            return TeamId("TM$randomNumber")
+            return TeamId(UUID.randomUUID().toString().replace("-", "").substring(0, 16))
         }
         
         /**

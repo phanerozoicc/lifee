@@ -2,6 +2,7 @@ package com.lifee.time.domain.service
 
 import com.lifee.time.domain.*
 import com.lifee.time.domain.repository.*
+import com.lifee.time.domain.service.TeamQueryService
 import com.lifee.user.domain.UserId
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
@@ -17,7 +18,7 @@ class StatisticsService(
     private val timeEntryRepository: TimeEntryRepository,
     private val projectRepository: ProjectRepository,
     private val taskRepository: TaskRepository,
-    private val teamRepository: TeamRepository
+    private val teamQueryService: TeamQueryService
 ) {
 
     /**
@@ -79,7 +80,7 @@ class StatisticsService(
      * 获取团队统计信息
      */
     suspend fun getTeamStatistics(teamId: TeamId, timeRange: TimeRange): TeamStatistics {
-        val team = teamRepository.findById(teamId)
+        val teamInfo = teamQueryService.findTeamById(teamId)
             ?: throw IllegalArgumentException("Team not found: $teamId")
         
         val projects = projectRepository.findByTeamId(teamId)
@@ -96,15 +97,15 @@ class StatisticsService(
             totalTimeTracked = calculateTotalDuration(allTimeEntries),
             billableTime = calculateBillableDuration(allTimeEntries),
             totalRevenue = calculateTotalRevenue(allTimeEntries),
-            memberCount = team.members.size,
-            activeMemberCount = team.members.count { it.isActive },
+            memberCount = teamInfo.members.size,
+            activeMemberCount = teamInfo.getActiveMemberCount(),
             projectCount = projects.size,
             activeProjectCount = projects.count { it.isActive },
             taskCount = allTasks.size,
             completedTaskCount = allTasks.count { it.status == TaskStatus.COMPLETED },
             averageProjectProgress = calculateAverageProjectProgress(projects, allTasks),
             teamEfficiency = calculateTeamEfficiency(allTimeEntries, allTasks),
-            memberUtilization = calculateMemberUtilization(allTimeEntries, team.members, timeRange)
+            memberUtilization = calculateMemberUtilization(allTimeEntries, teamInfo.members, timeRange)
         )
     }
 
@@ -318,7 +319,7 @@ class StatisticsService(
         return (billableRatio + completionRate) / 2
     }
 
-    private fun calculateMemberUtilization(timeEntries: List<TimeEntry>, members: Set<TeamMember>, timeRange: TimeRange): Double {
+    private fun calculateMemberUtilization(timeEntries: List<TimeEntry>, members: List<TeamMemberInfo>, timeRange: TimeRange): Double {
         val activeMembers = members.filter { it.isActive }
         if (activeMembers.isEmpty()) return 0.0
         

@@ -4,7 +4,8 @@ import com.lifee.chat.app.application.commands.CreateConversationCommand
 import com.lifee.chat.app.application.dtos.ConversationDto
 import com.lifee.chat.domain.aggregates.Conversation
 import com.lifee.chat.domain.repositories.ConversationRepository
-import com.lifee.common.cqrs.CommandHandler
+import com.lifee.common.cqrs.commands.AsyncCommandHandler
+import com.lifee.common.domain.valueobjects.UserId as CommonUserId
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
@@ -23,7 +24,7 @@ import org.springframework.transaction.annotation.Transactional
 @Component
 class CreateConversationCommandHandler(
     private val conversationRepository: ConversationRepository
-) : CommandHandler<CreateConversationCommand, ConversationDto> {
+) : AsyncCommandHandler<CreateConversationCommand, ConversationDto> {
     
     companion object {
         private val logger = LoggerFactory.getLogger(CreateConversationCommandHandler::class.java)
@@ -49,12 +50,13 @@ class CreateConversationCommandHandler(
         
         try {
             // 步骤1: 根据是否提供标题选择不同的创建策略
+            val commonUserId = CommonUserId(command.userId.value.toString())
             val conversation = if (command.title != null) {
                 // 使用用户提供的自定义标题创建对话
-                Conversation.create(command.title, command.userId)
+                Conversation.create(command.title, commonUserId)
             } else {
                 // 使用系统默认标题创建对话
-                Conversation.createWithDefaultTitle(command.userId)
+                Conversation.createWithDefaultTitle(commonUserId)
             }
             
             // 步骤2: 持久化对话数据，获取完整的对话实体

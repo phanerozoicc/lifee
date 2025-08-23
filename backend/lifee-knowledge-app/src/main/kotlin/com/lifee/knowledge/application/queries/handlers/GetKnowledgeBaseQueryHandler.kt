@@ -1,6 +1,6 @@
 package com.lifee.knowledge.application.queries.handlers
 
-import com.lifee.common.cqrs.queries.QueryHandler
+import com.lifee.common.cqrs.queries.AsyncQueryHandler
 import com.lifee.knowledge.application.dto.DocumentSummaryDto
 import com.lifee.knowledge.application.dto.KnowledgeBaseDto
 import com.lifee.knowledge.application.queries.GetKnowledgeBaseQuery
@@ -8,7 +8,7 @@ import com.lifee.knowledge.domain.exceptions.KnowledgeBaseNotFoundException
 import com.lifee.knowledge.domain.exceptions.UnauthorizedAccessException
 import com.lifee.knowledge.domain.repositories.KnowledgeBaseRepository
 import com.lifee.knowledge.domain.valueobjects.KnowledgeBaseId
-import com.lifee.knowledge.domain.valueobjects.UserId
+import com.lifee.common.domain.valueobjects.UserId
 import org.springframework.stereotype.Component
 
 /**
@@ -17,11 +17,11 @@ import org.springframework.stereotype.Component
 @Component
 class GetKnowledgeBaseQueryHandler(
     private val knowledgeBaseRepository: KnowledgeBaseRepository
-) : QueryHandler<GetKnowledgeBaseQuery, KnowledgeBaseDto?> {
+) : AsyncQueryHandler<GetKnowledgeBaseQuery, KnowledgeBaseDto?> {
     
     override suspend fun handle(query: GetKnowledgeBaseQuery): KnowledgeBaseDto? {
         val knowledgeBaseId = KnowledgeBaseId.fromString(query.knowledgeBaseId)
-        val userId = UserId.fromString(query.userId)
+        val userId = UserId(query.userId)
         
         val knowledgeBase = knowledgeBaseRepository.findById(knowledgeBaseId)
             ?: throw KnowledgeBaseNotFoundException(query.knowledgeBaseId)
@@ -38,7 +38,7 @@ class GetKnowledgeBaseQueryHandler(
             description = knowledgeBase.getDescription().value,
             ownerId = knowledgeBase.getOwnerId().toString(),
             documentCount = knowledgeBase.getDocumentCount(),
-            totalSize = knowledgeBase.getTotalSize(),
+            totalSize = knowledgeBase.getTotalSize().toLong(),
             createdAt = knowledgeBase.getCreatedAt(),
             updatedAt = knowledgeBase.getUpdatedAt(),
             documents = knowledgeBase.getDocuments().map { document ->

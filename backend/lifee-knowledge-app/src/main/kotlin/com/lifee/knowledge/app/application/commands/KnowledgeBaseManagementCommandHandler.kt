@@ -7,8 +7,8 @@ import com.lifee.knowledge.domain.aggregates.KnowledgeBase
 import com.lifee.knowledge.domain.entities.Document
 import com.lifee.knowledge.domain.valueobjects.*
 import com.lifee.knowledge.domain.repositories.KnowledgeBaseRepository
-import com.lifee.knowledge.domain.services.DocumentProcessingService
-import com.lifee.knowledge.domain.services.VectorSearchService
+import com.lifee.knowledge.app.services.DocumentProcessingService
+// import com.lifee.knowledge.domain.services.VectorSearchService // 暂时注释掉，待实现
 import com.lifee.common.domain.valueobjects.UserId
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
@@ -56,7 +56,7 @@ data class SearchKnowledgeBaseCommand(
 class KnowledgeBaseManagementCommandHandler(
     private val knowledgeBaseRepository: KnowledgeBaseRepository,
     private val documentProcessingService: DocumentProcessingService,
-    private val vectorSearchService: VectorSearchService,
+    // private val vectorSearchService: VectorSearchService, // 暂时注释掉，待实现
     private val businessFlowOrchestrator: BusinessFlowOrchestrator
 ) : AsyncCommandHandler<CreateKnowledgeBaseCommand, KnowledgeBaseResult> {
     
@@ -141,31 +141,29 @@ class KnowledgeBaseManagementCommandHandler(
             command.files.forEach { file ->
                 try {
                     val documentId = DocumentId.generate()
-                    val fileName = FileName(file.originalFilename ?: "unknown")
                     val content = String(file.bytes)
                     
                     // 创建文档
                     val document = Document.create(
                         id = documentId,
-                        knowledgeBaseId = knowledgeBaseId,
-                        name = fileName,
+                        title = DocumentTitle(file.originalFilename ?: "unknown"),
                         content = DocumentContent(content),
-                        metadata = DocumentMetadata(
-                            contentType = file.contentType ?: "text/plain",
-                            size = file.size,
-                            uploadedBy = userId,
-                            uploadedAt = Instant.now()
-                        )
+                        type = DocumentType.fromString(getDocumentTypeFromMimeType(file.contentType ?: "text/plain"))
                     )
                     
                     // 添加到知识库
-                    knowledgeBase.addDocument(document)
+                    knowledgeBase.addDocument(
+                        documentId = documentId,
+                        title = DocumentTitle(file.originalFilename ?: "unknown"),
+                        content = DocumentContent(content),
+                        type = DocumentType.fromString(getDocumentTypeFromMimeType(file.contentType ?: "text/plain"))
+                    )
                     
                     // 异步处理文档（分段、向量化）
-                    processDocumentAsync(document)
+                    processDocumentAsync(knowledgeBase.getKnowledgeBaseId(), document)
                     
                     uploadedDocuments.add(documentId.toString())
-                    logger.info("Document uploaded successfully: {}", fileName.value)
+                    logger.info("Document uploaded successfully: {}", file.originalFilename ?: "unknown")
                     
                 } catch (e: Exception) {
                     logger.error("Failed to upload document {}: {}", file.originalFilename, e.message, e)
@@ -209,12 +207,16 @@ class KnowledgeBaseManagementCommandHandler(
             }
             
             // 3. 执行向量搜索
+            // TODO: 实现向量搜索服务
+            val searchResults = emptyList<DocumentSearchResult>()
+            /*
             val searchResults = vectorSearchService.search(
                 knowledgeBaseId = knowledgeBaseId,
                 query = command.query,
                 limit = command.limit,
                 threshold = command.threshold
             )
+            */
             
             logger.info("Found {} search results for query: {}", searchResults.size, command.query)
             
@@ -233,23 +235,22 @@ class KnowledgeBaseManagementCommandHandler(
     /**
      * 异步处理文档
      */
-    private suspend fun processDocumentAsync(document: Document) {
+    private suspend fun processDocumentAsync(knowledgeBaseId: KnowledgeBaseId, document: Document) {
         try {
-            // 1. 文档分段
-            val chunks = documentProcessingService.chunkDocument(document)
+            // 使用DocumentProcessingService进行完整的文档处理
+            documentProcessingService.processDocument(
+                knowledgeBaseId = knowledgeBaseId,
+                documentId = document.getId(),
+                userId = UserId.fromString("system"), // 临时使用系统用户ID
+                title = document.getTitle().value,
+                content = document.getContent().value,
+                type = document.getType().value
+            )
             
-            // 2. 生成向量嵌入
-            chunks.forEach { chunk ->
-                documentProcessingService.generateEmbedding(chunk)
-            }
-            
-            // 3. 构建索引
-            documentProcessingService.buildIndex(document)
-            
-            logger.info("Document processing completed for: {}", document.getName().value)
+            logger.info("Document processing completed for: {}", document.getTitle().value)
             
         } catch (e: Exception) {
-            logger.error("Error processing document {}: {}", document.getName().value, e.message, e)
+            logger.error("Error processing document {}: {}", document.getTitle().value, e.message, e)
         }
     }
     
@@ -287,6 +288,19 @@ class KnowledgeBaseManagementCommandHandler(
         require(command.query.isNotBlank()) { "搜索查询不能为空" }
         require(command.limit > 0) { "搜索结果数量必须大于0" }
         require(command.threshold in 0.0..1.0) { "相似度阈值必须在0.0到1.0之间" }
+    }
+    
+    /**
+     * 根据MIME类型获取文档类型字符串
+     */
+    private fun getDocumentTypeFromMimeType(mimeType: String): String {
+        return when {
+            mimeType.startsWith("text/") -> "TEXT"
+            mimeType == "application/pdf" -> "PDF"
+            mimeType.startsWith("application/vnd.openxmlformats-officedocument.wordprocessingml") -> "DOCX"
+            mimeType == "application/msword" -> "DOC"
+            else -> "TEXT"
+        }
     }
 }
 

@@ -3,11 +3,11 @@ package com.lifee.knowledge.app.saga
 import com.lifee.common.cqrs.events.EventBus
 import com.lifee.common.saga.*
 import com.lifee.knowledge.domain.events.KnowledgeBaseDeletionRequestedEvent
-import com.lifee.chat.domain.events.ConversationsDeletedEvent
-import com.lifee.recommendation.domain.events.RecommendationCacheClearedEvent
 import com.lifee.knowledge.domain.events.KnowledgeBaseDeletedEvent
-import com.lifee.chat.app.services.ChatService
-import com.lifee.recommendation.app.services.RecommendationService
+import com.lifee.knowledge.domain.aggregates.KnowledgeBase
+import com.lifee.knowledge.domain.valueobjects.KnowledgeBaseId
+import com.lifee.common.domain.valueobjects.UserId
+import kotlin.reflect.KClass
 import com.lifee.knowledge.app.services.KnowledgeBaseService
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
@@ -28,8 +28,6 @@ class KnowledgeBaseDeletionSaga : Saga {
 @Component
 class KnowledgeBaseDeletionSagaDefinition(
     private val eventBus: EventBus,
-    private val chatService: ChatService,
-    private val recommendationService: RecommendationService,
     private val knowledgeBaseService: KnowledgeBaseService
 ) {
     
@@ -38,20 +36,20 @@ class KnowledgeBaseDeletionSagaDefinition(
             name = "KnowledgeBaseDeletionSaga",
             description = "协调知识库删除的完整流程",
             steps = listOf(
-                // 步骤1：删除相关对话
+                // 步骤1：发布删除对话事件
                 SagaStep(
-                    name = "DeleteRelatedConversations",
-                    description = "删除与知识库相关的所有对话",
-                    action = DeleteConversationsAction(chatService, eventBus),
-                    compensationAction = RestoreConversationsAction(chatService)
+                    name = "PublishDeleteConversationsEvent",
+                    description = "发布删除与知识库相关对话的事件",
+                    action = PublishDeleteConversationsEventAction(eventBus),
+                    compensationAction = PublishRestoreConversationsEventAction(eventBus)
                 ),
                 
-                // 步骤2：清理推荐缓存
+                // 步骤2：发布清理推荐缓存事件
                 SagaStep(
-                    name = "ClearRecommendationCache",
-                    description = "清理与知识库相关的推荐缓存",
-                    action = ClearRecommendationCacheAction(recommendationService, eventBus),
-                    compensationAction = RestoreRecommendationCacheAction(recommendationService)
+                    name = "PublishClearRecommendationCacheEvent",
+                    description = "发布清理与知识库相关推荐缓存的事件",
+                    action = PublishClearRecommendationCacheEventAction(eventBus),
+                    compensationAction = PublishRestoreRecommendationCacheEventAction(eventBus)
                 ),
                 
                 // 步骤3：删除知识库
@@ -78,97 +76,102 @@ class KnowledgeBaseDeletionSagaDefinition(
     }
 }
 
-/**
- * 删除对话动作
- */
-class DeleteConversationsAction(
-    private val chatService: ChatService,
+// 发布删除对话事件的Action
+class PublishDeleteConversationsEventAction(
     private val eventBus: EventBus
 ) : AbstractSagaAction() {
     
-    private val logger = LoggerFactory.getLogger(DeleteConversationsAction::class.java)
+    private val logger = LoggerFactory.getLogger(PublishDeleteConversationsEventAction::class.java)
     
     override suspend fun doExecute(data: Map<String, Any>): SagaStepResult {
         return try {
-            val deletionEvent = data["triggerEvent"] as? KnowledgeBaseDeletionRequestedEvent
-                ?: throw IllegalStateException("KnowledgeBaseDeletionRequestedEvent not found in saga data")
+            val knowledgeBaseId = data["knowledgeBaseId"] as? String
+                ?: return SagaStepResult.failed(Exception("Missing knowledgeBaseId"))
             
-            // 查找并删除相关对话
-            val conversations = chatService.findConversationsByKnowledgeBase(deletionEvent.knowledgeBaseId)
-            val deletedConversationIds = mutableListOf<String>()
+            logger.info("发布删除知识库 {} 相关对话的事件", knowledgeBaseId)
             
-            conversations.forEach { conversation ->
-                chatService.deleteConversation(conversation.id)
-                deletedConversationIds.add(conversation.id.toString())
-                logger.info("Deleted conversation {} related to knowledge base {}", 
-                    conversation.id, deletionEvent.knowledgeBaseId)
-            }
-            
-            // 发布对话删除事件
-            val conversationsDeletedEvent = ConversationsDeletedEvent(
-                knowledgeBaseId = deletionEvent.knowledgeBaseId,
-                deletedConversationIds = deletedConversationIds,
-                deletedCount = deletedConversationIds.size
+            // 发布删除对话事件
+            val event = ConversationsDeletedEvent(
+                userId = data["userId"] as? String ?: "",
+                knowledgeBaseId = knowledgeBaseId,
+                deletedAt = java.time.Instant.now()
             )
+            eventBus.publish(event)
             
-            eventBus.publish(conversationsDeletedEvent)
+            logger.info("成功发布删除对话事件")
             
-            SagaStepResult.success(
-                mapOf(
-                    "deletedConversations" to deletedConversationIds,
-                    "conversationsDeletedEvent" to conversationsDeletedEvent
-                ),
-                "Successfully deleted ${deletedConversationIds.size} conversations"
-            )
-            
+            SagaStepResult.success()
         } catch (e: Exception) {
-            logger.error("Failed to delete conversations: {}", e.message, e)
-            SagaStepResult.failed(e)
+            logger.error("发布删除对话事件失败", e)
+            SagaStepResult.failed(Exception("发布删除对话事件失败: ${e.message}"))
         }
     }
 }
 
 /**
- * 清理推荐缓存动作
+ * 对话删除事件
  */
-class ClearRecommendationCacheAction(
-    private val recommendationService: RecommendationService,
+data class ConversationsDeletedEvent(
+    val userId: String,
+    val knowledgeBaseId: String,
+    val deletedAt: java.time.Instant
+) : com.lifee.common.cqrs.events.Event
+
+/**
+ * 推荐缓存清理事件
+ */
+data class RecommendationCacheClearedEvent(
+    val userId: String,
+    val knowledgeBaseId: String,
+    val clearedAt: java.time.Instant
+) : com.lifee.common.cqrs.events.Event
+
+/**
+ * 对话恢复事件
+ */
+data class ConversationsRestoredEvent(
+    val userId: String,
+    val knowledgeBaseId: String,
+    val restoredAt: java.time.Instant
+) : com.lifee.common.cqrs.events.Event
+
+/**
+ * 推荐缓存恢复事件
+ */
+data class RecommendationCacheRestoredEvent(
+    val userId: String,
+    val knowledgeBaseId: String,
+    val restoredAt: java.time.Instant
+) : com.lifee.common.cqrs.events.Event
+
+// 发布清理推荐缓存事件的Action
+class PublishClearRecommendationCacheEventAction(
     private val eventBus: EventBus
 ) : AbstractSagaAction() {
     
-    private val logger = LoggerFactory.getLogger(ClearRecommendationCacheAction::class.java)
+    private val logger = LoggerFactory.getLogger(PublishClearRecommendationCacheEventAction::class.java)
     
     override suspend fun doExecute(data: Map<String, Any>): SagaStepResult {
         return try {
-            val deletionEvent = data["triggerEvent"] as? KnowledgeBaseDeletionRequestedEvent
-                ?: throw IllegalStateException("KnowledgeBaseDeletionRequestedEvent not found in saga data")
+            val knowledgeBaseId = data["knowledgeBaseId"] as? String
+                ?: return SagaStepResult.failed(Exception("Missing knowledgeBaseId"))
             
-            // 清理推荐缓存
-            val clearedCacheKeys = recommendationService.clearKnowledgeBaseCache(deletionEvent.knowledgeBaseId)
+            logger.info("发布清理知识库 {} 推荐缓存的事件", knowledgeBaseId)
             
-            logger.info("Cleared {} recommendation cache entries for knowledge base {}", 
-                clearedCacheKeys.size, deletionEvent.knowledgeBaseId)
-            
-            // 发布缓存清理事件
-            val cacheCleared = RecommendationCacheClearedEvent(
-                knowledgeBaseId = deletionEvent.knowledgeBaseId,
-                clearedCacheKeys = clearedCacheKeys,
-                clearedCount = clearedCacheKeys.size
+            // 发布清理推荐缓存事件
+            val event = RecommendationCacheClearedEvent(
+                userId = data["userId"] as? String ?: "",
+                knowledgeBaseId = knowledgeBaseId,
+                clearedAt = java.time.Instant.now()
             )
+            eventBus.publish(event)
+             
+             logger.info("成功发布清理推荐缓存事件")
             
-            eventBus.publish(cacheCleared)
-            
-            SagaStepResult.success(
-                mapOf(
-                    "clearedCacheKeys" to clearedCacheKeys,
-                    "cacheCleared" to cacheCleared
-                ),
-                "Successfully cleared ${clearedCacheKeys.size} cache entries"
-            )
-            
+            SagaStepResult.success()
         } catch (e: Exception) {
-            logger.error("Failed to clear recommendation cache: {}", e.message, e)
-            SagaStepResult.failed(e)
+            logger.error("发布清理推荐缓存事件失败", e)
+            SagaStepResult.failed(Exception("发布清理推荐缓存事件失败: ${e.message}"))
         }
     }
 }
@@ -199,9 +202,10 @@ class DeleteKnowledgeBaseAction(
             
             // 发布知识库删除事件
             val kbDeletedEvent = KnowledgeBaseDeletedEvent(
-                knowledgeBaseId = deletionEvent.knowledgeBaseId,
-                userId = knowledgeBase.userId,
-                name = knowledgeBase.name
+                knowledgeBaseId = deletionEvent.knowledgeBaseId.value.toString(),
+                userId = deletionEvent.userId.value,
+                name = knowledgeBase.getName().value,
+                deletedAt = java.time.Instant.now()
             )
             
             eventBus.publish(kbDeletedEvent)
@@ -221,65 +225,70 @@ class DeleteKnowledgeBaseAction(
     }
 }
 
-/**
- * 恢复对话补偿动作
- */
-class RestoreConversationsAction(
-    private val chatService: ChatService
+// 发布恢复对话事件的补偿Action
+class PublishRestoreConversationsEventAction(
+    private val eventBus: EventBus
 ) : AbstractSagaAction() {
     
-    private val logger = LoggerFactory.getLogger(RestoreConversationsAction::class.java)
+    private val logger = LoggerFactory.getLogger(PublishRestoreConversationsEventAction::class.java)
     
     override suspend fun doExecute(data: Map<String, Any>): SagaStepResult {
         return try {
-            val deletedConversations = data["deletedConversations"] as? List<String>
-                ?: return SagaStepResult.success(emptyMap(), "No conversations to restore")
+            val knowledgeBaseId = data["knowledgeBaseId"] as? String
+                ?: return SagaStepResult.failed(Exception("Missing knowledgeBaseId"))
             
-            // 注意：实际场景中，对话删除通常是不可逆的
-            // 这里只是记录补偿尝试
-            logger.warn("Attempted to restore {} deleted conversations, but conversation deletion is irreversible", 
-                deletedConversations.size)
+            val userId = data["userId"] as? String
+                ?: return SagaStepResult.failed(Exception("Missing userId"))
             
-            SagaStepResult.success(
-                mapOf("restorationAttempted" to true),
-                "Conversation restoration attempted (irreversible operation)"
+            logger.info("发布恢复知识库 {} 相关对话的补偿事件", knowledgeBaseId)
+            
+            // 发布对话恢复事件
+            val restoreEvent = ConversationsRestoredEvent(
+                userId = userId,
+                knowledgeBaseId = knowledgeBaseId,
+                restoredAt = java.time.Instant.now()
             )
             
+            eventBus.publish(restoreEvent)
+            
+            SagaStepResult.success()
         } catch (e: Exception) {
-            logger.error("Failed to restore conversations: {}", e.message, e)
-            SagaStepResult.failed(e)
+            logger.error("发布恢复对话补偿事件失败", e)
+            SagaStepResult.failed(Exception("发布恢复对话补偿事件失败: ${e.message}"))
         }
     }
 }
 
-/**
- * 恢复推荐缓存补偿动作
- */
-class RestoreRecommendationCacheAction(
-    private val recommendationService: RecommendationService
+// 发布恢复推荐缓存事件的补偿Action
+class PublishRestoreRecommendationCacheEventAction(
+    private val eventBus: EventBus
 ) : AbstractSagaAction() {
     
-    private val logger = LoggerFactory.getLogger(RestoreRecommendationCacheAction::class.java)
+    private val logger = LoggerFactory.getLogger(PublishRestoreRecommendationCacheEventAction::class.java)
     
     override suspend fun doExecute(data: Map<String, Any>): SagaStepResult {
         return try {
-            val deletionEvent = data["triggerEvent"] as? KnowledgeBaseDeletionRequestedEvent
-                ?: throw IllegalStateException("KnowledgeBaseDeletionRequestedEvent not found in saga data")
+            val knowledgeBaseId = data["knowledgeBaseId"] as? String
+                ?: return SagaStepResult.failed(Exception("Missing knowledgeBaseId"))
             
-            // 重新构建推荐缓存
-            recommendationService.rebuildKnowledgeBaseCache(deletionEvent.knowledgeBaseId)
+            val userId = data["userId"] as? String
+                ?: return SagaStepResult.failed(Exception("Missing userId"))
             
-            logger.info("Restored recommendation cache for knowledge base {}", 
-                deletionEvent.knowledgeBaseId)
+            logger.info("发布恢复知识库 {} 推荐缓存的补偿事件", knowledgeBaseId)
             
-            SagaStepResult.success(
-                mapOf("cacheRestored" to true),
-                "Recommendation cache restored"
+            // 发布推荐缓存恢复事件
+            val restoreEvent = RecommendationCacheRestoredEvent(
+                userId = userId,
+                knowledgeBaseId = knowledgeBaseId,
+                restoredAt = java.time.Instant.now()
             )
             
+            eventBus.publish(restoreEvent)
+            
+            SagaStepResult.success()
         } catch (e: Exception) {
-            logger.error("Failed to restore recommendation cache: {}", e.message, e)
-            SagaStepResult.failed(e)
+            logger.error("发布恢复推荐缓存补偿事件失败", e)
+            SagaStepResult.failed(Exception("发布恢复推荐缓存补偿事件失败: ${e.message}"))
         }
     }
 }

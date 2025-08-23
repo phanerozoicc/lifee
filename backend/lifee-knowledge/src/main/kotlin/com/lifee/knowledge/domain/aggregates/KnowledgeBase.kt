@@ -52,6 +52,29 @@ class KnowledgeBase private constructor(
             
             return knowledgeBase
         }
+        
+        /**
+         * 从持久化实体恢复知识库聚合根
+         */
+        fun fromEntity(
+            id: KnowledgeBaseId,
+            name: KnowledgeBaseName,
+            description: KnowledgeBaseDescription,
+            ownerId: CommonUserId,
+            createdAt: Instant,
+            updatedAt: Instant,
+            documents: MutableMap<DocumentId, Document> = mutableMapOf()
+        ): KnowledgeBase {
+            return KnowledgeBase(
+                id = id,
+                name = name,
+                description = description,
+                ownerId = ownerId,
+                createdAt = createdAt,
+                updatedAt = updatedAt,
+                documents = documents
+            )
+        }
     }
     
     // Getters

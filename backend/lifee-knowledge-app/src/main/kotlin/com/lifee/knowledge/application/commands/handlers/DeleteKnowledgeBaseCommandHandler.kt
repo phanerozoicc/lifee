@@ -1,6 +1,7 @@
 package com.lifee.knowledge.application.commands.handlers
 
-import com.lifee.common.cqrs.commands.CommandHandler
+import com.lifee.common.cqrs.commands.AsyncCommandHandler
+import com.lifee.common.domain.valueobjects.UserId
 import com.lifee.knowledge.application.commands.DeleteKnowledgeBaseCommand
 import com.lifee.knowledge.domain.exceptions.*
 import com.lifee.knowledge.domain.repositories.KnowledgeBaseRepository
@@ -15,7 +16,7 @@ import org.springframework.transaction.annotation.Transactional
 @Component
 class DeleteKnowledgeBaseCommandHandler(
     private val knowledgeBaseRepository: KnowledgeBaseRepository
-) : CommandHandler<DeleteKnowledgeBaseCommand> {
+) : AsyncCommandHandler<DeleteKnowledgeBaseCommand, Unit> {
     
     private val logger = LoggerFactory.getLogger(DeleteKnowledgeBaseCommandHandler::class.java)
     
@@ -24,7 +25,7 @@ class DeleteKnowledgeBaseCommandHandler(
         logger.info("Processing DeleteKnowledgeBaseCommand: ${command.knowledgeBaseId}")
         
         val knowledgeBaseId = KnowledgeBaseId.fromString(command.knowledgeBaseId)
-        val userId = UserId.fromString(command.userId)
+        val userId = UserId(command.userId)
         
         // 查找知识库
         val knowledgeBase = knowledgeBaseRepository.findById(knowledgeBaseId)

@@ -30,7 +30,7 @@ import jakarta.validation.constraints.NotBlank
  * 用户控制器
  */
 @RestController
-@RequestMapping("/api/v1/users")
+@RequestMapping("/users")
 @Validated
 @Tag(name = "用户管理", description = "用户注册、激活、档案管理等功能")
 class UserController(

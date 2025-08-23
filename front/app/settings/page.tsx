@@ -19,7 +19,21 @@ import {
   Shield,
   MessageSquare,
   Search,
-  Layers
+  Layers,
+  Users,
+  Crown,
+  UserPlus,
+  Mail,
+  Phone,
+  MapPin,
+  Building,
+  Clock,
+  Bell,
+  Globe,
+  Palette,
+  Monitor,
+  Moon,
+  Sun
 } from "lucide-react"
 import { useState } from "react"
 import { cn } from "@/lib/utils"
@@ -118,15 +132,30 @@ export default function SettingsPage() {
       ]
     },
     {
+      id: "user",
+      label: "个人设置",
+      icon: User,
+      children: [
+        { id: "profile", label: "个人资料", icon: User },
+        { id: "preferences", label: "偏好设置", icon: Settings },
+        { id: "notifications", label: "通知设置", icon: Bell },
+        { id: "appearance", label: "外观设置", icon: Palette }
+      ]
+    },
+    {
+      id: "team",
+      label: "团队管理",
+      icon: Users,
+      children: [
+        { id: "team-overview", label: "团队概览", icon: Users },
+        { id: "team-members", label: "成员管理", icon: UserPlus },
+        { id: "team-roles", label: "角色权限", icon: Crown }
+      ]
+    },
+    {
       id: "mcp",
       label: "MCP服务",
       icon: Plug,
-      children: []
-    },
-    {
-      id: "user",
-      label: "用户设置",
-      icon: User,
       children: []
     },
     {
@@ -452,48 +481,125 @@ export default function SettingsPage() {
           </div>
         )
       
-      case "user":
+      case "profile":
         return (
           <div className="space-y-6">
             <div>
-              <h2 className="text-xl font-semibold">用户信息</h2>
-              <p className="text-muted-foreground">管理个人账户信息和偏好设置</p>
+              <h2 className="text-xl font-semibold">个人资料</h2>
+              <p className="text-muted-foreground">管理您的个人信息和联系方式</p>
             </div>
             <Card>
               <CardHeader>
-                <CardTitle>个人信息</CardTitle>
+                <CardTitle>基本信息</CardTitle>
                 <CardDescription>更新您的个人资料</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">用户名</label>
+                    <label className="text-sm font-medium flex items-center gap-2">
+                      <User className="h-4 w-4" />
+                      用户名
+                    </label>
                     <Input 
                       value={userInfo.username}
                       onChange={(e) => setUserInfo({...userInfo, username: e.target.value})}
+                      placeholder="请输入用户名"
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">邮箱</label>
+                    <label className="text-sm font-medium flex items-center gap-2">
+                      <Mail className="h-4 w-4" />
+                      邮箱
+                    </label>
                     <Input 
                       type="email"
                       value={userInfo.email}
                       onChange={(e) => setUserInfo({...userInfo, email: e.target.value})}
+                      placeholder="请输入邮箱地址"
                     />
                   </div>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">时区</label>
+                    <label className="text-sm font-medium flex items-center gap-2">
+                      <Phone className="h-4 w-4" />
+                      电话
+                    </label>
+                    <Input 
+                      value={userInfo.phone || ''}
+                      onChange={(e) => setUserInfo({...userInfo, phone: e.target.value})}
+                      placeholder="请输入电话号码"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium flex items-center gap-2">
+                      <Building className="h-4 w-4" />
+                      部门
+                    </label>
+                    <Input 
+                      value={userInfo.department || ''}
+                      onChange={(e) => setUserInfo({...userInfo, department: e.target.value})}
+                      placeholder="请输入部门"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium flex items-center gap-2">
+                    <MapPin className="h-4 w-4" />
+                    地址
+                  </label>
+                  <Input 
+                    value={userInfo.address || ''}
+                    onChange={(e) => setUserInfo({...userInfo, address: e.target.value})}
+                    placeholder="请输入地址"
+                  />
+                </div>
+
+                <div className="flex gap-2 pt-4">
+                  <Button className="gap-2">
+                    <Save className="h-4 w-4" />
+                    保存资料
+                  </Button>
+                  <Button variant="outline" className="gap-2">
+                    <Key className="h-4 w-4" />
+                    修改密码
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )
+      
+      case "preferences":
+        return (
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-xl font-semibold">偏好设置</h2>
+              <p className="text-muted-foreground">配置您的个人偏好和工作习惯</p>
+            </div>
+            <Card>
+              <CardHeader>
+                <CardTitle>地区和语言</CardTitle>
+                <CardDescription>设置您的时区和语言偏好</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium flex items-center gap-2">
+                      <Globe className="h-4 w-4" />
+                      时区
+                    </label>
                     <select 
                       className="w-full p-2 border rounded-md"
                       value={userInfo.timezone}
                       onChange={(e) => setUserInfo({...userInfo, timezone: e.target.value})}
                     >
-                      <option value="Asia/Shanghai">Asia/Shanghai</option>
-                      <option value="UTC">UTC</option>
-                      <option value="America/New_York">America/New_York</option>
+                      <option value="Asia/Shanghai">Asia/Shanghai (UTC+8)</option>
+                      <option value="UTC">UTC (UTC+0)</option>
+                      <option value="America/New_York">America/New_York (UTC-5)</option>
+                      <option value="Europe/London">Europe/London (UTC+0)</option>
                     </select>
                   </div>
                   <div className="space-y-2">
@@ -505,7 +611,77 @@ export default function SettingsPage() {
                     >
                       <option value="zh-CN">简体中文</option>
                       <option value="en-US">English</option>
+                      <option value="ja-JP">日本語</option>
                     </select>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <label className="text-sm font-medium flex items-center gap-2">
+                    <Clock className="h-4 w-4" />
+                    工作时间格式
+                  </label>
+                  <select className="w-full p-2 border rounded-md">
+                    <option value="24h">24小时制</option>
+                    <option value="12h">12小时制</option>
+                  </select>
+                </div>
+
+                <div className="flex gap-2 pt-4">
+                  <Button className="gap-2">
+                    <Save className="h-4 w-4" />
+                    保存偏好
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )
+      
+      case "notifications":
+        return (
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-xl font-semibold">通知设置</h2>
+              <p className="text-muted-foreground">管理您接收通知的方式和频率</p>
+            </div>
+            <Card>
+              <CardHeader>
+                <CardTitle>通知偏好</CardTitle>
+                <CardDescription>选择您希望接收的通知类型</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="font-medium">邮件通知</h4>
+                      <p className="text-sm text-muted-foreground">接收重要更新的邮件通知</p>
+                    </div>
+                    <input type="checkbox" className="rounded" defaultChecked />
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="font-medium">桌面通知</h4>
+                      <p className="text-sm text-muted-foreground">在浏览器中显示桌面通知</p>
+                    </div>
+                    <input type="checkbox" className="rounded" defaultChecked />
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="font-medium">时间提醒</h4>
+                      <p className="text-sm text-muted-foreground">定期提醒记录工作时间</p>
+                    </div>
+                    <input type="checkbox" className="rounded" />
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="font-medium">团队活动</h4>
+                      <p className="text-sm text-muted-foreground">团队成员活动和更新通知</p>
+                    </div>
+                    <input type="checkbox" className="rounded" defaultChecked />
                   </div>
                 </div>
 
@@ -514,13 +690,311 @@ export default function SettingsPage() {
                     <Save className="h-4 w-4" />
                     保存设置
                   </Button>
-                  <Button variant="outline" className="gap-2">
-                    <Key className="h-4 w-4" />
-                    修改密码
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )
+      
+      case "appearance":
+        return (
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-xl font-semibold">外观设置</h2>
+              <p className="text-muted-foreground">自定义界面外观和主题</p>
+            </div>
+            <Card>
+              <CardHeader>
+                <CardTitle>主题设置</CardTitle>
+                <CardDescription>选择您喜欢的界面主题</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="font-medium mb-3 flex items-center gap-2">
+                      <Palette className="h-4 w-4" />
+                      主题模式
+                    </h4>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="border rounded-lg p-3 cursor-pointer hover:bg-accent">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Sun className="h-4 w-4" />
+                          <span className="font-medium">浅色</span>
+                        </div>
+                        <div className="w-full h-8 bg-white border rounded"></div>
+                      </div>
+                      <div className="border rounded-lg p-3 cursor-pointer hover:bg-accent bg-accent">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Moon className="h-4 w-4" />
+                          <span className="font-medium">深色</span>
+                        </div>
+                        <div className="w-full h-8 bg-gray-900 border rounded"></div>
+                      </div>
+                      <div className="border rounded-lg p-3 cursor-pointer hover:bg-accent">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Monitor className="h-4 w-4" />
+                          <span className="font-medium">跟随系统</span>
+                        </div>
+                        <div className="w-full h-8 bg-gradient-to-r from-white to-gray-900 border rounded"></div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h4 className="font-medium mb-3">界面密度</h4>
+                    <div className="space-y-2">
+                      <label className="flex items-center gap-2">
+                        <input type="radio" name="density" value="compact" />
+                        <span>紧凑</span>
+                      </label>
+                      <label className="flex items-center gap-2">
+                        <input type="radio" name="density" value="normal" defaultChecked />
+                        <span>标准</span>
+                      </label>
+                      <label className="flex items-center gap-2">
+                        <input type="radio" name="density" value="comfortable" />
+                        <span>宽松</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-2 pt-4">
+                  <Button className="gap-2">
+                    <Save className="h-4 w-4" />
+                    保存外观
                   </Button>
                 </div>
               </CardContent>
             </Card>
+          </div>
+        )
+      
+      case "team-overview":
+        return (
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-xl font-semibold">团队概览</h2>
+              <p className="text-muted-foreground">查看团队基本信息和统计数据</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="h-5 w-5" />
+                    团队成员
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">12</div>
+                  <p className="text-sm text-muted-foreground">活跃成员</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Clock className="h-5 w-5" />
+                    本月工时
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">1,248</div>
+                  <p className="text-sm text-muted-foreground">小时</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Building className="h-5 w-5" />
+                    活跃项目
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">8</div>
+                  <p className="text-sm text-muted-foreground">个项目</p>
+                </CardContent>
+              </Card>
+            </div>
+            <Card>
+              <CardHeader>
+                <CardTitle>团队信息</CardTitle>
+                <CardDescription>基本团队设置和信息</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium">团队名称</label>
+                    <p className="text-sm text-muted-foreground">开发团队</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">创建时间</label>
+                    <p className="text-sm text-muted-foreground">2024年1月15日</p>
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">团队描述</label>
+                  <p className="text-sm text-muted-foreground">负责产品开发和技术创新的核心团队</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )
+      
+      case "team-members":
+        return (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-semibold">成员管理</h2>
+                <p className="text-muted-foreground">管理团队成员和邀请新成员</p>
+              </div>
+              <Button className="gap-2">
+                <UserPlus className="h-4 w-4" />
+                邀请成员
+              </Button>
+            </div>
+            <Card>
+              <CardHeader>
+                <CardTitle>团队成员</CardTitle>
+                <CardDescription>当前团队的所有成员</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {[
+                    { name: "张三", email: "zhang@example.com", role: "owner", avatar: "" },
+                    { name: "李四", email: "li@example.com", role: "admin", avatar: "" },
+                    { name: "王五", email: "wang@example.com", role: "member", avatar: "" },
+                    { name: "赵六", email: "zhao@example.com", role: "member", avatar: "" }
+                  ].map((member, index) => (
+                    <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                          <User className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <h4 className="font-medium">{member.name}</h4>
+                          <p className="text-sm text-muted-foreground">{member.email}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className={`px-2 py-1 rounded-full text-xs ${
+                          member.role === 'owner' ? 'bg-yellow-100 text-yellow-800' :
+                          member.role === 'admin' ? 'bg-blue-100 text-blue-800' :
+                          'bg-gray-100 text-gray-800'
+                        }`}>
+                          {member.role === 'owner' ? '所有者' :
+                           member.role === 'admin' ? '管理员' : '成员'}
+                        </span>
+                        <Button variant="ghost" size="sm">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )
+      
+      case "team-roles":
+        return (
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-xl font-semibold">角色权限</h2>
+              <p className="text-muted-foreground">管理团队角色和权限设置</p>
+            </div>
+            <div className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Crown className="h-5 w-5 text-yellow-500" />
+                    所有者
+                  </CardTitle>
+                  <CardDescription>拥有团队的完全控制权</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <span className="text-sm">管理团队设置</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <span className="text-sm">添加/移除成员</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <span className="text-sm">管理角色权限</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <span className="text-sm">删除团队</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Shield className="h-5 w-5 text-blue-500" />
+                    管理员
+                  </CardTitle>
+                  <CardDescription>协助管理团队日常事务</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <span className="text-sm">管理项目</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <span className="text-sm">查看所有时间记录</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <span className="text-sm">生成报告</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                      <span className="text-sm text-muted-foreground">删除团队</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <User className="h-5 w-5 text-gray-500" />
+                    成员
+                  </CardTitle>
+                  <CardDescription>团队的普通成员</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <span className="text-sm">记录工作时间</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <span className="text-sm">查看自己的时间记录</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <span className="text-sm">参与分配的项目</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                      <span className="text-sm text-muted-foreground">管理其他成员</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         )
       

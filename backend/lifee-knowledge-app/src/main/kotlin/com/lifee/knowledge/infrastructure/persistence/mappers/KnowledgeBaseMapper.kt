@@ -3,6 +3,8 @@ package com.lifee.knowledge.infrastructure.persistence.mappers
 import com.lifee.knowledge.domain.aggregates.KnowledgeBase
 import com.lifee.knowledge.domain.entities.Document
 import com.lifee.knowledge.domain.valueobjects.*
+import com.lifee.common.domain.valueobjects.UserId as CommonUserId
+import java.util.UUID
 import com.lifee.knowledge.infrastructure.persistence.entities.DocumentEntity
 import com.lifee.knowledge.infrastructure.persistence.entities.DocumentTypeEnum
 import com.lifee.knowledge.infrastructure.persistence.entities.KnowledgeBaseEntity
@@ -22,7 +24,7 @@ class KnowledgeBaseMapper {
             id = knowledgeBase.getId().value
             name = knowledgeBase.getName().value
             description = knowledgeBase.getDescription().value
-            ownerId = knowledgeBase.getOwnerId().value
+            ownerId = UUID.fromString("00000000-0000-0000-0000-" + knowledgeBase.getOwnerId().value.substring(1).padEnd(12, '0'))
             createdAt = knowledgeBase.getCreatedAt()
             updatedAt = knowledgeBase.getUpdatedAt()
         }
@@ -39,22 +41,21 @@ class KnowledgeBaseMapper {
      * 将JPA实体转换为领域模型
      */
     fun toDomain(entity: KnowledgeBaseEntity): KnowledgeBase {
-        val knowledgeBase = KnowledgeBase(
+        // 转换文档
+        val documents: MutableMap<DocumentId, Document> = entity.documents.associate { documentEntity ->
+            val document = toDocumentDomain(documentEntity)
+            document.getId() to document
+        }.toMutableMap()
+        
+        return KnowledgeBase.fromEntity(
             id = KnowledgeBaseId(entity.id),
             name = KnowledgeBaseName(entity.name),
             description = KnowledgeBaseDescription(entity.description),
-            ownerId = UserId(entity.ownerId),
+            ownerId = CommonUserId("U" + entity.ownerId.toString().substring(19).replace("-", "")),
             createdAt = entity.createdAt,
-            updatedAt = entity.updatedAt
+            updatedAt = entity.updatedAt,
+            documents = documents
         )
-        
-        // 转换文档
-        entity.documents.forEach { documentEntity ->
-            val document = toDocumentDomain(documentEntity)
-            knowledgeBase.addDocumentInternal(document)
-        }
-        
-        return knowledgeBase
     }
     
     /**

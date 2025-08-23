@@ -7,6 +7,7 @@ import com.lifee.common.cqrs.events.IdempotentKeyStrategy
 import com.lifee.user.domain.events.UserRegisteredEvent
 import com.lifee.knowledge.domain.events.DefaultKnowledgeBaseCreatedEvent
 import com.lifee.knowledge.app.services.UserKnowledgeService
+import com.lifee.common.domain.valueobjects.UserId as CommonUserId
 import kotlinx.coroutines.runBlocking
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
@@ -31,7 +32,7 @@ class UserRegisteredEventHandler(
             runBlocking {
                 // 初始化用户知识库
                 val knowledgeBaseId = userKnowledgeService.initializeUserKnowledgeBase(
-                    userId = event.userId,
+                    userId = CommonUserId(event.userId.value),
                     email = event.email.value,
                     firstName = event.firstName,
                     lastName = event.lastName
@@ -39,7 +40,7 @@ class UserRegisteredEventHandler(
                 
                 // 发布默认知识库创建完成事件
                 val knowledgeBaseCreatedEvent = DefaultKnowledgeBaseCreatedEvent(
-                    userId = event.userId,
+                    userId = CommonUserId(event.userId.value),
                     knowledgeBaseId = knowledgeBaseId,
                     knowledgeBaseName = "默认知识库",
                     email = event.email.value,

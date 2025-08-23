@@ -4,8 +4,8 @@ import com.lifee.common.cqrs.events.EventBus
 import com.lifee.common.saga.*
 import com.lifee.user.domain.events.UserRegisteredEvent
 import com.lifee.user.domain.events.UserActivatedEvent
-import com.lifee.config.domain.events.UserConfigurationInitializedEvent
-import com.lifee.knowledge.domain.events.DefaultKnowledgeBaseCreatedEvent
+// import com.lifee.config.domain.events.UserConfigurationInitializedEvent
+// import com.lifee.knowledge.domain.events.DefaultKnowledgeBaseCreatedEvent
 import com.lifee.user.domain.events.WelcomeNotificationSentEvent
 import org.springframework.stereotype.Component
 import org.slf4j.LoggerFactory
@@ -45,7 +45,8 @@ class UserRegistrationSagaDefinition(
                     waitingForEvent = UserRegisteredEvent::class
                 ),
                 
-                // 步骤2：等待配置初始化完成
+                // 步骤2：等待配置初始化完成 - 暂时禁用
+                /*
                 SagaStep(
                     name = "WaitForConfigurationInitialization",
                     description = "等待用户配置初始化完成",
@@ -68,6 +69,7 @@ class UserRegistrationSagaDefinition(
                     waitingForEvent = DefaultKnowledgeBaseCreatedEvent::class,
                     compensationAction = CompensateKnowledgeBaseAction()
                 ),
+                */
                 
                 // 步骤4：发送欢迎通知
                 SagaStep(
@@ -81,7 +83,8 @@ class UserRegistrationSagaDefinition(
                 SagaEventTrigger(
                     eventType = UserRegisteredEvent::class,
                     correlationProperty = "userId"
-                ),
+                )
+                /*,
                 SagaEventTrigger(
                     eventType = UserConfigurationInitializedEvent::class,
                     correlationProperty = "userId"
@@ -90,6 +93,7 @@ class UserRegistrationSagaDefinition(
                     eventType = DefaultKnowledgeBaseCreatedEvent::class,
                     correlationProperty = "userId"
                 )
+                */
             ),
             timeout = 300000L, // 5分钟总超时
             retryPolicy = SagaRetryPolicy(

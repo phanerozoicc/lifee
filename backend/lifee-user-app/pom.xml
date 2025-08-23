@@ -45,26 +45,11 @@
             <version>${project.version}</version>
         </dependency>
 
-        <!-- Config Application Module -->
-        <dependency>
-            <groupId>com.lifee</groupId>
-            <artifactId>lifee-config-app</artifactId>
-            <version>${project.version}</version>
-        </dependency>
+        <!-- Config Application Module - Removed to avoid Flyway migration conflicts -->
 
-        <!-- Recommendation Application Module -->
-        <dependency>
-            <groupId>com.lifee</groupId>
-            <artifactId>lifee-recommendation-app</artifactId>
-            <version>${project.version}</version>
-        </dependency>
+        <!-- Recommendation Application Module - Removed to avoid Flyway migration conflicts -->
 
-        <!-- Knowledge Application Module -->
-        <dependency>
-            <groupId>com.lifee</groupId>
-            <artifactId>lifee-knowledge-app</artifactId>
-            <version>${project.version}</version>
-        </dependency>
+        <!-- Knowledge Application Module - Removed to avoid Flyway migration conflicts -->
 
         <!-- Spring Boot Starters -->
         <dependency>

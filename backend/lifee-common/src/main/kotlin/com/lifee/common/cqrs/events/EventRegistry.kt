@@ -7,7 +7,7 @@ import kotlin.reflect.KClass
  * 事件注册表
  * 管理事件类型名称和事件类的映射关系
  */
-@Component
+@Component("cqrsEventRegistry")
 class EventRegistry {
     
     private val eventClasses = mutableMapOf<String, KClass<out Event>>()

@@ -1,5 +1,5 @@
 import { isSupabaseEnabled } from "@/lib/supabase/config"
-import { createClient } from "@/lib/supabase/server"
+import { createClient } from "@/lib/supabase/client"
 import {
   convertFromApiFormat,
   defaultPreferences,
@@ -8,7 +8,7 @@ import type { UserProfile, UserRole, UserTimeSettings } from "./types"
 import { fetchClient } from "@/lib/api"
 
 export async function getSupabaseUser() {
-  const supabase = await createClient()
+  const supabase = createClient()
   if (!supabase) return { supabase: null, user: null }
 
   const { data } = await supabase.auth.getUser()
@@ -64,7 +64,9 @@ export const UserTimeAPI = {
   async getTimeSettings(userId: string): Promise<UserTimeSettings | null> {
     try {
       const response = await fetchClient(`/api/users/${userId}/time-settings`)
-      return response.data
+      if (!response.ok) return null
+      const data = await response.json()
+      return data
     } catch (error) {
       console.error('Failed to fetch user time settings:', error)
       return null
@@ -93,7 +95,9 @@ export const UserTimeAPI = {
   async getUserTeams(userId: string): Promise<string[]> {
     try {
       const response = await fetchClient(`/api/users/${userId}/teams`)
-      return response.data.map((team: Record<string, unknown>) => team.id as string)
+      if (!response.ok) return []
+      const data = await response.json()
+      return data.map((team: Record<string, unknown>) => team.id as string)
     } catch (error) {
       console.error('Failed to fetch user teams:', error)
       return []
@@ -106,7 +110,9 @@ export const UserTimeAPI = {
   async getUserProjects(userId: string): Promise<string[]> {
     try {
       const response = await fetchClient(`/api/users/${userId}/projects`)
-      return response.data.map((project: Record<string, unknown>) => project.id as string)
+      if (!response.ok) return []
+      const data = await response.json()
+      return data.map((project: Record<string, unknown>) => project.id as string)
     } catch (error) {
       console.error('Failed to fetch user projects:', error)
       return []
@@ -155,7 +161,9 @@ export const UserTimeAPI = {
       if (endDate) params.append('endDate', endDate)
       
       const response = await fetchClient(`/api/users/${userId}/work-stats?${params}`)
-      return response.data
+      if (!response.ok) return null
+      const data = await response.json()
+      return data
     } catch (error) {
       console.error('Failed to fetch user work stats:', error)
       return null
@@ -168,7 +176,9 @@ export const UserTimeAPI = {
   async getUserTimeStats(userId: string, period: 'week' | 'month' | 'year' = 'week'): Promise<Record<string, unknown> | null> {
     try {
       const response = await fetchClient(`/api/users/${userId}/time-stats?period=${period}`)
-      return response.data
+      if (!response.ok) return null
+      const data = await response.json()
+      return data
     } catch (error) {
       console.error('Failed to fetch user time stats:', error)
       return null
@@ -181,7 +191,9 @@ export const UserTimeAPI = {
   async canAccessProject(userId: string, projectId: string): Promise<boolean> {
     try {
       const response = await fetchClient(`/api/users/${userId}/can-access-project/${projectId}`)
-      return response.data.canAccess
+      if (!response.ok) return false
+      const data = await response.json()
+      return data.canAccess
     } catch (error) {
       console.error('Failed to check project access:', error)
       return false
@@ -194,7 +206,9 @@ export const UserTimeAPI = {
   async canAccessTeam(userId: string, teamId: string): Promise<boolean> {
     try {
       const response = await fetchClient(`/api/users/${userId}/can-access-team/${teamId}`)
-      return response.data.canAccess
+      if (!response.ok) return false
+      const data = await response.json()
+      return data.canAccess
     } catch (error) {
       console.error('Failed to check team access:', error)
       return false
