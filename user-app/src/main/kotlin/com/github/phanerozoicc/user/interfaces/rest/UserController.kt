@@ -6,8 +6,10 @@ import com.github.phanerozoicc.base.response.PageResponse
 import com.github.phanerozoicc.user.application.command.ActivationByTokenCommand
 import com.github.phanerozoicc.user.application.command.ChangePasswordCommand
 import com.github.phanerozoicc.user.application.command.LoginUserCommand
+import com.github.phanerozoicc.user.application.command.ReactivateUserCommand
 import com.github.phanerozoicc.user.application.command.RegisterUserCommand
 import com.github.phanerozoicc.user.application.command.UpdateUserProfileCommand
+import com.github.phanerozoicc.user.domain.model.Email
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -77,14 +79,17 @@ class UserController(
         }
     }
 
+    /**
+     * 激活用户 若注册后长时间未激活（通过定时间任务锁定） 需要重新激活
+     */
     @PostMapping("/activate")
     @Operation(summary = "通过token激活用户", description = "通过token激活用户")
     suspend fun activateByToken(
         @Parameter(description = "激活令牌", required = true)
         @RequestParam @NotBlank token: String
-    ) {
+    ): ResponseEntity<ApiResponse<Unit>> {
         val activationByTokenCommand = ActivationByTokenCommand(token)
-        try {
+        return try {
             commandBus.sendAndWait<ActivationByTokenCommand, Unit>(activationByTokenCommand)
             ResponseEntity.ok(ApiResponse.success("用户注册成功，请检查邮箱进行激活"))
         } catch (e: Exception) {
@@ -93,18 +98,23 @@ class UserController(
         }
     }
 
-
     /**
-     * 激活用户
+     * 重新激活用户
      */
-    @PutMapping("/{userId}/activate")
-    @Operation(summary = "激活用户", description = "激活指定用户账户")
-    fun activateUser(@PathVariable userId: String): ResponseEntity<ApiResponse<String>> {
+    @PostMapping("/reactivate")
+    @Operation(summary = "重新激活用户", description = "重新激活用户")
+    suspend fun reactivate(
+        @Parameter(description = "用户邮箱", required = true)
+        @RequestParam @NotBlank email: String
+    ): ResponseEntity<ApiResponse<Unit>> {
         return try {
-            ResponseEntity.ok(ApiResponse.success("用户激活成功", "用户ID: $userId"))
+            val email = Email.of(email)
+            val reactivateCommand = ReactivateUserCommand(email)
+            commandBus.sendAndWait<ReactivateUserCommand, Unit>(reactivateCommand)
+            ResponseEntity.ok(ApiResponse.success("用户已重新激活， 请检查邮箱"))
         } catch (e: Exception) {
             ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error<String>("用户激活失败", e.message))
+                .body(ApiResponse.error("重新激活失败", e.message))
         }
     }
 
@@ -172,18 +182,6 @@ class UserController(
         }
     }
 
-    /**
-     * 验证邮箱
-     */
-    @PostMapping("/verify-email")
-    fun verifyEmail(@Valid @RequestBody request: VerifyEmailRequest): ResponseEntity<ApiResponse<String>> {
-        return try {
-            ResponseEntity.ok(ApiResponse.success("邮箱验证成功"))
-        } catch (e: Exception) {
-            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error<String>("邮箱验证失败", e.message))
-        }
-    }
 
     /**
      * 获取用户列表

@@ -409,6 +409,13 @@ class User(
     fun needsPasswordUpdate(): Boolean {
         return passwordSpecification.isPasswordExpired(password) || password.needsRehash()
     }
+
+    /**
+     * 是否可以重新激活
+     */
+    fun canReactivate(lastVerificationSent: LocalDateTime?): Boolean {
+        return !status.isActive() && userSpecification.canSendEmailVerification(lastVerificationSent)
+    }
 }
 
 

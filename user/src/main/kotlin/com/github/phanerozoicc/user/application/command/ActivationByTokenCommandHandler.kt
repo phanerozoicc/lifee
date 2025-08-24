@@ -45,7 +45,7 @@ class ActivationByTokenCommandHandler(
         }
         // 发布事件
         eventBus.publishAll(user.getDomainEvents())
-        user.clearDomainEvents()
+        user.markEventsAsCommitted()
         logger.debug("user activated: {}",  user.id)
     }
 
