@@ -2,12 +2,11 @@ package com.github.phanerozoicc.user.application.query
 
 import com.github.phanerozoicc.base.queries.Query
 import com.github.phanerozoicc.base.queries.QueryHandler
-import com.github.phanerozoicc.user.bak.domain.cqrs.QueryResult
-import com.github.phanerozoicc.user.bak.domain.cqrs.UserQuery
+import com.github.phanerozoicc.user.domain.model.User
 import com.github.phanerozoicc.user.domain.model.UserId
 import com.github.phanerozoicc.user.domain.repository.UserRepository
-import com.github.phanerozoicc.user.interfaces.rest.UserProfileDTO
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
 
 /**
@@ -23,20 +22,12 @@ data class GetUserProfileQuery(
 @Service
 class GetUserProfileQueryHandler(
     private val userRepository: UserRepository
-) : QueryHandler<GetUserProfileQuery, UserProfileDTO> {
+) : QueryHandler<GetUserProfileQuery, UserProfileDTO?> {
 
-    override suspend fun handle(query: GetUserProfileQuery): QueryResult<UserProfileDTO> {
-        try {
-            val user = userRepository.findById(query.userId)
-                ?: return QueryResult.NotFound("用户不存在")
-
-            val profile = UserProfileDTO.fromUser(user)
-
-            return QueryResult.Success(profile)
-
-        } catch (e: Exception) {
-            return QueryResult.Error("获取用户资料失败: ${e.message}")
-        }
+    @Transactional(readOnly = true)
+    override fun handle(query: GetUserProfileQuery): UserProfileDTO? {
+        val user = userRepository.findById(query.userId)
+        return user?.let { UserProfileDTO.fromUser(it) }
     }
 }
 
@@ -78,23 +69,23 @@ data class UserProfileDTO(
             val status = user.getStatus()
 
             return UserProfileDTO(
-                userId = user.id.getValue(),
-                email = user.getEmail().getValue(),
-                nickname = profile.getNickname(),
-                firstName = profile.getFirstName(),
-                lastName = profile.getLastName(),
-                fullName = profile.getFullName(),
+                userId = user.id.value,
+                email = user.getEmail().value,
+                nickname = profile.nickname,
+                firstName = profile.firstName,
+                lastName = profile.lastName,
+                fullName = profile.firstName,
                 displayName = profile.getDisplayName(),
-                avatar = profile.getAvatar(),
-                bio = profile.getBio(),
-                birthDate = profile.getBirthDate()?.toString(),
+                avatar = profile.avatar,
+                bio = profile.bio,
+                birthDate = profile.birthDate?.toString(),
                 age = profile.getAge(),
-                gender = profile.getGender()?.name,
-                phoneNumber = profile.getPhoneNumber(),
-                address = profile.getAddress(),
-                website = profile.getWebsite(),
+                gender = profile.gender?.name,
+                phoneNumber = profile.phoneNumber,
+                address = profile.address,
+                website = profile.website,
                 profileCompleteness = profile.getCompletionPercentage(),
-                status = status.getStatus().name,
+                status = status.status.name,
                 statusDisplayName = status.getDisplayName(),
                 emailVerified = user.isEmailVerified(),
                 createdAt = user.getCreatedAt(),

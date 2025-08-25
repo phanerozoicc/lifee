@@ -9,16 +9,27 @@ import java.time.Period
  * 封装用户的个人信息
  */
 data class UserProfile(
+    // 昵称
     val nickname: String,
+    // 名字
     val firstName: String? = null,
+    // 姓氏
     val lastName: String? = null,
+    // 头像URL
     val avatar: String? = null,
+    // 简介
     val bio: String? = null,
+    // 出生日期
     val birthDate: LocalDate? = null,
+    // 性别
     val gender: Gender? = null,
+    // 电话号码
     val phoneNumber: String? = null,
+    // 地址
     val address: String? = null,
+    // 个人网站
     val website: String? = null,
+    // 资料最后更新时间
     val updatedAt: LocalDateTime = LocalDateTime.now()
 ) {
     companion object {

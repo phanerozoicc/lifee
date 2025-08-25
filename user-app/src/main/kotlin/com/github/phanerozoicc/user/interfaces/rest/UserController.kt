@@ -10,12 +10,18 @@ import com.github.phanerozoicc.user.application.command.LoginUserCommand
 import com.github.phanerozoicc.user.application.command.ReactivateUserCommand
 import com.github.phanerozoicc.user.application.command.RegisterUserCommand
 import com.github.phanerozoicc.user.application.command.UpdateUserProfileCommand
+import com.github.phanerozoicc.user.application.query.GetUserProfileQuery
+import com.github.phanerozoicc.user.application.query.UserProfileDTO
 import com.github.phanerozoicc.user.domain.model.Email
+import com.github.phanerozoicc.user.domain.model.UserId
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
+import kotlinx.coroutines.runBlocking
+import mu.KLogging
 import org.springframework.data.domain.Pageable
 import org.springframework.data.web.PageableDefault
 import org.springframework.http.HttpStatus
@@ -35,6 +41,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
+import java.net.http.HttpResponse
 
 /**
  * 用户控制器
@@ -46,6 +53,8 @@ class UserController(
     val commandBus: CommandBus,
     val queryBus: QueryBus,
 ) {
+
+    companion object: KLogging()
 
     /**
      * 用户注册
@@ -69,7 +78,6 @@ class UserController(
             ipAddress = remoteIp,
             userAgent = userAgent
         )
-
         return try {
             // 事件都用同步处理(一般)
             commandBus.sendAndWait<RegisterUserCommand, Unit>(registerCommand)
@@ -121,52 +129,67 @@ class UserController(
 
 
     /**
-     * 用户登录
-     */
-    @PostMapping("/login")
-    fun login(@Valid @RequestBody request: LoginUserRequest): ResponseEntity<ApiResponse<String>> {
-        return try {
-            val loginCommand = LoginUserCommand(
-                email = request.email,
-                password = request.password,
-                rememberMe = request.rememberMe,
-            )
-            ResponseEntity.ok(ApiResponse.success("登录成功", "用户登录成功"))
-        } catch (e: Exception) {
-            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error<String>("登录失败", e.message))
-        }
-    }
-
-    /**
      * 获取用户资料
      */
-    @GetMapping("/{userId}")
+    @GetMapping("/{userId}/profile")
     @Operation(summary = "根据ID获取用户信息", description = "获取指定用户的公开信息")
-    fun getUseProfile(
+    suspend fun getUseProfile(
         @Parameter(description = "用户ID") @PathVariable userId: String
     ): ApiResponse<UserProfileDTO> {
-
-        queryBus.send<>()
-        val user = userApplicationService.getUserById(userId)
-        return ApiResponse.success(UserSummaryDto.Companion.fromDomain(user))
+        val getUserProfileQuery = GetUserProfileQuery(UserId.of(userId))
+        val userProfileDTO = queryBus.send<GetUserProfileQuery, UserProfileDTO?>(getUserProfileQuery)
+        return if (userProfileDTO!=null) {
+            ApiResponse.success( userProfileDTO)
+        } else {
+            ApiResponse.error("未找到用户", "用户ID: $userId" )
+        }
     }
 
 
     /**
      * 更新用户资料
      */
-    @PutMapping("/{userId}")
+    @Operation(summary = "更新用户资料", description = "更新指定用户的个人资料")
+    @ApiResponses(
+        value = [
+            io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "用户资料更新成功"),
+            io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "用户资料更新失败")
+        ]
+    )
+    @PutMapping("/{userId}/profile")
     fun updateUserProfile(
-        @PathVariable userId: String,
+        @Parameter(description = "用户ID", required = true)
+        @PathVariable @NotBlank userId: String,
         @Valid @RequestBody request: UpdateUserProfileRequest
-    ): ResponseEntity<ApiResponse<String>> {
+    ): ResponseEntity<ApiResponse<UserProfileDTO>> {
+        logger.info("更新用户档案请求 userId：{}", userId)
+        val updateUserProfileCommand = UpdateUserProfileCommand(
+            userId = UserId.of(userId),
+            nickname = request.nickname,
+            firstName = request.firstName,
+            lastName = request.lastName,
+            avatar = request.avatar,
+            bio = request.bio,
+            birthDate = request.birthDate,
+            age = request.age,
+            gender = request.gender,
+            phoneNumber = request.phoneNumber,
+            address = request.address,
+            website = request.website
+        )
         return try {
-            ResponseEntity.ok(ApiResponse.success("用户资料更新成功", "用户ID: $userId"))
-        } catch (e: Exception) {
+            runBlocking {
+                commandBus.sendAndWait<UpdateUserProfileCommand, Unit>(updateUserProfileCommand)
+                val getUserProfileQuery = GetUserProfileQuery(UserId.of(userId))
+                val userProfileDTO = queryBus.send<GetUserProfileQuery, UserProfileDTO>(getUserProfileQuery)
+                return@runBlocking ResponseEntity.ok(ApiResponse.success(userProfileDTO,
+                    "用户信息修改成功"))
+            }
+        }catch (e : Exception) {
             ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error<String>("用户资料更新失败", e.message))
+                .body(ApiResponse.error("用户信息修改失败", e.message))
         }
+
     }
 
     /**

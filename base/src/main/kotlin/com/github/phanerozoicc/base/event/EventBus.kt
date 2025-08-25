@@ -101,6 +101,12 @@ class DefaultEventBus(
         if (domainEvents.isNotEmpty()) {
             persistDomainEvents(domainEvents)
         }
+        events.forEach { event ->
+            // 本地事件处理
+            handleLocalEvent(event)
+            // 发布到Kafka
+            publish2Kafka(event)
+        }
     }
 
     /**

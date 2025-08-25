@@ -134,7 +134,12 @@ data class UpdateUserProfileRequest(
     
     @JsonFormat(pattern = "yyyy-MM-dd")
     val birthDate: LocalDate? = null,
-    
+
+    @field:Max(150, message = "年龄不能超过150岁")
+    @field:Min(0, message = "年龄不能为负数")
+    val age: Int? = null,
+
+    @field:Pattern(regexp = "MALE|FEMALE|OTHER|PREFER_NOT_TO_SAY", message = "性别不合法")
     val gender: String? = null,
     
     @field:Pattern(regexp = "^[+]?[0-9]{10,15}$", message = "手机号格式不正确")
@@ -167,32 +172,6 @@ data class VerifyEmailRequest(
     val token: String
 )
 
-/**
- * 用户资料DTO
- */
-data class UserProfileDTO(
-    val id: String,
-    val email: String,
-    val nickname: String,
-    val firstName: String?,
-    val lastName: String?,
-    val avatar: String?,
-    val bio: String?,
-    @JsonFormat(pattern = "yyyy-MM-dd")
-    val birthDate: LocalDate?,
-    val gender: String?,
-    val phoneNumber: String?,
-    val address: String?,
-    val website: String?,
-    val status: String,
-    val emailVerified: Boolean,
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    val createdAt: LocalDateTime,
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    val updatedAt: LocalDateTime,
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    val lastLoginAt: LocalDateTime?
-)
 
 /**
  * 用户摘要DTO（用于列表显示）
