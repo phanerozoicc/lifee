@@ -2,10 +2,10 @@ package com.github.phanerozoicc.user.infrastructure.config
 
 import com.github.phanerozoicc.base.command.CommandBus
 import com.github.phanerozoicc.base.command.DefaultCommandBus
+import com.github.phanerozoicc.base.queries.DefaultQueryBus
 import com.github.phanerozoicc.base.queries.QueryBus
 import com.github.phanerozoicc.user.application.command.*
 import com.github.phanerozoicc.user.application.query.*
-import com.github.phanerozoicc.user.application.service.UserApplicationService
 import com.github.phanerozoicc.user.bak.application.query.ExportUserDataQueryHandler
 import com.github.phanerozoicc.user.bak.application.query.GetUserActivityQueryHandler
 import com.github.phanerozoicc.user.bak.application.query.GetUserPermissionsQueryHandler
@@ -18,9 +18,7 @@ import com.github.phanerozoicc.user.bak.application.query.SearchUsersQueryHandle
 import com.github.phanerozoicc.user.bak.application.query.ValidateUniquenessQueryHandler
 import com.github.phanerozoicc.user.domain.repository.UserRepository
 import com.github.phanerozoicc.user.domain.service.UserDomainService
-import com.github.phanerozoicc.user.infrastructure.cqrs.QueryBusImpl
 import org.springframework.boot.autoconfigure.domain.EntityScan
-import org.springframework.context.ApplicationContext
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories
@@ -56,24 +54,13 @@ class UserModuleConfiguration {
 //    }
 
 
-    
-    /**
-     * 用户域服务
-     */
-    @Bean
-    fun userDomainService(
-        userRepository: UserRepository
-    ): UserDomainService {
-        return UserDomainService(userRepository)
-    }
-    
 
     /**
      * 查询总线
      */
     @Bean
-    fun queryBus(applicationContext: ApplicationContext): QueryBus {
-        return QueryBusImpl(applicationContext)
+    fun queryBus(): QueryBus {
+        return DefaultQueryBus()
     }
     
 

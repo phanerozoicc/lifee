@@ -1,6 +1,7 @@
 package com.github.phanerozoicc.user.interfaces.rest
 
 import com.github.phanerozoicc.base.command.CommandBus
+import com.github.phanerozoicc.base.queries.QueryBus
 import com.github.phanerozoicc.base.response.ApiResponse
 import com.github.phanerozoicc.base.response.PageResponse
 import com.github.phanerozoicc.user.application.command.ActivationByTokenCommand
@@ -43,7 +44,7 @@ import org.springframework.web.bind.annotation.RestController
 @CrossOrigin(origins = ["*"])
 class UserController(
     val commandBus: CommandBus,
-
+    val queryBus: QueryBus,
 ) {
 
     /**
@@ -141,14 +142,16 @@ class UserController(
      * 获取用户资料
      */
     @GetMapping("/{userId}")
-    fun getUserProfile(@PathVariable userId: String): ResponseEntity<ApiResponse<String>> {
-        return try {
-            ResponseEntity.ok(ApiResponse.success("用户资料获取成功", "用户ID: $userId"))
-        } catch (e: Exception) {
-            ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(ApiResponse.error<String>("用户不存在", e.message))
-        }
+    @Operation(summary = "根据ID获取用户信息", description = "获取指定用户的公开信息")
+    fun getUseProfile(
+        @Parameter(description = "用户ID") @PathVariable userId: String
+    ): ApiResponse<UserProfileDTO> {
+
+        queryBus.send<>()
+        val user = userApplicationService.getUserById(userId)
+        return ApiResponse.success(UserSummaryDto.Companion.fromDomain(user))
     }
+
 
     /**
      * 更新用户资料
@@ -327,15 +330,6 @@ class UserController(
     ): ApiResponse<UserDto> {
         val user = userApplicationService.getUserByUsername(userDetails.username)
         return ApiResponse.success(UserDto.Companion.fromDomain(user))
-    }
-
-    @GetMapping("/{userId}")
-    @Operation(summary = "根据ID获取用户信息", description = "获取指定用户的公开信息")
-    fun getUserById(
-        @Parameter(description = "用户ID") @PathVariable userId: String
-    ): ApiResponse<UserSummaryDto> {
-        val user = userApplicationService.getUserById(userId)
-        return ApiResponse.success(UserSummaryDto.Companion.fromDomain(user))
     }
 
     @PutMapping("/me")

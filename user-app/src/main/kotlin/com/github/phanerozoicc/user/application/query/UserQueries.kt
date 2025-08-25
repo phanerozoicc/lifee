@@ -17,16 +17,7 @@ abstract class UserQuery {
     abstract val requestedBy: UserId?
 }
 
-/**
- * 获取用户资料查询
- */
-data class GetUserProfileQuery(
-    override val queryId: String,
-    override val timestamp: LocalDateTime = LocalDateTime.now(),
-    override val requestedBy: UserId? = null,
-    val userId: UserId,
-    val includePrivateInfo: Boolean = false // 是否包含私密信息
-) : UserQuery()
+
 
 /**
  * 获取用户权限查询
@@ -263,27 +254,6 @@ interface QueryHandler<TQuery : UserQuery, TResult> {
     
 }
 
-/**
- * 查询总线接口
- */
-interface QueryBus {
-    /**
-     * 发送查询
-     * @param query 要发送的查询
-     * @return 查询结果
-     */
-    suspend fun <TQuery : UserQuery, TResult> send(query: TQuery): QueryResult<TResult>
-    
-    /**
-     * 注册查询处理器
-     * @param queryClass 查询类型
-     * @param handler 查询处理器
-     */
-    fun <TQuery : UserQuery, TResult> register(
-        queryClass: Class<TQuery>,
-        handler: QueryHandler<TQuery, TResult>
-    )
-}
 
 /**
  * 分页查询结果
