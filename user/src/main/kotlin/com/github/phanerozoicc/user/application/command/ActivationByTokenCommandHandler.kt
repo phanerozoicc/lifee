@@ -8,6 +8,7 @@ import com.github.phanerozoicc.user.domain.repository.UserRepository
 import kotlinx.coroutines.runBlocking
 import mu.KLogging
 import org.springframework.stereotype.Component
+import org.springframework.transaction.support.TransactionTemplate
 
 class ActivationByTokenCommand(
     val token: String,
@@ -18,7 +19,8 @@ class ActivationByTokenCommand(
 class ActivationByTokenCommandHandler(
     private val userRepository: UserRepository,
     private val activationTokenRepository: ActivationTokenRepository,
-    private val eventBus: EventBus
+    private val eventBus: EventBus,
+    private val transactionTemplate: TransactionTemplate,
 ): CommandHandler<ActivationByTokenCommand, Unit> {
 
     companion object: KLogging()
@@ -38,14 +40,17 @@ class ActivationByTokenCommandHandler(
         throw IllegalStateException("User not found: ${activationToken.userId}")
 
         user.activate(user.id)
-        runBlocking {
-            userRepository.save(user)
-            // 删除已使用的 token
-            activationTokenRepository.delete(activationToken)
-        }
+        val savedUser = transactionTemplate.execute {
+            runBlocking {
+                val savedUser = userRepository.save(user)
+                // 删除已使用的 token
+                activationTokenRepository.delete(activationToken)
+                savedUser
+            }
+        } ?: throw IllegalStateException("Failed to save user ${activationToken.userId}")
         // 发布事件
-        eventBus.publishAll(user.getDomainEvents())
-        user.markEventsAsCommitted()
+        eventBus.publishAll(savedUser.getDomainEvents())
+        savedUser.markEventsAsCommitted()
         logger.debug("user activated: {}",  user.id)
     }
 

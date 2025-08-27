@@ -4,12 +4,7 @@ import com.github.phanerozoicc.base.command.CommandBus
 import com.github.phanerozoicc.base.queries.QueryBus
 import com.github.phanerozoicc.base.response.ApiResponse
 import com.github.phanerozoicc.base.response.PageResponse
-import com.github.phanerozoicc.user.application.command.ActivationByTokenCommand
-import com.github.phanerozoicc.user.application.command.ChangePasswordCommand
-import com.github.phanerozoicc.user.application.command.LoginUserCommand
-import com.github.phanerozoicc.user.application.command.ReactivateUserCommand
-import com.github.phanerozoicc.user.application.command.RegisterUserCommand
-import com.github.phanerozoicc.user.application.command.UpdateUserProfileCommand
+import com.github.phanerozoicc.user.application.command.*
 import com.github.phanerozoicc.user.application.query.GetUserProfileQuery
 import com.github.phanerozoicc.user.application.query.UserProfileDTO
 import com.github.phanerozoicc.user.domain.model.Email
@@ -29,19 +24,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.core.userdetails.UserDetails
-import org.springframework.web.bind.annotation.CrossOrigin
-import org.springframework.web.bind.annotation.DeleteMapping
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.PutMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestHeader
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestParam
-import org.springframework.web.bind.annotation.ResponseStatus
-import org.springframework.web.bind.annotation.RestController
-import java.net.http.HttpResponse
+import org.springframework.web.bind.annotation.*
 
 /**
  * 用户控制器
@@ -195,17 +178,20 @@ class UserController(
     /**
      * 修改密码
      */
-    @PutMapping("/{userId}/password")
-    fun changePassword(
+    @Operation(summary = "修改用户密码", description = "修改指定用户的登录密码")
+    @PutMapping("/{userId}/change-password")
+    suspend fun changePassword(
         @PathVariable userId: String,
         @Valid @RequestBody request: ChangePasswordRequest
-    ): ResponseEntity<ApiResponse<String>> {
-        return try {
-            ResponseEntity.ok(ApiResponse.success("密码修改成功", "用户ID: $userId"))
-        } catch (e: Exception) {
-            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error<String>("密码修改失败", e.message))
-        }
+    ): ResponseEntity<ApiResponse<Unit>> {
+        logger.info("修改用户密码请求 userId：{}", userId)
+        val changePasswordCommand = ChangePasswordCommand(
+            userId = UserId.of(userId),
+            currentPassword = request.currentPassword,
+            newPassword = request.newPassword
+        )
+        commandBus.sendAndWait<ChangePasswordCommand, Unit>(changePasswordCommand)
+        return ResponseEntity.ok(ApiResponse.success("密码修改成功"))
     }
 
 

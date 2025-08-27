@@ -25,7 +25,8 @@ class UserActivatedEvent(
     override fun copy(
         aggregateId: String,
         version: Long,
-        occurredOn: Instant
+        occurredOn: Instant,
+        eventId: String
     ): DomainEvent {
         return UserActivatedEvent(
             UserId(aggregateId),

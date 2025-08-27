@@ -11,6 +11,7 @@ import com.github.phanerozoicc.user.domain.repository.UserRepository
 import com.github.phanerozoicc.user.domain.service.UserDomainService
 import kotlinx.coroutines.runBlocking
 import org.springframework.stereotype.Service
+import org.springframework.transaction.support.TransactionTemplate
 
 /**
  * 用户注册命令
@@ -37,7 +38,8 @@ class RegisterUserCommandHandler(
     private val userRepository: UserRepository,
     private val activationTokenRepository: ActivationTokenRepository,
     private val userDomainService: UserDomainService,
-    private val eventBus: EventBus
+    private val eventBus: EventBus,
+    private val transitionTemplate: TransactionTemplate,
 ) : CommandHandler<RegisterUserCommand, Unit> {
 
 
@@ -72,30 +74,39 @@ class RegisterUserCommandHandler(
             user.updateProfile(updatedProfile)
         }
 
-        // 保存用户
-        runBlocking {
-            val savedUser = userRepository.save(user)
 
-            // 生成激活令牌
-            val activationToken = ActivationToken.generate(user.id)
-            activationTokenRepository.save(activationToken)
+        val savedUser = transitionTemplate.execute {
 
-            // 之后可以通过saga管理器模式处理后续的业务流程
-            // 这里为了简化直接依赖事件机制触发后续步骤并行处理
-            // 发布领域事件
-            savedUser.getDomainEvents().forEach { event ->
-                eventBus.publish(
-                    if(event is UserRegisteredEvent) {
-                        event.copy(
-                            activationToken = activationToken.value
-                        )
-                    } else {
-                        event
-                    }
-                )
+            // 保存用户
+            runBlocking {
+                val savedUser = userRepository.save(user)
+
+                // 生成激活令牌
+                val activationToken = ActivationToken.generate(user.id)
+                activationTokenRepository.save(activationToken)
+
+                // 之后可以通过saga管理器模式处理后续的业务流程
+                // 这里为了简化直接依赖事件机制触发后续步骤并行处理
+                // 发布领域事件
+
+                // TODO 这里不要 创建出的事件不应该被修改
+                savedUser.getUnCommittedEvents().forEach { event ->
+                    eventBus.publish(
+                        if(event is UserRegisteredEvent) {
+                            event.copy(
+                                activationToken = activationToken.value
+                            )
+                        } else {
+                            event
+                        }
+                    )
+                }
+                savedUser
+
             }
-            savedUser.clearDomainEvents()
-        }
+        }?: throw IllegalStateException("Failed to save user")
+
+        savedUser.markEventsAsCommitted()
 
     }
 

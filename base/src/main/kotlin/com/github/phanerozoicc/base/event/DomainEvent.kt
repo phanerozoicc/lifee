@@ -32,7 +32,7 @@ abstract class DomainEvent(
         return aggregateId.hashCode()
     }
 
-    abstract fun copy(aggregateId: String, version: Long, occurredOn: Instant): DomainEvent
+    abstract fun copy(aggregateId: String, version: Long, occurredOn: Instant, eventId: String): DomainEvent
 }
 
 

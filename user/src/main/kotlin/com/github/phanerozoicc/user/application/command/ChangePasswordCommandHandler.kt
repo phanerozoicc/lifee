@@ -1,24 +1,24 @@
 package com.github.phanerozoicc.user.application.command
 
-import com.github.phanerozoicc.base.event.DomainEventPublisher
+import com.github.phanerozoicc.base.command.Command
+import com.github.phanerozoicc.base.command.CommandHandler
+import com.github.phanerozoicc.base.event.EventBus
 import com.github.phanerozoicc.user.domain.model.UserId
 import com.github.phanerozoicc.user.domain.repository.UserRepository
+import kotlinx.coroutines.runBlocking
+import mu.KLogging
 import org.springframework.stereotype.Service
-import java.time.LocalDateTime
+import org.springframework.transaction.support.TransactionTemplate
 
 /**
  * 修改密码命令
  */
 data class ChangePasswordCommand(
-    override val commandId: String,
-    override val timestamp: LocalDateTime = LocalDateTime.now(),
-    override val userId: UserId,
-    override val ipAddress: String? = null,
-    override val userAgent: String? = null,
-    val oldPassword: String,
+    val userId: UserId,
+    val currentPassword: String,
     val newPassword: String,
-    val confirmPassword: String
-) : UserCommand()
+    val ipAddress: String? = null,
+) : Command()
 
 
 /**
@@ -27,49 +27,46 @@ data class ChangePasswordCommand(
 @Service
 class ChangePasswordCommandHandler(
     private val userRepository: UserRepository,
-    private val domainEventPublisher: DomainEventPublisher
-) : CommandHandler<ChangePasswordCommand> {
+    private val eventBus: EventBus,
+    private val transactionTemplate: TransactionTemplate,
+) : CommandHandler<ChangePasswordCommand, Unit> {
 
-    override suspend fun handle(command: ChangePasswordCommand): CommandResult {
+    companion object: KLogging()
+
+    override fun handle(command: ChangePasswordCommand) {
+        // 验证命令
+        validate(command)
+
         try {
-            // 验证命令
-            val validationResult = validate(command)
-            if (validationResult is CommandResult.ValidationError) {
-                return validationResult
-            }
-
             val user = userRepository.findById(command.userId)
-                ?: return CommandResult.Failure("用户不存在", "USER_NOT_FOUND")
+                ?: throw IllegalStateException("User with id ${command.userId} not found")
 
             // 修改密码
             user.changePassword(
-                oldPassword = command.oldPassword,
+                oldPassword = command.currentPassword,
                 newPassword = command.newPassword,
                 ipAddress = command.ipAddress
             )
 
-            // 保存用户
-            val savedUser = userRepository.save(user)
 
-            // 发布领域事件
-            savedUser.getDomainEvents().forEach { event ->
-                domainEventPublisher.publish(event)
-            }
-            savedUser.clearDomainEvents()
-
-            return CommandResult.Success("密码修改成功")
-
-        } catch (e: IllegalArgumentException) {
-            return CommandResult.Failure(e.message ?: "密码修改失败", "PASSWORD_CHANGE_FAILED")
+            val savedUser = transactionTemplate.execute {
+                runBlocking {
+                    // 保存用户
+                    userRepository.save(user)
+                }
+            } ?: throw IllegalStateException("Failed to save user ${command.userId}")
+            eventBus.publishAll(savedUser.getUnCommittedEvents())
+            savedUser.markEventsAsCommitted()
         } catch (e: Exception) {
-            return CommandResult.Failure("系统错误，请稍后重试", "SYSTEM_ERROR")
+            logger.error("Failed to change password for user ${command.userId}: ${e.message}", e)
+            throw e
         }
     }
 
-    override fun validate(command: ChangePasswordCommand): CommandResult {
+    private fun validate(command: ChangePasswordCommand) {
         val errors = mutableMapOf<String, MutableList<String>>()
 
-        if (command.oldPassword.isBlank()) {
+        if (command.currentPassword.isBlank()) {
             errors.getOrPut("oldPassword") { mutableListOf() }.add("原密码不能为空")
         }
 
@@ -77,14 +74,8 @@ class ChangePasswordCommandHandler(
             errors.getOrPut("newPassword") { mutableListOf() }.add("新密码不能为空")
         }
 
-        if (command.newPassword != command.confirmPassword) {
-            errors.getOrPut("confirmPassword") { mutableListOf() }.add("确认密码与新密码不一致")
-        }
-
-        return if (errors.isEmpty()) {
-            CommandResult.Success()
-        } else {
-            CommandResult.ValidationError(errors)
+        if (errors.isNotEmpty()) {
+            throw IllegalArgumentException(errors.toString())
         }
     }
 }

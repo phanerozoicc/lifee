@@ -1,6 +1,5 @@
 package com.github.phanerozoicc.user.domain.model
 
-import com.github.phanerozoicc.base.domain.AggregateRoot
 import com.github.phanerozoicc.base.domain.EventSourcedAggregateRoot
 import com.github.phanerozoicc.user.domain.event.*
 import java.time.Duration
@@ -132,7 +131,7 @@ class User(
             
             // 发布资料更新事件
             addDomainEvent(
-                UserProfileUpdated(
+                UserProfileUpdatedEvent(
                     userId = id,
                     oldProfile = oldProfile,
                     newProfile = newProfile,
@@ -176,7 +175,7 @@ class User(
         
         // 发布密码变更事件
         addDomainEvent(
-            PasswordChanged(
+            PasswordChangedEvent(
                 userId = id,
                 ipAddress = ipAddress
             )
@@ -206,7 +205,7 @@ class User(
         
         // 发布密码变更事件
         addDomainEvent(
-            PasswordChanged(
+            PasswordChangedEvent(
                 userId = id,
                 ipAddress = ipAddress,
                 isAdminReset = true,

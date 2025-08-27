@@ -9,15 +9,14 @@ import com.github.phanerozoicc.user.domain.repository.UserSearchCriteria
 import com.github.phanerozoicc.user.infrastructure.persistence.entity.UserEntity
 import com.github.phanerozoicc.user.infrastructure.persistence.mapper.toEntity
 import com.github.phanerozoicc.user.infrastructure.persistence.repository.JpaUserRepository
-import org.springframework.stereotype.Repository
-import java.time.LocalDateTime
 import jakarta.persistence.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import mu.KLogging
-import org.apache.commons.lang3.concurrent.ConcurrentException
+import org.springframework.stereotype.Repository
 import org.springframework.transaction.annotation.Transactional
+import java.time.LocalDateTime
 
 /**
  * 用户仓储实现
@@ -134,7 +133,7 @@ class UserRepositoryImpl(
     }
     
     override fun existsByNicknameExcluding(nickname: String, excludeUserId: UserId): Boolean {
-        return false
+        return jpaUserRepository.existsByNicknameAndIdNot(nickname, excludeUserId.value)
     }
     
     override fun count(): Long {

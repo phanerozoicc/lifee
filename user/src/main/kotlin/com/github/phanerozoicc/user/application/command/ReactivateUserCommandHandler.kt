@@ -5,12 +5,13 @@ import com.github.phanerozoicc.base.command.CommandHandler
 import com.github.phanerozoicc.user.application.service.EmailService
 import com.github.phanerozoicc.user.domain.model.ActivationToken
 import com.github.phanerozoicc.user.domain.model.Email
-import com.github.phanerozoicc.user.domain.model.UserSpecification
-import com.github.phanerozoicc.user.domain.model.UserStatus
 import com.github.phanerozoicc.user.domain.repository.ActivationTokenRepository
 import com.github.phanerozoicc.user.domain.repository.UserRepository
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import org.springframework.stereotype.Component
+import org.springframework.transaction.support.TransactionTemplate
 import java.time.LocalDateTime
 import java.time.ZoneId
 
@@ -24,6 +25,7 @@ class ReactivateUserCommand(
 class ReactivateUserCommandHandler(
     private val userRepository: UserRepository,
     private val activationTokenRepository: ActivationTokenRepository,
+    private val transitionTemplate: TransactionTemplate,
     private val emailService: EmailService
 ): CommandHandler<ReactivateUserCommand,  Unit> {
 
@@ -53,9 +55,11 @@ class ReactivateUserCommandHandler(
             }
             if (lastEmailSent == null) {
                 lastEmailSent = ActivationToken.generate(user.id)
-                activationTokenRepository.save(lastEmailSent)
+                transitionTemplate.execute {
+                    activationTokenRepository.save(lastEmailSent)
+                }
             }
-            runBlocking {
+            CoroutineScope(Dispatchers.IO).async {
                 emailService.sendActivationEmail(
                     user.id,
                     user.getEmail(),

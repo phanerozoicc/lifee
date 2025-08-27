@@ -255,4 +255,16 @@ interface JpaUserRepository : JpaRepository<UserEntity, String>, JpaSpecificatio
         @Param("userId") userId: String,
         @Param("updateTime") updateTime: LocalDateTime
     ): Int
+
+    /**
+     * 检查邮箱在排除指定用户ID外是否存在
+     */
+    @Query("""
+        select count(1) > 0 from UserEntity u 
+        where u.nickname = :nickname and u.id <> :uid
+    """)
+    fun existsByNicknameAndIdNot(
+        @Param("nickname") nickname: String,
+        @Param("uid") uid: String
+    ): Boolean
 }

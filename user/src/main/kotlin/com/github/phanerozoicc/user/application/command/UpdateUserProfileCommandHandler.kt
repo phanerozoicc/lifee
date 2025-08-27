@@ -1,14 +1,13 @@
 package com.github.phanerozoicc.user.application.command
 
 import com.github.phanerozoicc.base.command.Command
-import com.github.phanerozoicc.base.command.CommandBus
 import com.github.phanerozoicc.base.command.CommandHandler
 import com.github.phanerozoicc.base.event.EventBus
-import com.github.phanerozoicc.user.domain.service.UserDomainService
 import com.github.phanerozoicc.user.domain.model.Gender
 import com.github.phanerozoicc.user.domain.model.UserId
 import com.github.phanerozoicc.user.domain.model.UserProfile
 import com.github.phanerozoicc.user.domain.repository.UserRepository
+import com.github.phanerozoicc.user.domain.service.UserDomainService
 import kotlinx.coroutines.runBlocking
 import mu.KLogging
 import org.springframework.stereotype.Service
@@ -79,13 +78,13 @@ class UpdateUserProfileCommandHandler(
 
             // 更新用户资料
             transitionTemplate.execute {
-                runBlocking {
+                val savedUser = runBlocking {
                     // 保存用户
-                    val savedUser = userRepository.save(user)
+                    userRepository.save(user)
                 }
                 // 发布领域事件
-                eventBus.publishAll(user.getUnCommittedEvents())
-                user.markEventsAsCommitted()
+                eventBus.publishAll(savedUser.getUnCommittedEvents())
+                savedUser.markEventsAsCommitted()
             }
         } catch (e: Exception) {
             logger.error("更新用户资料失败: userId=${command.userId.value}", e)
