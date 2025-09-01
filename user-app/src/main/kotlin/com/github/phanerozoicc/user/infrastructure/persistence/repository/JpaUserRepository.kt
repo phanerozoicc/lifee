@@ -1,5 +1,6 @@
 package com.github.phanerozoicc.user.infrastructure.persistence.repository
 
+import com.github.phanerozoicc.user.domain.repository.UserSearchCriteria
 import com.github.phanerozoicc.user.infrastructure.persistence.entity.UserEntity
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
@@ -267,4 +268,16 @@ interface JpaUserRepository : JpaRepository<UserEntity, String>, JpaSpecificatio
         @Param("nickname") nickname: String,
         @Param("uid") uid: String
     ): Boolean
+
+    @Query("""
+        SELECT u FROM UserEntity u
+        WHERE (:#{#criteria.status} IS NULL OR u.status = :#{#criteria.status})
+          AND (:#{#criteria.createdAfter} IS NULL OR u.createdAt >= :#{#criteria.createdAfter})
+          AND (:#{#criteria.createdBefore} IS NULL OR u.createdAt <= :#{#criteria.createdBefore})
+          AND (:#{#criteria.lastLoginAfter} IS NULL OR u.lastLoginAt >= :#{#criteria.lastLoginAfter})
+          AND (:#{#criteria.lastLoginBefore} IS NULL OR u.lastLoginAt <= :#{#criteria.lastLoginBefore})
+          AND (:#{#criteria.emailVerified} IS NULL OR u.emailVerified = :#{#criteria.emailVerified})
+    """)
+    fun findByCriteria(criteria: UserSearchCriteria, pageable: Pageable): Page<UserEntity>
+
 }

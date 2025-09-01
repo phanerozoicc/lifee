@@ -1,4 +1,4 @@
-package com.github.phanerozoicc.user.domain.event
+package com.github.phanerozoicc.user.application.event
 
 import com.github.phanerozoicc.base.event.DomainEvent
 import com.github.phanerozoicc.base.event.EventHandler

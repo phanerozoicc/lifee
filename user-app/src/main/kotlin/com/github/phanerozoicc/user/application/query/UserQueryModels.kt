@@ -1,51 +1,13 @@
 package com.github.phanerozoicc.user.bak.domain.query
 
 import com.github.phanerozoicc.user.domain.model.*
+import com.github.phanerozoicc.user.interfaces.rest.UserSummaryDTO
 import java.time.LocalDateTime
 
 /**
  * 用户查询相关的数据传输对象和查询模型
  */
 
-/**
- * 用户摘要DTO
- * 用于列表显示的简化用户信息
- */
-data class UserSummaryDTO(
-    val userId: String,
-    val email: String,
-    val nickname: String,
-    val displayName: String,
-    val avatar: String?,
-    val status: String,
-    val statusDisplayName: String,
-    val emailVerified: Boolean,
-    val createdAt: LocalDateTime,
-    val lastLoginAt: LocalDateTime?
-) {
-    companion object {
-        /**
-         * 从用户聚合根创建DTO
-         */
-        fun fromUser(user: User): UserSummaryDTO {
-            val profile = user.getProfile()
-            val status = user.getStatus()
-            
-            return UserSummaryDTO(
-                userId = user.id.getValue(),
-                email = user.getEmail().getValue(),
-                nickname = profile.getNickname(),
-                displayName = profile.getDisplayName(),
-                avatar = profile.getAvatar(),
-                status = status.getStatus().name,
-                statusDisplayName = status.getDisplayName(),
-                emailVerified = user.isEmailVerified(),
-                createdAt = user.getCreatedAt(),
-                lastLoginAt = user.getLastLoginAt()
-            )
-        }
-    }
-}
 
 /**
  * 用户权限DTO

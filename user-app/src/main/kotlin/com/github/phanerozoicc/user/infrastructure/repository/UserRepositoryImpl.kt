@@ -14,6 +14,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import mu.KLogging
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Repository
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
@@ -88,7 +91,7 @@ class UserRepositoryImpl(
     }
     
     override fun findByEmail(email: Email): User? {
-        return jpaUserRepository.findByEmail(email.getValue())?.toDomain()
+        return jpaUserRepository.findByEmail(email.value)?.toDomain()
     }
     
     override fun findByNickname(nickname: String): User? {
@@ -125,7 +128,7 @@ class UserRepositoryImpl(
     }
     
     override fun existsByEmail(email: Email): Boolean {
-        return jpaUserRepository.existsByEmail(email.getValue())
+        return jpaUserRepository.existsByEmail(email.value)
     }
     
     override fun existsByNickname(nickname: String): Boolean {
@@ -158,16 +161,24 @@ class UserRepositoryImpl(
         return jpaUserRepository.countByLastLoginAtBetween(startDate, endDate)
     }
     
-    override fun findByCriteria(criteria: UserSearchCriteria): List<User> {
-        return emptyList()
+//    override fun findByCriteria(criteria: UserSearchCriteria): List<User> {
+//        return emptyList()
+//    }
+
+    override fun findByCriteria(criteria: UserSearchCriteria, pageable: Pageable): Page<User> {
+        val map = jpaUserRepository.findByCriteria(criteria, pageable)
+            .map { it.toDomain() }
     }
-    
+
+    override fun countByCriteria(criteria: UserSearchCriteria) {
+    }
+
     override fun delete(userId: UserId) {
-        jpaUserRepository.deleteById(userId.getValue())
+        jpaUserRepository.deleteById(userId.value)
     }
     
     override fun deleteAll(userIds: List<UserId>) {
-        val ids: List<String> = userIds.map { it.getValue() }
+        val ids: List<String> = userIds.map { it.value }
         jpaUserRepository.deleteAllById(ids)
     }
 }

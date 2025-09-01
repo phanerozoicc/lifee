@@ -6,7 +6,9 @@ import com.github.phanerozoicc.base.response.ApiResponse
 import com.github.phanerozoicc.base.response.PageResponse
 import com.github.phanerozoicc.user.application.command.*
 import com.github.phanerozoicc.user.application.query.GetUserProfileQuery
+import com.github.phanerozoicc.user.application.query.ListUsersQuery
 import com.github.phanerozoicc.user.application.query.UserProfileDTO
+import com.github.phanerozoicc.user.application.query.UserSummaryDTO
 import com.github.phanerozoicc.user.domain.model.Email
 import com.github.phanerozoicc.user.domain.model.UserId
 import io.swagger.v3.oas.annotations.Operation
@@ -17,6 +19,7 @@ import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
 import kotlinx.coroutines.runBlocking
 import mu.KLogging
+import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.web.PageableDefault
 import org.springframework.http.HttpStatus
@@ -199,104 +202,85 @@ class UserController(
      * 获取用户列表
      */
     @GetMapping
-    fun getUserList(
-        @RequestParam(defaultValue = "0") page: Int,
-        @RequestParam(defaultValue = "20") size: Int,
-        @RequestParam(defaultValue = "createdAt") sortBy: String,
+    suspend fun getUserList(
+        @RequestParam(defaultValue = "0", required = false) page: Int,
+        @RequestParam(defaultValue = "20", required = false) size: Int,
+        @RequestParam(defaultValue = "createdAt", required = false) sortBy: String,
         @RequestParam(defaultValue = "desc") sortDir: String
-    ): ResponseEntity<ApiResponse<String>> {
+    ): ResponseEntity<ApiResponse<PageResponse<UserSummaryDTO>>> {
         return try {
-            ResponseEntity.ok(ApiResponse.success("获取用户列表成功", "页码: $page, 大小: $size"))
+            val listUsersQuery = ListUsersQuery(
+                pageNumber = page,
+                pageSize = size,
+                sortBy = sortBy,
+                sortDirection = sortDir
+            )
+            val pageResponse = queryBus.send<ListUsersQuery, PageResponse<UserSummaryDTO>>(listUsersQuery)
+            ResponseEntity.ok(ApiResponse.success(pageResponse,"获取用户列表成功"))
         } catch (e: Exception) {
             ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error<String>("获取用户列表失败", e.message))
+                .body(ApiResponse.error("获取用户列表失败", e.message))
         }
     }
 
-    /**
-     * 搜索用户
-     */
-    @GetMapping("/search")
-    fun searchUsers(
-        @RequestParam keyword: String?,
-        @RequestParam status: String?,
-        @RequestParam emailVerified: Boolean?,
-        @RequestParam(defaultValue = "0") page: Int,
-        @RequestParam(defaultValue = "20") size: Int
-    ): ResponseEntity<ApiResponse<String>> {
-        return try {
-            ResponseEntity.ok(ApiResponse.success("搜索用户成功", "关键词: $keyword"))
-        } catch (e: Exception) {
-            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error<String>("搜索用户失败", e.message))
-        }
-    }
+//    /**
+//     * 搜索用户
+//     */
+//    @GetMapping("/search")
+//    fun searchUsers(
+//        @RequestParam keyword: String?,
+//        @RequestParam status: String?,
+//        @RequestParam emailVerified: Boolean?,
+//        @RequestParam(defaultValue = "0") page: Int,
+//        @RequestParam(defaultValue = "20") size: Int
+//    ): ResponseEntity<ApiResponse<String>> {
+//        return try {
+//            ResponseEntity.ok(ApiResponse.success("搜索用户成功", "关键词: $keyword"))
+//        } catch (e: Exception) {
+//            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+//                .body(ApiResponse.error<String>("搜索用户失败", e.message))
+//        }
+//    }
 
-    /**
-     * 获取用户统计
-     */
-    @GetMapping("/statistics")
-    fun getUserStatistics(): ResponseEntity<ApiResponse<String>> {
-        return try {
-            ResponseEntity.ok(ApiResponse.success("获取用户统计成功"))
-        } catch (e: Exception) {
-            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error<String>("获取用户统计失败", e.message))
-        }
-    }
-
-    /**
-     * 检查邮箱可用性
-     */
-    @GetMapping("/check-email")
-    fun checkEmailAvailability(@RequestParam email: String): ResponseEntity<ApiResponse<Boolean>> {
-        return try {
-            ResponseEntity.ok(ApiResponse.success(true))
-        } catch (e: Exception) {
-            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error<Boolean>("检查邮箱可用性失败", e.message))
-        }
-    }
-
-    /**
-     * 检查昵称可用性
-     */
-    @GetMapping("/check-nickname")
-    fun checkNicknameAvailability(@RequestParam nickname: String): ResponseEntity<ApiResponse<Boolean>> {
-        return try {
-            ResponseEntity.ok(ApiResponse.success(true))
-        } catch (e: Exception) {
-            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error<Boolean>("检查昵称可用性失败", e.message))
-        }
-    }
+//    /**
+//     * 获取用户统计
+//     */
+//    @GetMapping("/statistics")
+//    fun getUserStatistics(): ResponseEntity<ApiResponse<String>> {
+//        return try {
+//            ResponseEntity.ok(ApiResponse.success("获取用户统计成功"))
+//        } catch (e: Exception) {
+//            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+//                .body(ApiResponse.error<String>("获取用户统计失败", e.message))
+//        }
+//    }
 
 
-    /**
-     * 停用用户
-     */
-    @PutMapping("/{userId}/deactivate")
-    fun deactivateUser(@PathVariable userId: String): ResponseEntity<ApiResponse<String>> {
-        return try {
-            ResponseEntity.ok(ApiResponse.success("用户停用成功", "用户ID: $userId"))
-        } catch (e: Exception) {
-            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error<String>("用户停用失败", e.message))
-        }
-    }
-
-    /**
-     * 删除用户
-     */
-    @DeleteMapping("/{userId}")
-    fun deleteUser(@PathVariable userId: String): ResponseEntity<ApiResponse<String>> {
-        return try {
-            ResponseEntity.ok(ApiResponse.success("用户删除成功", "用户ID: $userId"))
-        } catch (e: Exception) {
-            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error<String>("用户删除失败", e.message))
-        }
-    }
+//    /**
+//     * 停用用户
+//     */
+//    @PutMapping("/{userId}/deactivate")
+//    fun deactivateUser(@PathVariable userId: String): ResponseEntity<ApiResponse<String>> {
+//        return try {
+//            ResponseEntity.ok(ApiResponse.success("用户停用成功", "用户ID: $userId"))
+//        } catch (e: Exception) {
+//            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+//                .body(ApiResponse.error<String>("用户停用失败", e.message))
+//        }
+//    }
+//
+//    /**
+//     * 删除用户
+//     */
+//    @DeleteMapping("/{userId}")
+//    fun deleteUser(@PathVariable userId: String): ResponseEntity<ApiResponse<String>> {
+//        return try {
+//            ResponseEntity.ok(ApiResponse.success("用户删除成功", "用户ID: $userId"))
+//        } catch (e: Exception) {
+//            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+//                .body(ApiResponse.error<String>("用户删除失败", e.message))
+//        }
+//    }
 }
 
 /**
@@ -311,14 +295,6 @@ class UserController(
 ) {
 
 
-    @PostMapping("/login")
-    @Operation(summary = "用户登录", description = "用户身份验证")
-    fun login(
-        @Valid @RequestBody command: AuthenticateUserCommand
-    ): ApiResponse<Map<String, Any>> {
-        val authResult = userApplicationService.authenticateUser(command)
-        return ApiResponse.success(authResult)
-    }
 
     @PostMapping("/refresh")
     @Operation(summary = "刷新令牌", description = "使用刷新令牌获取新的访问令牌")

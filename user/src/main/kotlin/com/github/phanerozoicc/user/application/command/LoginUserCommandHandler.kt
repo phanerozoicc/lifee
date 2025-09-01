@@ -1,24 +1,36 @@
 package com.github.phanerozoicc.user.application.command
 
-import com.github.phanerozoicc.base.event.DomainEventPublisher
+import com.fasterxml.jackson.annotation.JsonFormat
+import com.github.phanerozoicc.base.command.Command
+import com.github.phanerozoicc.base.command.CommandHandler
+import com.github.phanerozoicc.base.command.CommandResult
+import com.github.phanerozoicc.base.event.EventBus
+import com.github.phanerozoicc.user.application.service.JwtService
 import com.github.phanerozoicc.user.domain.model.Email
+import com.github.phanerozoicc.user.domain.model.User
 import com.github.phanerozoicc.user.domain.model.UserId
 import com.github.phanerozoicc.user.domain.repository.UserRepository
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import org.springframework.stereotype.Service
+import org.springframework.transaction.support.TransactionTemplate
+import sun.jvm.hotspot.HelloWorld.e
+import java.time.LocalDateTime
 
 
 /**
  * 用户登录命令
  */
 data class LoginUserCommand(
-    override val userId: UserId? = null,
-    override val ipAddress: String? = null,
-    override val userAgent: String? = null,
     val email: String,
     val password: String,
     val rememberMe: Boolean = false,
-    val sessionId: String? = null
-) : UserCommand()
+    val sessionId: String? = null,
+    val userId: UserId? = null,
+    val ipAddress: String? = null,
+    val userAgent: String? = null,
+) : Command()
 
 
 /**
@@ -27,20 +39,19 @@ data class LoginUserCommand(
 @Service
 class LoginUserCommandHandler(
     private val userRepository: UserRepository,
-    private val domainEventPublisher: DomainEventPublisher
-) : CommandHandler<LoginUserCommand> {
+    private val jwtService: JwtService,
+    private val eventBus: EventBus,
+    private val transitionTemplate: TransactionTemplate,
+) : CommandHandler<LoginUserCommand, LoginResponse> {
 
-    override suspend fun handle(command: LoginUserCommand): CommandResult {
+    override fun handle(command: LoginUserCommand): LoginResponse {
         try {
             // 验证命令
-            val validationResult = validate(command)
-            if (validationResult is CommandResult.ValidationError) {
-                return validationResult
-            }
+            validate(command)
 
             val email = Email.of(command.email)
             val user = userRepository.findByEmail(email)
-                ?: return CommandResult.Failure("用户名或密码错误", "LOGIN_FAILED")
+                ?: throw IllegalStateException("用户不存在")
 
             // 执行登录
             user.login(
@@ -51,21 +62,31 @@ class LoginUserCommandHandler(
             )
 
             // 保存用户状态
-            val savedUser = userRepository.save(user)
 
-            // 发布领域事件
-            savedUser.getDomainEvents().forEach { event ->
-                domainEventPublisher.publish(event)
+            val savedUser = transitionTemplate.execute {
+                val savedUser = runBlocking {
+                    userRepository.save(user)
+                }
+                eventBus.publishAll(savedUser.getDomainEvents())
+                savedUser.clearDomainEvents()
+                savedUser
             }
-            savedUser.clearDomainEvents()
-
-            return CommandResult.Success(
-                message = "登录成功",
-                data = mapOf(
-                    "userId" to savedUser.id,
-                    "sessionId" to command.sessionId
-                )
+            // 生成jwt令牌
+            // 生成访问令牌
+            val accessToken = jwtService.generateAccessToken(
+                user,
+                rememberMe = command.rememberMe,
+                sessionId = command.sessionId
             )
+            // 生成刷新令牌
+            val refreshToken = jwtService.generateRefreshToken(
+                user,
+                rememberMe = command.rememberMe,
+                sessionId = command.sessionId,
+            )
+
+
+
 
         } catch (e: IllegalArgumentException) {
             return CommandResult.Failure(e.message ?: "登录失败", "LOGIN_FAILED")
@@ -76,21 +97,27 @@ class LoginUserCommandHandler(
         }
     }
 
-    override fun validate(command: LoginUserCommand): CommandResult {
+    fun validate(command: LoginUserCommand) {
         val errors = mutableMapOf<String, MutableList<String>>()
 
         if (command.email.isBlank()) {
-            errors.getOrPut("email") { mutableListOf() }.add("邮箱不能为空")
+            throw IllegalArgumentException("邮箱不能为空")
         }
 
         if (command.password.isBlank()) {
-            errors.getOrPut("password") { mutableListOf() }.add("密码不能为空")
-        }
-
-        return if (errors.isEmpty()) {
-            CommandResult.Success()
-        } else {
-            CommandResult.ValidationError(errors)
+            throw IllegalArgumentException("密码不能为空")
         }
     }
 }
+
+
+
+/**
+ * 登录响应
+ */
+data class LoginResponse(
+    val user: UserProfileDTO,
+    val token: String,
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    val expiresAt: LocalDateTime
+)

@@ -103,15 +103,6 @@ data class LoginUserRequest(
     val userAgent: String? = null
 )
 
-/**
- * 登录响应
- */
-data class LoginResponse(
-    val user: UserProfileDTO,
-    val token: String,
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    val expiresAt: LocalDateTime
-)
 
 /**
  * 更新用户资料请求
@@ -173,23 +164,6 @@ data class VerifyEmailRequest(
 )
 
 
-/**
- * 用户摘要DTO（用于列表显示）
- */
-data class UserSummaryDTO(
-    val id: String,
-    val email: String,
-    val nickname: String,
-    val firstName: String?,
-    val lastName: String?,
-    val avatar: String?,
-    val status: String,
-    val emailVerified: Boolean,
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    val createdAt: LocalDateTime,
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    val lastLoginAt: LocalDateTime?
-)
 
 /**
  * 用户搜索结果DTO

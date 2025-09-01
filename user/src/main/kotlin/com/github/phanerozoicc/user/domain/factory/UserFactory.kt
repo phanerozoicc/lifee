@@ -1,6 +1,6 @@
 package com.github.phanerozoicc.user.domain.factory
 
-import com.github.phanerozoicc.user.domain.event.UserRegisteredEvent
+import com.github.phanerozoicc.user.application.event.UserRegisteredEvent
 import com.github.phanerozoicc.user.domain.model.Email
 import com.github.phanerozoicc.user.domain.model.Password
 import com.github.phanerozoicc.user.domain.model.PasswordSpecification

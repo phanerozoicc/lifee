@@ -1,7 +1,14 @@
 package com.github.phanerozoicc.user.domain.model
 
 import com.github.phanerozoicc.base.domain.EventSourcedAggregateRoot
-import com.github.phanerozoicc.user.domain.event.*
+import com.github.phanerozoicc.user.application.event.PasswordChangedEvent
+import com.github.phanerozoicc.user.application.event.UserActivatedEvent
+import com.github.phanerozoicc.user.application.event.UserDeleted
+import com.github.phanerozoicc.user.application.event.UserLoggedIn
+import com.github.phanerozoicc.user.application.event.UserLoginFailed
+import com.github.phanerozoicc.user.application.event.UserPreferencesUpdated
+import com.github.phanerozoicc.user.application.event.UserProfileUpdatedEvent
+import com.github.phanerozoicc.user.application.event.UserStatusChangedEvent
 import java.time.Duration
 import java.time.LocalDateTime
 

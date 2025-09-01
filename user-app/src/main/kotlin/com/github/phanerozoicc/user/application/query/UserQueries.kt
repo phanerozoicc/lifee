@@ -31,24 +31,6 @@ data class GetUserPermissionsQuery(
     val includePermissions: Boolean = true
 ) : UserQuery()
 
-/**
- * 用户列表查询
- */
-data class ListUsersQuery(
-    override val queryId: String,
-    override val timestamp: LocalDateTime = LocalDateTime.now(),
-    override val requestedBy: UserId? = null,
-    val pageSize: Int = 20,
-    val pageNumber: Int = 1,
-    val sortBy: String = "createdAt",
-    val sortDirection: String = "DESC",
-    val status: String? = null,
-    val emailVerified: Boolean? = null,
-    val createdAfter: LocalDateTime? = null,
-    val createdBefore: LocalDateTime? = null,
-    val lastLoginAfter: LocalDateTime? = null,
-    val lastLoginBefore: LocalDateTime? = null
-) : UserQuery()
 
 /**
  * 搜索用户查询
@@ -231,72 +213,72 @@ enum class ExportFormat {
     PDF
 }
 
-/**
- * 查询结果
- */
-sealed class QueryResult<T> {
-    data class Success<T>(val data: T) : QueryResult<T>()
-    data class NotFound<T>(val message: String = "未找到数据") : QueryResult<T>()
-    data class Error<T>(val error: String, val errorCode: String? = null) : QueryResult<T>()
-    data class Unauthorized<T>(val message: String = "无权限访问") : QueryResult<T>()
-}
+///**
+// * 查询结果
+// */
+//sealed class QueryResult<T> {
+//    data class Success<T>(val data: T) : QueryResult<T>()
+//    data class NotFound<T>(val message: String = "未找到数据") : QueryResult<T>()
+//    data class Error<T>(val error: String, val errorCode: String? = null) : QueryResult<T>()
+//    data class Unauthorized<T>(val message: String = "无权限访问") : QueryResult<T>()
+//}
 
 /**
  * 查询处理器接口
  */
-interface QueryHandler<TQuery : UserQuery, TResult> {
-    /**
-     * 处理查询
-     * @param query 要处理的查询
-     * @return 查询结果
-     */
-    suspend fun handle(query: TQuery): QueryResult<TResult>
-    
-}
+//interface QueryHandler<TQuery : UserQuery, TResult> {
+//    /**
+//     * 处理查询
+//     * @param query 要处理的查询
+//     * @return 查询结果
+//     */
+//    suspend fun handle(query: TQuery): QueryResult<TResult>
+//
+//}
 
 
-/**
- * 分页查询结果
- */
-data class PagedResult<T>(
-    val items: List<T>,
-    val totalCount: Long,
-    val pageSize: Int,
-    val pageNumber: Int,
-    val totalPages: Int,
-    val hasNext: Boolean,
-    val hasPrevious: Boolean
-) {
-    companion object {
-        fun <T> create(
-            items: List<T>,
-            totalCount: Long,
-            pageSize: Int,
-            pageNumber: Int
-        ): PagedResult<T> {
-            val totalPages = ((totalCount + pageSize - 1) / pageSize).toInt()
-            
-            return PagedResult(
-                items = items,
-                totalCount = totalCount,
-                pageSize = pageSize,
-                pageNumber = pageNumber,
-                totalPages = totalPages,
-                hasNext = pageNumber < totalPages,
-                hasPrevious = pageNumber > 1
-            )
-        }
-        
-        fun <T> empty(pageSize: Int = 20, pageNumber: Int = 1): PagedResult<T> {
-            return PagedResult(
-                items = emptyList(),
-                totalCount = 0,
-                pageSize = pageSize,
-                pageNumber = pageNumber,
-                totalPages = 0,
-                hasNext = false,
-                hasPrevious = false
-            )
-        }
-    }
-}
+///**
+// * 分页查询结果
+// */
+//data class PagedResult<T>(
+//    val items: List<T>,
+//    val totalCount: Long,
+//    val pageSize: Int,
+//    val pageNumber: Int,
+//    val totalPages: Int,
+//    val hasNext: Boolean,
+//    val hasPrevious: Boolean
+//) {
+//    companion object {
+//        fun <T> create(
+//            items: List<T>,
+//            totalCount: Long,
+//            pageSize: Int,
+//            pageNumber: Int
+//        ): PagedResult<T> {
+//            val totalPages = ((totalCount + pageSize - 1) / pageSize).toInt()
+//
+//            return PagedResult(
+//                items = items,
+//                totalCount = totalCount,
+//                pageSize = pageSize,
+//                pageNumber = pageNumber,
+//                totalPages = totalPages,
+//                hasNext = pageNumber < totalPages,
+//                hasPrevious = pageNumber > 1
+//            )
+//        }
+//
+//        fun <T> empty(pageSize: Int = 20, pageNumber: Int = 1): PagedResult<T> {
+//            return PagedResult(
+//                items = emptyList(),
+//                totalCount = 0,
+//                pageSize = pageSize,
+//                pageNumber = pageNumber,
+//                totalPages = 0,
+//                hasNext = false,
+//                hasPrevious = false
+//            )
+//        }
+//    }
+//}

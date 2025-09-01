@@ -48,6 +48,10 @@ data class UserStatus(
         fun deleted(reason: String = "用户主动删除"): UserStatus {
             return UserStatus(StatusEnum.DELETED, reason)
         }
+
+        fun valueOf(status: String): UserStatus? {
+            return StatusEnum.of(status)?.let { UserStatus(it) }
+        }
     }
     
     /**
@@ -171,5 +175,9 @@ enum class StatusEnum(val displayName: String, val description: String) {
     PENDING("待激活", "用户已注册但尚未激活，需要验证邮箱或手机号"),
     INACTIVE("停用", "用户账户被停用，无法登录和使用功能"),
     LOCKED("锁定", "用户账户被锁定，通常由于安全原因或违规行为"),
-    DELETED("已删除", "用户账户已被删除，数据可能被软删除保留")
+    DELETED("已删除", "用户账户已被删除，数据可能被软删除保留");
+
+    companion object {
+        fun of(status: String): StatusEnum? = entries.find { it.displayName == status }
+    }
 }

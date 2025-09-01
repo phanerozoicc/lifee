@@ -3,7 +3,7 @@ package com.github.phanerozoicc.user.application.command
 import com.github.phanerozoicc.base.command.Command
 import com.github.phanerozoicc.base.command.CommandHandler
 import com.github.phanerozoicc.base.event.EventBus
-import com.github.phanerozoicc.user.domain.event.UserRegisteredEvent
+import com.github.phanerozoicc.user.application.event.UserRegisteredEvent
 import com.github.phanerozoicc.user.domain.factory.UserFactory
 import com.github.phanerozoicc.user.domain.model.*
 import com.github.phanerozoicc.user.domain.repository.ActivationTokenRepository

@@ -4,6 +4,8 @@ import com.github.phanerozoicc.user.domain.model.Email
 import com.github.phanerozoicc.user.domain.model.User
 import com.github.phanerozoicc.user.domain.model.UserId
 import com.github.phanerozoicc.user.domain.model.UserStatus
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 import java.time.LocalDateTime
 
 /**
@@ -173,12 +175,24 @@ interface UserRepository {
      */
     fun searchUsers(keyword: String, limit: Int = 50, offset: Int = 0): List<User>
 
+//    /**
+//     * 根据多个条件查找用户
+//     * @param criteria 查询条件
+//     * @return 用户列表
+//     */
+//    fun findByCriteria(criteria: UserSearchCriteria): List<User>
+
     /**
-     * 根据多个条件查找用户
+     * 根据多个条件查找用户（分页）
      * @param criteria 查询条件
-     * @return 用户列表
      */
-    fun findByCriteria(criteria: UserSearchCriteria): List<User>
+    fun findByCriteria(criteria: UserSearchCriteria, pageable: Pageable): Page<User>
+    /**
+     * 根据多个条件统计用户数量
+     * @param criteria 查询条件
+     */
+    fun countByCriteria(criteria: UserSearchCriteria)
+
 }
 
 
