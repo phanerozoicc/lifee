@@ -87,6 +87,12 @@ class LoginUserCommandHandler(
 
 
 
+            return LoginResponse(
+                user = UserProfileDTO.fromDomain(savedUser!!),
+                accessToken = accessToken,
+                refreshToken = refreshToken
+            )
+
 
         } catch (e: IllegalArgumentException) {
             return CommandResult.Failure(e.message ?: "登录失败", "LOGIN_FAILED")
@@ -117,7 +123,27 @@ class LoginUserCommandHandler(
  */
 data class LoginResponse(
     val user: UserProfileDTO,
-    val token: String,
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    val expiresAt: LocalDateTime
+    val accessToken: String,
+    val refreshToken: String
 )
+
+data class UserProfileDTO(
+    val id: String,
+    val email: String,
+    val nickname: String,
+    val avatarUrl: String?,
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    val lastLoginAt: LocalDateTime?
+) {
+    companion object {
+        fun fromDomain(user: User): UserProfileDTO {
+            return UserProfileDTO(
+                id = user.id.value,
+                email = user.getEmail().value,
+                nickname = user.getProfile().nickname,
+                avatarUrl = user.getProfile().avatar,
+                lastLoginAt = user.getLastLoginAt()
+            )
+        }
+    }
+}
