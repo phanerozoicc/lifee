@@ -1,27 +1,27 @@
 package com.github.phanerozoicc.user.application.event
 
 import com.github.phanerozoicc.base.event.DomainEvent
+import com.github.phanerozoicc.user.domain.model.Email
 import com.github.phanerozoicc.user.domain.model.UserId
-import mu.KLogging
 import java.time.Instant
 import java.time.LocalDateTime
 import java.util.*
 
-
 /**
- * 密码变更事件
- * 当用户密码发生变更时发布
+ * 用户删除事件
+ * 当用户账户被删除时发布
  */
-class PasswordChangedEvent(
+class UserDeletedEvent(
     val userId: UserId,
-    val changeTime: LocalDateTime = LocalDateTime.now(),
-    val ipAddress: String? = null,
-    val isAdminReset: Boolean = false,
-    val resetBy: UserId? = null, // 如果是管理员重置，记录操作者
+    val email: Email,
+    val deletionTime: LocalDateTime = LocalDateTime.now(),
+    val reason: String? = null,
+    val deletedBy: UserId? = null, // 操作者ID
+    val isHardDelete: Boolean = false, // 是否为硬删除
     version: Long = 0,
     eventId: String = UUID.randomUUID().toString(),
     occurredOn: Instant = Instant.now(),
-    override val eventType: String = "PasswordChanged"
+    override val eventType: String = "UserDeleted"
 ) : DomainEvent(userId.value, version, eventId, occurredOn) {
 
     override fun copy(
@@ -30,12 +30,13 @@ class PasswordChangedEvent(
         occurredOn: Instant,
         eventId: String
     ): DomainEvent {
-        return PasswordChangedEvent(
+        return UserDeletedEvent(
             userId = UserId(aggregateId),
-            changeTime = this.changeTime,
-            ipAddress = this.ipAddress,
-            isAdminReset = this.isAdminReset,
-            resetBy = this.resetBy,
+            email = this.email,
+            deletionTime = this.deletionTime,
+            reason = this.reason,
+            deletedBy = this.deletedBy,
+            isHardDelete = this.isHardDelete,
             version = version,
             eventId = eventId,
             occurredOn = occurredOn
@@ -45,15 +46,13 @@ class PasswordChangedEvent(
 
 
 //@Component
-class PasswordChangedEventHandler(
+class UserDeletedEventHandler(
 
 ) {
-    companion object : KLogging()
 
-    fun onEvent(event: PasswordChangedEvent) {
-        // 处理密码变更事件的逻辑
+    fun onEvent(event: UserDeletedEvent) {
+        // 处理用户删除事件的逻辑
         // 例如，记录日志、发送通知等
         // 这里暂时什么都不做
-        logger.info { "Password changed for userId=${event.userId}, isAdminReset=${event.isAdminReset}" }
     }
 }

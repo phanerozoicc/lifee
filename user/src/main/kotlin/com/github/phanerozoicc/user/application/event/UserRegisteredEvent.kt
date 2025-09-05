@@ -27,8 +27,9 @@ class UserRegisteredEvent(
     aggregateId: String = userId.value,
     version: Long = 0,
     occurredOn: Instant = Instant.now(),
-    eventId: String = UUID.randomUUID().toString()
-    ) : DomainEvent(aggregateId, version) {
+    eventId: String = UUID.randomUUID().toString(),
+    override val eventType: String = "UserRegistered"
+    ) : DomainEvent(aggregateId, version, eventId, occurredOn) {
     override fun copy(
         aggregateId: String,
         version: Long,

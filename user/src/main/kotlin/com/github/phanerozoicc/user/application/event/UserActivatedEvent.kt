@@ -17,10 +17,10 @@ import java.util.*
  */
 class UserActivatedEvent(
     val userId: UserId,
-    override val eventType: String = "UserActivated",
     version: Long = 0,
     occurredOn: Instant = Instant.now(),
-    eventId: String = UUID.randomUUID().toString()
+    eventId: String = UUID.randomUUID().toString(),
+    override val eventType: String = "UserActivated",
 ) : DomainEvent(userId.value, version, eventId, occurredOn) {
     override fun copy(
         aggregateId: String,
@@ -29,8 +29,7 @@ class UserActivatedEvent(
         eventId: String
     ): DomainEvent {
         return UserActivatedEvent(
-            UserId(aggregateId),
-            eventType,
+            userId,
             version,
             occurredOn,
             eventId

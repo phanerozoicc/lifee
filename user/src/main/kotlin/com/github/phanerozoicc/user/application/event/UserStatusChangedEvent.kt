@@ -20,7 +20,8 @@ class UserStatusChangedEvent(
     val ipAddress: String? = null,
     version: Long = 0,
     occurredOn: Instant = Instant.now(),
-    eventId: String = UUID.randomUUID().toString()
+    eventId: String = UUID.randomUUID().toString(),
+    override val eventType: String = "UserStatusChanged"
 ) : DomainEvent(userId.value, version, eventId, occurredOn) {
 
     /**

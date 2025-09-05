@@ -1,14 +1,7 @@
 package com.github.phanerozoicc.user.domain.model
 
 import com.github.phanerozoicc.base.domain.EventSourcedAggregateRoot
-import com.github.phanerozoicc.user.application.event.PasswordChangedEvent
-import com.github.phanerozoicc.user.application.event.UserActivatedEvent
-import com.github.phanerozoicc.user.application.event.UserDeleted
-import com.github.phanerozoicc.user.application.event.UserLoggedIn
-import com.github.phanerozoicc.user.application.event.UserLoginFailed
-import com.github.phanerozoicc.user.application.event.UserPreferencesUpdated
-import com.github.phanerozoicc.user.application.event.UserProfileUpdatedEvent
-import com.github.phanerozoicc.user.application.event.UserStatusChangedEvent
+import com.github.phanerozoicc.user.application.event.*
 import java.time.Duration
 import java.time.LocalDateTime
 
@@ -77,7 +70,7 @@ class User(
         
         // 发布登录事件
         addDomainEvent(
-            UserLoggedIn(
+            UserLoggedInEvent(
                 userId = id,
                 email = email,
                 ipAddress = ipAddress,
@@ -102,7 +95,8 @@ class User(
         
         // 发布登录失败事件
         addDomainEvent(
-            UserLoginFailed(
+            UserLoginFailedEvent(
+                userId = id,
                 email = email,
                 failureReason = reason,
                 ipAddress = ipAddress,
@@ -336,7 +330,7 @@ class User(
             
             // 发布偏好设置更新事件
             addDomainEvent(
-                UserPreferencesUpdated(
+                UserPreferencesUpdatedEvent(
                     userId = id,
                     oldPreferences = oldPreferences,
                     newPreferences = newPreferences,
@@ -364,7 +358,7 @@ class User(
         
         // 发布用户删除事件
         addDomainEvent(
-            UserDeleted(
+            UserDeletedEvent(
                 userId = id,
                 email = email,
                 reason = reason,

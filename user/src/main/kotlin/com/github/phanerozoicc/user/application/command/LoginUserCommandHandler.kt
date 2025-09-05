@@ -3,19 +3,16 @@ package com.github.phanerozoicc.user.application.command
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.github.phanerozoicc.base.command.Command
 import com.github.phanerozoicc.base.command.CommandHandler
-import com.github.phanerozoicc.base.command.CommandResult
 import com.github.phanerozoicc.base.event.EventBus
 import com.github.phanerozoicc.user.application.service.JwtService
 import com.github.phanerozoicc.user.domain.model.Email
 import com.github.phanerozoicc.user.domain.model.User
 import com.github.phanerozoicc.user.domain.model.UserId
 import com.github.phanerozoicc.user.domain.repository.UserRepository
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import mu.KLogging
 import org.springframework.stereotype.Service
 import org.springframework.transaction.support.TransactionTemplate
-import sun.jvm.hotspot.HelloWorld.e
 import java.time.LocalDateTime
 
 
@@ -43,6 +40,8 @@ class LoginUserCommandHandler(
     private val eventBus: EventBus,
     private val transitionTemplate: TransactionTemplate,
 ) : CommandHandler<LoginUserCommand, LoginResponse> {
+
+    companion object: KLogging()
 
     override fun handle(command: LoginUserCommand): LoginResponse {
         try {
@@ -86,6 +85,9 @@ class LoginUserCommandHandler(
             )
 
 
+            // 记录登录日志
+
+
 
             return LoginResponse(
                 user = UserProfileDTO.fromDomain(savedUser!!),
@@ -94,22 +96,16 @@ class LoginUserCommandHandler(
             )
 
 
-        } catch (e: IllegalArgumentException) {
-            return CommandResult.Failure(e.message ?: "登录失败", "LOGIN_FAILED")
-        } catch (e: IllegalStateException) {
-            return CommandResult.Failure(e.message ?: "账户状态异常", "ACCOUNT_STATUS_ERROR")
         } catch (e: Exception) {
-            return CommandResult.Failure("系统错误，请稍后重试", "SYSTEM_ERROR")
+            logger.error("用户登录失败: ${e.message}", e)
+            throw e
         }
     }
 
     fun validate(command: LoginUserCommand) {
-        val errors = mutableMapOf<String, MutableList<String>>()
-
         if (command.email.isBlank()) {
             throw IllegalArgumentException("邮箱不能为空")
         }
-
         if (command.password.isBlank()) {
             throw IllegalArgumentException("密码不能为空")
         }
