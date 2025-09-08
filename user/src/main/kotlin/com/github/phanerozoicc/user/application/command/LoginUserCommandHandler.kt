@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat
 import com.github.phanerozoicc.base.command.Command
 import com.github.phanerozoicc.base.command.CommandHandler
 import com.github.phanerozoicc.base.event.EventBus
+import com.github.phanerozoicc.base.exception.BusinessRuleException
 import com.github.phanerozoicc.user.application.service.JwtService
 import com.github.phanerozoicc.user.domain.model.Email
 import com.github.phanerozoicc.user.domain.model.User
@@ -52,13 +53,27 @@ class LoginUserCommandHandler(
             val user = userRepository.findByEmail(email)
                 ?: throw IllegalStateException("用户不存在")
 
-            // 执行登录
-            user.login(
-                plainPassword = command.password,
-                ipAddress = command.ipAddress,
-                userAgent = command.userAgent,
-                sessionId = command.sessionId
-            )
+
+            try {
+                // 执行登录
+                user.login(
+                    plainPassword = command.password,
+                    ipAddress = command.ipAddress,
+                    userAgent = command.userAgent,
+                    sessionId = command.sessionId
+                )
+            } catch (e: BusinessRuleException) {
+                // 对于登录业务异常需要记录失败次数
+                transitionTemplate.execute {
+                    val savedUser = runBlocking {
+                        userRepository.save(user)
+                    }
+                    eventBus.publishAll(savedUser.getDomainEvents())
+                    savedUser.clearDomainEvents()
+                    savedUser
+                }
+                throw e
+            }
 
             // 保存用户状态
 

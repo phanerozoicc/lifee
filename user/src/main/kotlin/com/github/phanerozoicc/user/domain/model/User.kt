@@ -1,6 +1,7 @@
 package com.github.phanerozoicc.user.domain.model
 
 import com.github.phanerozoicc.base.domain.EventSourcedAggregateRoot
+import com.github.phanerozoicc.base.exception.BusinessRuleException
 import com.github.phanerozoicc.user.application.event.*
 import java.time.Duration
 import java.time.LocalDateTime
@@ -59,9 +60,9 @@ class User(
         // 验证密码
         if (!password.matches(plainPassword)) {
             handleLoginFailure("密码错误", ipAddress, userAgent)
-            throw IllegalArgumentException("用户名或密码错误")
+            throw BusinessRuleException("用户名或密码错误")
         }
-        
+
         // 登录成功
         loginAttempts = 0
         lastFailedLoginAt = null

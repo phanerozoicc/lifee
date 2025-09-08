@@ -9,6 +9,7 @@ import com.github.phanerozoicc.user.application.query.GetUserProfileQuery
 import com.github.phanerozoicc.user.application.query.ListUsersQuery
 import com.github.phanerozoicc.user.application.query.UserProfileDTO
 import com.github.phanerozoicc.user.application.query.UserSummaryDTO
+import com.github.phanerozoicc.user.application.service.UserApplicationService
 import com.github.phanerozoicc.user.domain.model.Email
 import com.github.phanerozoicc.user.domain.model.UserId
 import io.swagger.v3.oas.annotations.Operation
@@ -296,48 +297,10 @@ class UserController(
 
 
 
-    @PostMapping("/refresh")
-    @Operation(summary = "刷新令牌", description = "使用刷新令牌获取新的访问令牌")
-    fun refreshToken(
-        @RequestBody request: Map<String, String>
-    ): ApiResponse<Map<String, Any>> {
-        val refreshToken = request["refreshToken"]
-            ?: throw IllegalArgumentException("刷新令牌不能为空")
-        val authResult = userApplicationService.refreshToken(refreshToken)
-        return ApiResponse.success(authResult)
-    }
 
-    @GetMapping("/me")
-    @Operation(summary = "获取当前用户信息", description = "获取当前登录用户的详细信息")
-    @PreAuthorize("isAuthenticated()")
-    fun getCurrentUser(
-        @AuthenticationPrincipal userDetails: UserDetails
-    ): ApiResponse<UserDto> {
-        val user = userApplicationService.getUserByUsername(userDetails.username)
-        return ApiResponse.success(UserDto.Companion.fromDomain(user))
-    }
 
-    @PutMapping("/me")
-    @Operation(summary = "更新用户资料", description = "更新当前用户的个人资料")
-    @PreAuthorize("isAuthenticated()")
-    fun updateProfile(
-        @AuthenticationPrincipal userDetails: UserDetails,
-        @Valid @RequestBody command: UpdateUserProfileCommand
-    ): ApiResponse<UserDto> {
-        val user = userApplicationService.updateUserProfile(userDetails.username, command)
-        return ApiResponse.success(UserDto.Companion.fromDomain(user))
-    }
 
-    @PutMapping("/me/password")
-    @Operation(summary = "修改密码", description = "修改当前用户的登录密码")
-    @PreAuthorize("isAuthenticated()")
-    fun changePassword(
-        @AuthenticationPrincipal userDetails: UserDetails,
-        @Valid @RequestBody command: ChangePasswordCommand
-    ): ApiResponse<String> {
-        userApplicationService.changePassword(userDetails.username, command)
-        return ApiResponse.success("密码修改成功")
-    }
+
 
 
 
