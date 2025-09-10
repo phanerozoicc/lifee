@@ -102,8 +102,6 @@ class LoginUserCommandHandler(
 
             // 记录登录日志
 
-
-
             return LoginResponse(
                 user = UserProfileDTO.fromDomain(savedUser!!),
                 accessToken = accessToken,

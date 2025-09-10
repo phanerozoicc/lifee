@@ -6,14 +6,11 @@ import com.github.phanerozoicc.base.response.ApiResponse
 import com.github.phanerozoicc.user.application.command.ChangePasswordCommand
 import com.github.phanerozoicc.user.application.command.LoginResponse
 import com.github.phanerozoicc.user.application.command.LoginUserCommand
-import com.github.phanerozoicc.user.application.command.UpdateUserProfileCommand
-import com.github.phanerozoicc.user.application.query.GetUserProfileQuery
-import com.github.phanerozoicc.user.application.query.UserProfileDTO
+import com.github.phanerozoicc.user.application.command.RegisterUserCommand
 import com.github.phanerozoicc.user.application.service.UserApplicationService
 import com.github.phanerozoicc.user.domain.model.UserId
 import io.swagger.v3.oas.annotations.Operation
 import jakarta.validation.Valid
-import kotlinx.coroutines.runBlocking
 import mu.KLogging
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -21,7 +18,10 @@ import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.stereotype.Controller
-import org.springframework.web.bind.annotation.*
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestHeader
 
 @Controller("/api/v1/auth")
 class AuthController(
@@ -31,6 +31,41 @@ class AuthController(
 ) {
 
     companion object: KLogging()
+
+
+    /**
+     * 用户注册
+     */
+    // TODO 添加网关服务
+    //  从网关获取用户IP和UserAgent
+    @Operation(summary = "用户注册", description = "创建新用户账户")
+    @PostMapping("/register")
+    suspend fun register(@Valid @RequestBody registerRequest: RegisterUserRequest,
+                         @RequestHeader("X-User-Agent") userAgent: String,
+                         @RequestHeader("X-Forwarded-For") remoteIp: String
+    ): ResponseEntity<ApiResponse<Unit>> {
+        val registerCommand = RegisterUserCommand(
+            email = registerRequest.email,
+            password = registerRequest.password,
+            nickname = registerRequest.nickname,
+            firstName = registerRequest.firstName,
+            lastName = registerRequest.lastName,
+            acceptTerms = registerRequest.acceptTerms,
+            marketingConsent = registerRequest.marketingConsent,
+            ipAddress = remoteIp,
+            userAgent = userAgent
+        )
+        return try {
+            // 事件都用同步处理(一般)
+            commandBus.sendAndWait<RegisterUserCommand, Unit>(registerCommand)
+            ResponseEntity.ok(ApiResponse.success("用户注册成功，请检查邮箱进行激活"))
+        } catch (e: Exception) {
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiResponse.error("用户注册失败", e.message))
+        }
+    }
+
+
 
     /**
      * 用户登录
@@ -75,55 +110,6 @@ class AuthController(
     }
 
 
-    @GetMapping("/me")
-    @Operation(summary = "获取当前用户信息", description = "获取当前登录用户的详细信息")
-    @PreAuthorize("isAuthenticated()")
-    suspend fun getCurrentUser(
-        @AuthenticationPrincipal userDetails: UserDetails
-    ): ApiResponse<UserProfileDTO> {
-        val getUserProfileQuery = GetUserProfileQuery(UserId.of(userDetails.username))
-        val userProfileDTO = queryBus.send<GetUserProfileQuery, UserProfileDTO?>(getUserProfileQuery)
-        return ApiResponse.success( userProfileDTO!!)
-    }
-
-
-      @PutMapping("/me")
-    @Operation(summary = "更新用户资料", description = "更新当前用户的个人资料")
-    @PreAuthorize("isAuthenticated()")
-    suspend fun updateProfile(
-        @AuthenticationPrincipal userDetails: UserDetails,
-        @Valid @RequestBody request: UpdateUserProfileRequest
-    ): ResponseEntity<ApiResponse<UserProfileDTO>> {
-        val userId = userDetails.username
-          logger.info("更新用户档案请求 userId：{}", userId)
-          val updateUserProfileCommand = UpdateUserProfileCommand(
-              userId = UserId.of(userId),
-              nickname = request.nickname,
-              firstName = request.firstName,
-              lastName = request.lastName,
-              avatar = request.avatar,
-              bio = request.bio,
-              birthDate = request.birthDate,
-              age = request.age,
-              gender = request.gender,
-              phoneNumber = request.phoneNumber,
-              address = request.address,
-              website = request.website
-          )
-          return try {
-              runBlocking {
-                  commandBus.sendAndWait<UpdateUserProfileCommand, Unit>(updateUserProfileCommand)
-                  val getUserProfileQuery = GetUserProfileQuery(UserId.of(userId))
-                  val userProfileDTO = queryBus.send<GetUserProfileQuery, UserProfileDTO>(getUserProfileQuery)
-                  return@runBlocking ResponseEntity.ok(ApiResponse.success(userProfileDTO,
-                      "用户信息修改成功"))
-              }
-          }catch (e : Exception) {
-              ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                  .body(ApiResponse.error("用户信息修改失败", e.message))
-          }
-
-      }
 
     @PutMapping("/me/password")
     @Operation(summary = "修改密码", description = "修改当前用户的登录密码")

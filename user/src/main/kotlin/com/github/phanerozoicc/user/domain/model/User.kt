@@ -1,10 +1,13 @@
 package com.github.phanerozoicc.user.domain.model
 
 import com.github.phanerozoicc.base.domain.EventSourcedAggregateRoot
+import com.github.phanerozoicc.base.event.DomainEvent
 import com.github.phanerozoicc.base.exception.BusinessRuleException
 import com.github.phanerozoicc.user.application.event.*
 import java.time.Duration
 import java.time.LocalDateTime
+import java.time.ZoneId
+import java.util.*
 
 /**
  * 用户聚合根
@@ -70,7 +73,7 @@ class User(
         updatedAt = LocalDateTime.now()
         
         // 发布登录事件
-        addDomainEvent(
+        recordEvent(
             UserLoggedInEvent(
                 userId = id,
                 email = email,
@@ -95,7 +98,7 @@ class User(
         updatedAt = LocalDateTime.now()
         
         // 发布登录失败事件
-        addDomainEvent(
+        recordEvent(
             UserLoginFailedEvent(
                 userId = id,
                 email = email,
@@ -132,7 +135,7 @@ class User(
             updatedAt = LocalDateTime.now()
             
             // 发布资料更新事件
-            addDomainEvent(
+            recordEvent(
                 UserProfileUpdatedEvent(
                     userId = id,
                     oldProfile = oldProfile,
@@ -176,7 +179,7 @@ class User(
         updatedAt = LocalDateTime.now()
         
         // 发布密码变更事件
-        addDomainEvent(
+        recordEvent(
             PasswordChangedEvent(
                 userId = id,
                 ipAddress = ipAddress
@@ -206,7 +209,7 @@ class User(
         lastFailedLoginAt = null
         
         // 发布密码变更事件
-        addDomainEvent(
+        recordEvent(
             PasswordChangedEvent(
                 userId = id,
                 ipAddress = ipAddress,
@@ -238,7 +241,7 @@ class User(
             )
         )
         // 发布激活事件
-        addDomainEvent(
+        recordEvent(
             UserActivatedEvent(
                 userId = id
             )
@@ -256,7 +259,7 @@ class User(
         updatedAt = LocalDateTime.now()
         
         // 发布状态变更事件
-        addDomainEvent(
+        recordEvent(
             UserStatusChangedEvent(
                 userId = id,
                 oldStatus = oldStatus,
@@ -278,7 +281,7 @@ class User(
         updatedAt = LocalDateTime.now()
         
         // 发布状态变更事件
-        addDomainEvent(
+        recordEvent(
             UserStatusChangedEvent(
                 userId = id,
                 oldStatus = oldStatus,
@@ -303,7 +306,7 @@ class User(
         lastFailedLoginAt = null
         
         // 发布状态变更事件
-        addDomainEvent(
+        recordEvent(
             UserStatusChangedEvent(
                 userId = id,
                 oldStatus = oldStatus,
@@ -330,7 +333,7 @@ class User(
             updatedAt = LocalDateTime.now()
             
             // 发布偏好设置更新事件
-            addDomainEvent(
+            recordEvent(
                 UserPreferencesUpdatedEvent(
                     userId = id,
                     oldPreferences = oldPreferences,
@@ -358,7 +361,7 @@ class User(
         updatedAt = LocalDateTime.now()
         
         // 发布用户删除事件
-        addDomainEvent(
+        recordEvent(
             UserDeletedEvent(
                 userId = id,
                 email = email,
@@ -416,6 +419,82 @@ class User(
      */
     fun canReactivate(lastVerificationSent: LocalDateTime?): Boolean {
         return !status.isActive() && userSpecification.canSendEmailVerification(lastVerificationSent)
+    }
+
+    override fun applyEvent(event: DomainEvent) {
+        // TODO 从事件重建聚合
+        TODO("Not yet implemented")
+    }
+
+    override fun serializeState(): Map<String, Any> {
+        return mapOf(
+            "id" to id.toString(),
+            "email" to email.value,
+            "password" to "${password.hashedValue}:${password.salt}",
+            "profile" to mapOf(
+                "nickname" to profile.nickname,
+                "avatar" to profile.avatar,
+                "bio" to profile.bio,
+                "updatedAt" to profile.updatedAt.toString()
+            ),
+            "status" to mapOf(
+                "status" to status.status,
+                "reason" to status.reason,
+                "createdAt" to status.changedAt
+            ),
+            "preferences" to mapOf(
+                "language" to preferences.language,
+                "timezone" to preferences.timezone,
+                "theme" to preferences.theme,
+                "emailNotification" to preferences.notificationSettings.isEmailNotificationEnabled(),
+                "smsNotification" to preferences.notificationSettings.isSmsNotificationEnabled(),
+                "pushNotification" to preferences.notificationSettings.isPushNotificationEnabled()
+            ),
+            "emailVerified" to emailVerified,
+            "createdAt" to createdAt.toString(),
+            "updatedAt" to updatedAt.toString(),
+            "lastLoginAt" to (lastLoginAt?.toString() ?: ""),
+            "loginAttempts" to loginAttempts,
+            "lastFailedLoginAt" to (lastFailedLoginAt?.toString() ?: "")
+        )
+    }
+
+    override fun deserializeState(state: Map<String, Any>): Any {
+        val passwordSplit = (state["password"] as String).split(":")
+        val password = Password.fromHash(passwordSplit[0], passwordSplit[1])
+        val status = UserStatus(
+            status = (state["status"] as Map<*, *>)["status"] as StatusEnum,
+            reason = (state["status"] as Map<*, *>)["reason"] as? String,
+            changedAt = LocalDateTime.parse((state["status"] as Map<*, *>)["createdAt"] as String)
+        )
+        return User(
+            id = UserId(state["id"] as String),
+            email = Email(state["email"] as String),
+            password = password,
+            profile = UserProfile(
+                nickname = (state["profile"] as Map<*, *>)["nickname"] as String,
+                avatar = (state["profile"] as Map<*, *>)["avatar"] as? String,
+                bio = (state["profile"] as Map<*, *>)["bio"] as? String,
+                updatedAt = LocalDateTime.parse((state["profile"] as Map<*, *>)["updatedAt"] as String)
+            ),
+            status = status,
+            preferences = UserPreferences(
+                language = (state["preferences"] as Map<String, Any>)["language"] as Locale,
+                timezone = (state["preferences"] as Map<String, Any>)["timezone"] as ZoneId,
+                theme = (state["preferences"] as Map<String, Any>)["theme"] as Theme,
+                notificationSettings = NotificationSettings(
+                    emailNotification = (state["preferences"] as Map<*, *>)["emailNotification"] as Boolean,
+                    smsNotification = (state["preferences"] as Map<*, *>)["smsNotification"] as Boolean,
+                    pushNotification = (state["preferences"] as Map<*, *>)["pushNotification"] as Boolean
+                )
+            ),
+            emailVerified = state["emailVerified"] as Boolean,
+            createdAt = LocalDateTime.parse(state["createdAt"] as String),
+            updatedAt = LocalDateTime.parse(state["updatedAt"] as String),
+            lastLoginAt = (state["lastLoginAt"] as String).takeIf { it.isNotEmpty() }?.let { LocalDateTime.parse(it) },
+            loginAttempts = state["loginAttempts"] as Int,
+            lastFailedLoginAt = (state["lastFailedLoginAt"] as String).takeIf { it.isNotEmpty() }?.let { LocalDateTime.parse(it) }
+        )
     }
 }
 

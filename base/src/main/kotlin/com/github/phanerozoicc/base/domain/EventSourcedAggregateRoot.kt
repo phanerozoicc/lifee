@@ -37,7 +37,8 @@ abstract class EventSourcedAggregateRoot<ID>(
         val eventWithMetadata = event.copy(
             aggregateId = id.toString(),
             version = getVersion() + 1,
-            occurredOn = Instant.now ()
+            occurredOn = Instant.now (),
+            eventId = event.eventId
         )
 
         // 应用事件到聚合根
@@ -100,9 +101,9 @@ abstract class EventSourcedAggregateRoot<ID>(
     open fun createSnapshot(): AggregateSnapshot<Map<String, Any>> {
         return AggregateSnapshot(
             aggregateId = id.toString(),
-            aggregateType = this::class.simpleName?:"unkown",
+            aggregateType = this::class.simpleName?:"unknown",
             version = getVersion(),
-            snapshotData = serializeState(this)
+            snapshotData = serializeState()
         )
     }
 
@@ -119,7 +120,7 @@ abstract class EventSourcedAggregateRoot<ID>(
     /**
      * 聚合根状态序列化
      */
-    protected abstract fun serializeState(state: Any): Map<String, Any>
+    protected abstract fun serializeState(): Map<String, Any>
 
     /**
      * 聚合根状态反序列化

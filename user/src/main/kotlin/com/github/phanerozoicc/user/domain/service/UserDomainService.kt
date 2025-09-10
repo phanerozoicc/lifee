@@ -2,15 +2,23 @@ package com.github.phanerozoicc.user.domain.service
 
 import com.github.phanerozoicc.user.domain.model.*
 import com.github.phanerozoicc.user.domain.repository.UserRepository
+import mu.KLogging
+import org.springframework.stereotype.Service
 import java.time.LocalDateTime
 
 /**
  * 用户领域服务
  * 处理跨聚合根的业务逻辑和复杂的业务规则
  */
+@Service
 class UserDomainService(
     private val userRepository: UserRepository
 ) {
+
+    companion object {
+        val userSpecification = UserSpecification()
+        val logger = KLogging()
+    }
 
     /**
      * 验证用户注册信息的唯一性
@@ -24,11 +32,12 @@ class UserDomainService(
          if (userRepository.existsByEmail(email)) {
              throw IllegalArgumentException("邮箱地址已被注册")
          }
-        
-        // 检查昵称唯一性
-        if (userRepository.existsByNickname(nickname)) {
-            throw IllegalArgumentException("昵称已被使用")
-        }
+
+        // 昵称可以相同
+//        // 检查昵称唯一性
+//        if (userRepository.existsByNickname(nickname)) {
+//            throw IllegalArgumentException("昵称已被使用")
+//        }
     }
     
     /**
@@ -38,9 +47,9 @@ class UserDomainService(
      * @throws IllegalArgumentException 如果昵称已被其他用户使用
      */
     fun validateProfileUpdateUniqueness(userId: UserId, nickname: String) {
-        if (userRepository.existsByNicknameExcluding(nickname, userId)) {
-            throw IllegalArgumentException("昵称已被其他用户使用")
-        }
+//        if (userRepository.existsByNicknameExcluding(nickname, userId)) {
+//            throw IllegalArgumentException("昵称已被其他用户使用")
+//        }
     }
     
     /**
@@ -63,10 +72,10 @@ class UserDomainService(
         // 检查操作频率限制
         return when (operationType) {
             SensitiveOperationType.CHANGE_PASSWORD -> {
-                userSpecification.canChangePassword(user.getPassword().getCreatedAt())
+                userSpecification.canChangePassword(user.getPassword().createdAt)
             }
             SensitiveOperationType.UPDATE_PROFILE -> {
-                userSpecification.canUpdateProfile(user.getProfile().getUpdatedAt())
+                userSpecification.canUpdateProfile(user.getProfile().updatedAt)
             }
             SensitiveOperationType.CHANGE_EMAIL -> {
                 // TODO: 实现邮箱变更权限检查逻辑

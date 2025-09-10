@@ -45,7 +45,6 @@ class RegisterUserCommandHandler(
 
     private val emailSpecification = EmailSpecification()
     private val passwordSpecification = PasswordSpecification()
-    private val userSpecification = UserSpecification()
 
     override fun handle(command: RegisterUserCommand) {
         // 验证命令
