@@ -1,0 +1,65 @@
+@startuml User Aggregate Detail
+!include ../single.puml
+
+Title("对话聚合详细设计", "User Aggregate Detailed Design", "v1.0", "2025")
+
+' 样式定义
+skinparam class {
+    BackgroundColor<<AggregateRoot>> #FDFD9D
+    BackgroundColor<<Entity>> #E1F5FE
+    BackgroundColor<<ValueObject>> #F3E5F5
+    BackgroundColor<<BusinessRule>> #FFE0B2
+    BackgroundColor<<DomainEvent>> #FFCB81
+    BorderColor #333333
+    FontSize 11
+}
+
+skinparam note {
+    BackgroundColor #FFFACD
+    BorderColor #DDD
+}
+
+' 定义聚合根
+package "对话聚合" {
+    class Conversation <<AggregateRoot>> {
+        + chatId: String
+        + user: User
+        + chatModel: ChatModelConfig
+        + messages: List<Message>
+        --
+        + startChat(participants: List<User>): Chat
+        + sendMessage(sender: User, content: String): Message
+        + getChatHistory(): List<Message>
+    }
+
+    ` 模型配置
+    class ChatModelConfig <<ValueObject>> {
+        + modelService: ModelService
+        + temperature: Float
+        + maxTokens: Integer
+        --
+        + updateModel(newModel: String, newTemp: Float, newMaxTokens: Integer): void
+    }
+
+    ' 定义实体
+    class Message <<Entity>> {
+        + messageId: String
+        + sender: User
+        + content: String
+        + timestamp: DateTime
+        --
+        + editContent(newContent: String): void
+    }
+
+    ' 定义值对象
+    class ChatSettings <<ValueObject>> {
+        + isGroupChat: Boolean
+        + notificationsEnabled: Boolean
+        --
+        + toggleNotifications(): void
+    }
+
+    ' 定义领域事件
+    class MessageSent
+
+@enduml
